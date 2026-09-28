@@ -1,0 +1,40 @@
+{
+  "name": "@walangstudio/badgetrip-react-native",
+  "version": "0.0.1",
+  "description": "React Native / Expo bindings for badgetrip - the @walangstudio/badgetrip-react hooks plus a native AchievementBadge.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "src"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "@walangstudio/badgetrip-assets": "workspace:*",
+    "@walangstudio/badgetrip-core": "workspace:*",
+    "@walangstudio/badgetrip-react": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-native": ">=0.74.0",
+    "react-native-svg": ">=13.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "@types/react-test-renderer": "^18.3.0",
+    "react": "^18.3.1",
+    "react-native": "0.76.9",
+    "react-native-svg": "^15.8.0",
+    "react-test-renderer": "^18.3.1"
+  },
+  "keywords": ["gamification", "react-native", "expo", "hooks"],
+  "license": "MIT"
+}
