@@ -1,0 +1,27 @@
+{
+  "name": "badgetrip",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Framework-agnostic gamification primitives - points, achievements, streaks, tiers, leaderboards, escalators.",
+  "scripts": {
+    "build": "tsc -b && pnpm --filter @badgetrip/angular build",
+    "typecheck": "tsc -b && tsc -p tsconfig.tests.json && pnpm --filter @badgetrip/angular typecheck",
+    "test:coverage": "vitest run --coverage --coverage.include=packages/*/src/** --coverage.exclude=packages/angular/** --coverage.exclude=**/types.ts",
+    "clean": "tsc -b --clean",
+    "test": "vitest run && pnpm --filter @badgetrip/angular test",
+    "test:watch": "vitest",
+    "lint": "biome check .",
+    "format": "biome format --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@types/node": "^22.10.5",
+    "@vitest/coverage-v8": "2.1.8",
+    "jsdom": "25.0.1",
+    "typescript": "5.7.2",
+    "vitest": "2.1.8"
+  },
+  "packageManager": "pnpm@11.3.0",
+  "license": "MIT"
+}

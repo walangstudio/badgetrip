@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@badgetrip/core": ["./packages/core/src/index.ts"],
+      "@badgetrip/testing": ["./packages/testing/src/index.ts"],
+      "@badgetrip/assets": ["./packages/assets/src/index.ts"],
+      "@badgetrip/react": ["./packages/react/src/index.ts"],
+      "@badgetrip/react-native": ["./packages/react-native/src/index.ts"],
+      "@badgetrip/vue": ["./packages/vue/src/index.ts"],
+      "@badgetrip/html": ["./packages/html/src/index.ts"],
+      "@badgetrip/ipc": ["./packages/ipc/src/index.ts"]
+    }
+  },
+  "include": ["packages/*/test", "vitest.config.ts"],
+  "exclude": ["packages/angular"]
+}

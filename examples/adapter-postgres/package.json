@@ -1,0 +1,19 @@
+{
+  "name": "@badgetrip-example/adapter-postgres",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Reference: implementing the badgetrip store contract for Postgres. Copy and adapt - not a published package.",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@badgetrip/core": "workspace:*",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@badgetrip/testing": "workspace:*",
+    "@types/pg": "^8.11.10",
+    "vitest": "2.1.8"
+  }
+}
