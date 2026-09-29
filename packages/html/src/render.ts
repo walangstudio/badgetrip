@@ -1,7 +1,9 @@
 import {
+  type CountFormat,
   type IconResolver,
   createIconResolver,
   displayIcon,
+  progressCount,
   safeSrc,
 } from '@walangstudio/badgetrip-assets';
 import { type AchievementView, splitConcealed } from '@walangstudio/badgetrip-core';
@@ -17,6 +19,10 @@ export type BadgeOptions = {
   size?: number;
   /** Show a progress bar while locked. Default true. */
   showProgress?: boolean;
+  /** Show a "3/5" count under locked multi-step achievements. Default true. */
+  showCount?: boolean;
+  /** Wording of the count, e.g. `(p) => \`${p.current} of ${p.target}\``. */
+  formatCount?: CountFormat;
   className?: string;
 };
 
@@ -40,6 +46,8 @@ export function renderBadge(a: AchievementView, opts: BadgeOptions = {}): string
     reducedMotion = false,
     size = 48,
     showProgress = true,
+    showCount = true,
+    formatCount,
     className,
   } = opts;
   const icon = displayIcon(icons.resolve(a), {
@@ -54,13 +62,17 @@ export function renderBadge(a: AchievementView, opts: BadgeOptions = {}): string
     showProgress && !a.unlocked && !a.concealed
       ? `<progress value="${esc(pct)}" max="100" style="width:100%" aria-label="${esc(`${a.name}: ${pct}%`)}"></progress>`
       : '';
+  const count = showCount ? progressCount(a, formatCount) : null;
+  const countHtml =
+    count === null ? '' : `<small data-count style="${COUNT}">${esc(count)}</small>`;
   const figure = `<figure${cls} data-unlocked="${esc(a.unlocked)}" data-concealed="${esc(a.concealed)}" style="${FIGURE}">`;
   const image = `<img src="${esc(safeSrc(icon.src))}" alt="" width="${esc(size)}" height="${esc(size)}"${imgStyle}>`;
   const caption = `<figcaption style="text-align:center;flex:1"><strong>${esc(a.name)}</strong>${desc}</figcaption>`;
-  return `${figure}${image}${caption}${bar}</figure>`;
+  return `${figure}${image}${caption}${bar}${countHtml}</figure>`;
 }
 
 const FIGURE = 'margin:0;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%';
+const COUNT = 'font-size:12px;opacity:0.7';
 const GRID = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:1rem';
 
 export type CatalogOptions = BadgeOptions & {

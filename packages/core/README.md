@@ -78,6 +78,7 @@ const { unlocked } = await engine.emit({
 | `memoryEventStore`, `memoryScoreStore`, `memoryAchievementStore`, `memoryStreakStore` | In-memory reference stores for demos and tests. |
 | `observe(engine)` | Wraps an engine so UI adapters re-render after every change. One wrapper per engine. Its `onUnlock` reports each batch of new unlocks from `emit` and `refresh`. |
 | `watchUnlocks(observed, { actor }, cb)` | New unlocks resolved to catalog views, in order. The celebration notifiers are built on it. |
+| `watchProgress(observed, { actor }, cb)` | Locked achievements of one actor that moved forward, with the step they came from. Progress popups are built on it. |
 | `splitConcealed(views)` | Secret mode: `{ views, hiddenRemaining }` without the hidden, locked ones. |
 | `systemClock`, `fixedClock(t)`, `utcDayStart` | Clocks and the default day boundary. The engine only reads the clock for queries, never during `emit`. |
 | `evaluateRule`, `ruleProgress`, `evalTier`, `evalEscalator`, `getPath`, `matchFilter` | The building blocks, for stores that evaluate rules natively. |

@@ -158,3 +158,19 @@ describe('AchievementBadge props', () => {
     expect(w.get('figure').classes()).toEqual(['cell']);
   });
 });
+
+describe('AchievementBadge progress count', () => {
+  it('shows 1/4 by default, and can be hidden or reworded', () => {
+    setReducedMotion(false);
+    const count = (props: Record<string, unknown>) =>
+      mount(AchievementBadge, { props: { achievement: view(), ...props } }).find('[data-count]');
+    expect(count({}).text()).toBe('1/4');
+    expect(count({ showCount: false }).exists()).toBe(false);
+    expect(
+      count({
+        formatCount: (p: { current: number; target: number }) => `${p.current} of ${p.target}`,
+      }).text(),
+    ).toBe('1 of 4');
+    expect(count({ achievement: view({ unlocked: true }) }).exists()).toBe(false);
+  });
+});

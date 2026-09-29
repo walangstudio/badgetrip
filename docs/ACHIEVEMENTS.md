@@ -71,6 +71,8 @@ Leave `n` out only on a tiered achievement: each tier supplies it. See [RULES.md
 
 ## Progress and the catalog
 
+Every badge adapter shows a "3/5" count under locked multi-step achievements (`showCount`, `formatCount`), and a notifier can pop up progress along the way; see [Progress along the way](guide/celebrations.md#progress-along-the-way).
+
 ```ts
 await engine.progress('u1', 'fan.silver'); // { current: 12, target: 50, percent: 24 }
 await engine.catalog('u1');                // every achievement, ready to render

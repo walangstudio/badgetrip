@@ -170,3 +170,23 @@ describe('secret mode', () => {
     expect(parse(renderCatalog(views)).querySelectorAll('figure')).toHaveLength(4);
   });
 });
+
+describe('progress count', () => {
+  it('shows current/target under locked multi-step badges only', () => {
+    expect(badge(view()).querySelector('[data-count]')?.textContent).toBe('1/4');
+    expect(badge(view({ unlocked: true })).querySelector('[data-count]')).toBeNull();
+    expect(badge(view({ concealed: true })).querySelector('[data-count]')).toBeNull();
+    expect(
+      badge(view({ progress: { current: 0, target: 1, percent: 0 } })).querySelector(
+        '[data-count]',
+      ),
+    ).toBeNull();
+  });
+
+  it('can be hidden, reworded, and escapes the wording', () => {
+    expect(badge(view(), { showCount: false }).querySelector('[data-count]')).toBeNull();
+    const worded = badge(view(), { formatCount: (p) => `<b>${p.current}</b> of ${p.target}` });
+    expect(worded.querySelector('b')).toBeNull();
+    expect(worded.querySelector('[data-count]')?.textContent).toBe('<b>1</b> of 4');
+  });
+});

@@ -18,7 +18,9 @@ describe('createCelebrationResolver defaults', () => {
       confetti: null,
       title: 'Achievement unlocked',
       quiet: false,
+      progress: null,
     });
+    expect(createCelebrationResolver().usesProgress()).toBe(false);
   });
 
   it('ships toast, modal, epic, quiet and secret presets', () => {
@@ -245,5 +247,78 @@ describe('sound registry forms', () => {
     expect(() => createCelebrationResolver({ sounds: { a: { src: 'javascript:x' } } })).toThrow(
       /sounds\.a: unsafe URL/,
     );
+  });
+});
+
+describe('progress popups', () => {
+  it('are off by default and on with true, at 25/50/75%, quiet, for 3 seconds', () => {
+    const r = createCelebrationResolver({ default: { progress: true, position: 'bottom' } });
+    expect(r.usesProgress()).toBe(true);
+    expect(r.resolve({ code: 'a' }).progress).toEqual({
+      at: [25, 50, 75],
+      every: null,
+      position: 'bottom',
+      duration: 3000,
+      sound: null,
+      title: 'Achievement progress',
+    });
+  });
+
+  it('take every-N steps or custom marks, per achievement, and can be switched off again', () => {
+    const r = createCelebrationResolver({
+      default: { progress: { at: [50] } },
+      overrides: {
+        todo_5: {
+          progress: {
+            every: 1,
+            position: 'top',
+            sound: 'pop',
+            title: 'Keep going',
+            duration: 1500,
+          },
+        },
+        big: { progress: false },
+      },
+    });
+    expect(r.resolve({ code: 'x' }).progress).toMatchObject({ at: [50], every: null });
+    expect(r.resolve({ code: 'todo_5' }).progress).toEqual({
+      at: null,
+      every: 1,
+      position: 'top',
+      duration: 1500,
+      sound: builtinSounds.pop,
+      title: 'Keep going',
+    });
+    expect(r.resolve({ code: 'big' }).progress).toBeNull();
+  });
+
+  it('usesProgress sees progress set on any layer', () => {
+    expect(createCelebrationResolver({ rarity: { 3: { progress: true } } }).usesProgress()).toBe(
+      true,
+    );
+    expect(
+      createCelebrationResolver({ categories: { c: { progress: { every: 2 } } } }).usesProgress(),
+    ).toBe(true);
+    expect(createCelebrationResolver({ presets: { p: { layout: 'modal' } } }).usesProgress()).toBe(
+      false,
+    );
+  });
+
+  it('validates the progress options', () => {
+    const bad = (progress: unknown, msg: RegExp) =>
+      expect(() => createCelebrationResolver({ default: { progress: progress as never } })).toThrow(
+        msg,
+      );
+    bad('yes', /progress must be true, false or an object/);
+    bad({ at: [] }, /progress.at/);
+    bad({ at: [0] }, /progress.at/);
+    bad({ at: [100] }, /progress.at/);
+    bad({ every: 0 }, /progress.every/);
+    bad({ every: 1.5 }, /progress.every/);
+    bad({ position: 'middle' }, /progress.position/);
+    bad({ duration: -1 }, /progress.duration/);
+    bad({ sound: 'nope' }, /progress: unknown sound 'nope'/);
+    bad({ title: '' }, /progress.title/);
+    bad({ step: 1 }, /progress: unknown option 'step'/);
   });
 });

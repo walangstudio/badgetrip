@@ -1,4 +1,9 @@
-import { type IconAsset, displayIcon } from '@walangstudio/badgetrip-assets';
+import {
+  type CountFormat,
+  type IconAsset,
+  displayIcon,
+  progressCount,
+} from '@walangstudio/badgetrip-assets';
 import type { AchievementView } from '@walangstudio/badgetrip-core';
 import { useIconResolver } from '@walangstudio/badgetrip-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -69,6 +74,10 @@ export type AchievementBadgeProps = {
   size?: number;
   /** Show a progress bar while locked. Default true. */
   showProgress?: boolean;
+  /** Show a "3/5" count under locked multi-step achievements. Default true. */
+  showCount?: boolean;
+  /** Wording of the count, e.g. `(p) => \`${p.current} of ${p.target}\``. */
+  formatCount?: CountFormat;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -82,9 +91,12 @@ export function AchievementBadge({
   achievement: a,
   size = 48,
   showProgress = true,
+  showCount = true,
+  formatCount,
   style,
 }: AchievementBadgeProps) {
   const icon = useAchievementIcon(a);
+  const count = showCount ? progressCount(a, formatCount) : null;
   const locked = !a.unlocked;
   const tintable = icon.src === icon.still ? icon.stillSvg : icon.svg;
   const xml = locked && tintable ? tintable : svgMarkup(icon.src);
@@ -136,6 +148,7 @@ export function AchievementBadge({
           />
         </View>
       ) : null}
+      {count === null ? null : <Text style={{ fontSize: 12, opacity: 0.7 }}>{count}</Text>}
     </View>
   );
 }

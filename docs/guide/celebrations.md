@@ -140,6 +140,39 @@ Sound is off until you turn it on:
 - **Autoplay:** browsers block audio until the user has interacted with the page. Unlocks usually follow a click, so this rarely matters. If an unlock arrives before any interaction, it's shown silently.
 - **One sound per batch:** a single emit that unlocks bronze, silver and gold plays one sound, the one from the biggest celebration.
 
+## Progress along the way
+
+Badges show a "3/5" count under locked achievements that take more than one step. It's on by default. Hide it with `showCount={false}`, or reword it with `formatCount`:
+
+```tsx
+<AchievementBadge achievement={a} formatCount={(p) => `${p.current} of ${p.target} todos`} />
+```
+
+For a Steam-style popup before the unlock ("Create 5 todos: 3/5"), turn on `progress`. It's off by default, and you can turn it on app-wide or per achievement:
+
+```ts
+createCelebrationResolver({
+  default: { progress: { at: [25, 50, 75] } },       // every achievement, at 25/50/75%
+  overrides: {
+    todo_5: { progress: { every: 1 } },               // this one, on every step
+    streak_100: { progress: false },                  // never for this one
+  },
+});
+```
+
+| Field | | Default |
+|---|---|---|
+| `at` | Percentages (1-99) that trigger a popup when passed | `[25, 50, 75]` |
+| `every` | A popup every N steps instead | - |
+| `position` | Where progress toasts go | the celebration's position |
+| `duration` | Milliseconds on screen | `3000` |
+| `sound` | A sound key, or `false` | `false` |
+| `title` | Heading above the name | "Achievement progress" |
+
+`progress: true` means the defaults. Reaching the target never shows a progress popup, because the unlock celebration takes over. Quiet and hidden achievements never show one. Progress popups follow one user, so they need a string `actor` on the notifier: `<UnlockNotifier actor={user.id} />`. The count wording in popups is `labels.count`.
+
+To build your own, `watchProgress(observed, { actor }, cb)` from `@walangstudio/badgetrip-core` reports each locked achievement that moved forward with where it came from, and `crossesMilestone` from `@walangstudio/badgetrip-assets` applies the same `at`/`every` rules.
+
 ## Secret achievements
 
 Hidden achievements already show as "Hidden achievement" until they're earned. For the console-style list that leaves them out entirely and says how many remain, use secret mode:
@@ -199,7 +232,7 @@ The others are `--badgetrip-backdrop`, `--badgetrip-fullscreen-bg` and `--badget
 | `maxQueue` | 10 | Waiting toasts before the rest fold into one "+N more" toast. |
 | `root` | `document.body` | Where the overlay is attached. |
 | `zIndex` | 2147483000 | Stacking order, above almost everything. |
-| `labels` | English | `{ close, more(n) }` for translations. |
+| `labels` | English | `{ close, more(n), count(p) }` for translations. |
 | `onError` | rethrow | Called when a catalog query fails. |
 
 On the server, `createNotifier` returns a no-op, so it's safe in SSR code. With `@walangstudio/badgetrip-ipc`, unlocks cross the process boundary too. When `serveEngine` has an `authorize` hook they are off unless you pass `unlocks`, usually a filter for the peer's own user; see the [Electron guide](electron.md#what-the-window-can-and-cant-do).

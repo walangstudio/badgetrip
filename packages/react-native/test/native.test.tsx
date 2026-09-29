@@ -88,7 +88,7 @@ describe('AchievementBadge', () => {
     expect(bar.props.accessibilityLabel).toBe('Alpha: 25%');
     expect(bar.props.accessibilityValue).toEqual({ min: 0, max: 100, now: 25 });
     const texts = t.root.findAllByType('Text' as never).map((n) => n.props.children);
-    expect(texts).toEqual(['Alpha', 'Do the thing']);
+    expect(texts).toEqual(['Alpha', 'Do the thing', '1/4']);
   });
 
   it('unlocked: full-colour tier-tinted SVG, no progress bar', async () => {
@@ -293,5 +293,19 @@ describe('svg handling review fixes', () => {
     );
     expect(t.root.findByType('SvgUri' as never).props.uri).toBe('https://cdn.example/a.svg');
     expect(t.root.findAllByType('Image' as never)).toHaveLength(0);
+  });
+});
+
+describe('progress count', () => {
+  const texts = (t: ReactTestRenderer) =>
+    t.root.findAllByType('Text' as never).map((n) => n.props.children);
+
+  it('can be hidden or reworded', async () => {
+    const hidden = await mount(<AchievementBadge achievement={view()} showCount={false} />);
+    expect(texts(hidden)).toEqual(['Alpha', 'Do the thing']);
+    const worded = await mount(
+      <AchievementBadge achievement={view()} formatCount={(p) => `${p.current} of ${p.target}`} />,
+    );
+    expect(texts(worded)).toContain('1 of 4');
   });
 });

@@ -1,4 +1,9 @@
-import { type IconAsset, displayIcon } from '@walangstudio/badgetrip-assets';
+import {
+  type CountFormat,
+  type IconAsset,
+  displayIcon,
+  progressCount,
+} from '@walangstudio/badgetrip-assets';
 import type { AchievementView } from '@walangstudio/badgetrip-core';
 import {
   type ComputedRef,
@@ -60,11 +65,16 @@ export const AchievementBadge = defineComponent({
     size: { type: Number, default: 48 },
     /** Show a progress bar while locked. */
     showProgress: { type: Boolean, default: true },
+    /** Show a "3/5" count under locked multi-step achievements. */
+    showCount: { type: Boolean, default: true },
+    /** Wording of the count. */
+    formatCount: Function as PropType<CountFormat>,
   },
   setup(props) {
     const icon = useAchievementIcon(() => props.achievement);
     return () => {
       const a = props.achievement;
+      const count = props.showCount ? progressCount(a, props.formatCount) : null;
       return h(
         'figure',
         {
@@ -99,6 +109,9 @@ export const AchievementBadge = defineComponent({
                 'aria-label': `${a.name}: ${a.progress.percent}%`,
               })
             : null,
+          count === null
+            ? null
+            : h('small', { 'data-count': '', style: { fontSize: '12px', opacity: 0.7 } }, count),
         ],
       );
     };

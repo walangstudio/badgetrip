@@ -11,6 +11,8 @@ export {
 export {
   watchUnlocks,
   splitConcealed,
+  watchProgress,
+  type ProgressChange,
   type UnlockedView,
   type WatchUnlocksOptions,
 } from './unlocks.js';
