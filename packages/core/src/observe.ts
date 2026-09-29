@@ -15,6 +15,9 @@ export type EngineApi = Pick<
   | 'catalog'
 >;
 
+/** One achievement one actor just unlocked. */
+export type Unlock = { actor: string; code: string };
+
 /** Anything UI adapters bind to: `observe(engine)`, or a remote from `@walangstudio/badgetrip-ipc`. */
 export type Observable<E extends EngineApi = EngineApi> = {
   engine: E;
@@ -22,6 +25,12 @@ export type Observable<E extends EngineApi = EngineApi> = {
   subscribe: (cb: () => void) => () => void;
   /** Increments on every notification; use it as a cache key or snapshot. */
   getVersion: () => number;
+  /**
+   * Called with each batch of new unlocks from `emit` and `refresh`, after `subscribe`
+   * listeners. `replay` and `seed` rebuild or import history, so they never report
+   * unlocks. Returns an unsubscribe.
+   */
+  onUnlock?: (cb: (unlocks: readonly Unlock[]) => void) => () => void;
 };
 
 /** An engine whose state-changing methods notify subscribers after they run. */
@@ -56,6 +65,7 @@ export function observe(engine: Engine): ObservedEngine {
   const hit = observed.get(engine);
   if (hit) return hit;
   const listeners = new Set<() => void>();
+  const unlockListeners = new Set<(unlocks: readonly Unlock[]) => void>();
   let version = 0;
   const notify = () => {
     version += 1;
@@ -72,13 +82,29 @@ export function observe(engine: Engine): ObservedEngine {
       }
     };
 
+  const report = (actor: string, codes: string[]) => {
+    if (!codes.length) return;
+    const batch: readonly Unlock[] = Object.freeze(codes.map((code) => ({ actor, code })));
+    notifyAll([...unlockListeners].map((l) => () => l(batch)));
+  };
+  const emit = tracked(engine.emit);
+  const refresh = tracked(engine.refresh);
+
   const out: ObservedEngine = {
     engine: {
       ...engine,
-      emit: tracked(engine.emit),
+      emit: async (event) => {
+        const result = await emit(event);
+        report(result.event.actor, result.unlocked);
+        return result;
+      },
       replay: tracked(engine.replay),
       seed: tracked(engine.seed),
-      refresh: tracked(engine.refresh),
+      refresh: async (actor) => {
+        const codes = await refresh(actor);
+        report(actor, codes);
+        return codes;
+      },
     },
     subscribe: (cb) => {
       listeners.add(cb);
@@ -87,6 +113,12 @@ export function observe(engine: Engine): ObservedEngine {
       };
     },
     getVersion: () => version,
+    onUnlock: (cb) => {
+      unlockListeners.add(cb);
+      return () => {
+        unlockListeners.delete(cb);
+      };
+    },
   };
   observed.set(engine, out);
   return out;

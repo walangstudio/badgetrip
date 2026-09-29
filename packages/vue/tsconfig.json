@@ -6,5 +6,5 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
   "include": ["src"],
-  "references": [{ "path": "../core" }, { "path": "../assets" }]
+  "references": [{ "path": "../core" }, { "path": "../assets" }, { "path": "../html" }]
 }

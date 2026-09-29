@@ -15,6 +15,7 @@
   "dependencies": {
     "@walangstudio/badgetrip-assets": "workspace:*",
     "@walangstudio/badgetrip-core": "workspace:*",
+    "@walangstudio/badgetrip-html": "workspace:*",
     "tslib": "^2.3.0"
   },
   "peerDependencies": {

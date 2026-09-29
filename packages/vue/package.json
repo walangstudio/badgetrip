@@ -19,7 +19,8 @@
   },
   "dependencies": {
     "@walangstudio/badgetrip-assets": "workspace:*",
-    "@walangstudio/badgetrip-core": "workspace:*"
+    "@walangstudio/badgetrip-core": "workspace:*",
+    "@walangstudio/badgetrip-html": "workspace:*"
   },
   "peerDependencies": {
     "vue": "^3.4.0"

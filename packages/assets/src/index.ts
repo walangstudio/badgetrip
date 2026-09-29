@@ -1,6 +1,19 @@
 import { type IconName, svgs } from './icons.js';
 
 export { svgs, type IconName };
+export { safeSrc } from './safe.js';
+export { builtinSounds, type BuiltinSound, type SoundAsset, type Tone } from './sounds.js';
+export {
+  createCelebrationResolver,
+  type Celebration,
+  type CelebrationResolver,
+  type CelebrationResolverOptions,
+  type CelebrationSpec,
+  type CelebrationSubject,
+  type ConfettiSpec,
+  type Layout,
+  type Position,
+} from './celebrations.js';
 
 /**
  * A renderable icon. `src` is anything an `<img>` accepts: a data URL, a PNG, a GIF,

@@ -1,4 +1,4 @@
-import { notifyAll } from '@walangstudio/badgetrip-core';
+import { type Unlock, notifyAll } from '@walangstudio/badgetrip-core';
 import {
   type DefaultMethod,
   REMOTE_METHODS,
@@ -24,6 +24,8 @@ export type RemoteEngine<M extends RemoteMethod = DefaultMethod> = Pick<RemoteMe
   subscribe: (cb: () => void) => () => void;
   /** The server's version from its latest change notification. */
   getVersion: () => number;
+  /** Called with each batch of unlocks the server reports. Returns an unsubscribe. */
+  onUnlock: (cb: (unlocks: readonly Unlock[]) => void) => () => void;
   /** Stop listening and reject every pending call. */
   dispose: () => void;
 };
@@ -36,6 +38,22 @@ type Pending = {
 
 const named = (name: string, message: string) => Object.assign(new Error(message), { name });
 
+const MAX_UNLOCKS = 1000;
+
+/** The well-formed `{actor, code}` entries of an untrusted `unlocks` payload. */
+function readUnlocks(raw: unknown): readonly Unlock[] {
+  if (!Array.isArray(raw) || raw.length > MAX_UNLOCKS) return [];
+  const out: Unlock[] = [];
+  for (const u of raw) {
+    if (!isRecord(u)) continue;
+    const { actor, code } = u;
+    if (typeof actor === 'string' && actor && typeof code === 'string' && code) {
+      out.push({ actor, code });
+    }
+  }
+  return Object.freeze(out);
+}
+
 export function connectEngine<M extends RemoteMethod = DefaultMethod>(
   transport: Transport,
   opts: ConnectOptions = {},
@@ -43,6 +61,7 @@ export function connectEngine<M extends RemoteMethod = DefaultMethod>(
   const timeoutMs = opts.timeoutMs ?? 10000;
   const pending = new Map<string, Pending>();
   const listeners = new Set<() => void>();
+  const unlockListeners = new Set<(unlocks: readonly Unlock[]) => void>();
   // Replies reach every listener on a shared channel (two clients, a reload), so ids
   // must be unique per client, not just per call.
   const prefix =
@@ -59,6 +78,11 @@ export function connectEngine<M extends RemoteMethod = DefaultMethod>(
       if (typeof msg.version !== 'number') return;
       version = msg.version;
       notifyAll(listeners);
+      return;
+    }
+    if (msg.type === 'unlocked') {
+      const batch = readUnlocks(msg.unlocks);
+      if (batch.length) notifyAll([...unlockListeners].map((l) => () => l(batch)));
       return;
     }
     const p = typeof msg.id === 'string' ? pending.get(msg.id) : undefined;
@@ -116,10 +140,17 @@ export function connectEngine<M extends RemoteMethod = DefaultMethod>(
       };
     },
     getVersion: () => version,
+    onUnlock: (cb) => {
+      unlockListeners.add(cb);
+      return () => {
+        unlockListeners.delete(cb);
+      };
+    },
     dispose: () => {
       if (disposed) return;
       disposed = true;
       off();
+      unlockListeners.clear();
       for (const p of pending.values()) {
         clearTimeout(p.timer);
         p.reject(named('DisposedError', 'badgetrip ipc: connection disposed'));

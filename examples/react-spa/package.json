@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@walangstudio/badgetrip-assets": "workspace:*",
     "@walangstudio/badgetrip-core": "workspace:*",
     "@walangstudio/badgetrip-react": "workspace:*",
     "react": "^18.3.1",

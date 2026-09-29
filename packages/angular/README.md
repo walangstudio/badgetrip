@@ -56,6 +56,7 @@ export class Profile {
 - A rejected query sets `query.error()` and goes to Angular's `ErrorHandler`. The last good value stays.
 - Create queries in an injection context (field initializers) or pass `{ injector }`. They are torn down with that injector.
 - Only calls through `gk.engine` notify. Calls on the raw engine do not.
+- `provideBadgetrip(engine, { notifier })` celebrates unlocks on top of the page (browser only; `BADGETRIP_NOTIFIER` exposes it for `update({ sound })`). `unlocks()` returns a signal queue for a custom UI. See the [celebrations guide](../../docs/guide/celebrations.md).
 - `achievementIcon(signal)` returns the icon a custom badge should show (resolver + `displayIcon` + `prefers-reduced-motion`, SSR-safe).
 
 ## Development

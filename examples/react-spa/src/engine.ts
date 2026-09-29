@@ -1,3 +1,4 @@
+import { createCelebrationResolver } from '@walangstudio/badgetrip-assets';
 import {
   type Definitions,
   createEngine,
@@ -57,7 +58,7 @@ const definitions: Definitions = {
       tiers: {
         bronze: { at: 1, description: 'Created your first todont' },
         silver: 3,
-        gold: { at: 10, points: 50 },
+        gold: { at: 10, points: 50, celebration: 'epic' },
       },
     },
     crowd_favorite: {
@@ -66,6 +67,7 @@ const definitions: Definitions = {
       icon: 'heart',
       rarity: 4,
       points: 25,
+      celebration: 'modal',
       when: rules.all(
         rules.count('reaction.received', 5),
         rules.unique('reaction.received', 'payload.from', 3),
@@ -77,6 +79,7 @@ const definitions: Definitions = {
       icon: 'flame',
       rarity: 4,
       points: 25,
+      celebration: 'epic',
       when: rules.streak('daily_clean', 3),
     },
     comeback: {
@@ -101,3 +104,8 @@ export const engine = createEngine({
 });
 
 export const ACTOR = 'demo_user';
+
+// Toasts bottom-right by default; `celebration` on an achievement picks a preset.
+export const celebrations = createCelebrationResolver({
+  default: { position: 'bottom-right' },
+});

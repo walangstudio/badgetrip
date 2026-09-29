@@ -77,3 +77,7 @@ renderCatalog(badges, { className: 'trophy', size: 64 });
 ```
 
 For the custom elements, target `badgetrip-catalog figure` in your stylesheet. They render into the page's normal DOM (no shadow DOM), so your CSS applies directly.
+
+## Celebrate unlocks
+
+`createNotifier(observed, { actor: 'ana' })` shows each unlock on top of the page: a toast, a modal or fullscreen confetti, with optional sound. Add `secret` to `<badgetrip-catalog>` to leave hidden achievements out and show how many remain. Both are covered in [Unlock celebrations](celebrations.md).

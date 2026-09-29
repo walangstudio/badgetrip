@@ -50,7 +50,8 @@ const engine = createEngine({ /* stores, clock */ definitions: { achievements } 
 | `lockedDescription` | `description` (`''` when `hidden`) | Spoiler-free text shown while locked. |
 | `icon` | category, then `'trophy'` | Asset key. See [Assets](#assets). |
 | `category` | - | Free-form group; also an icon fallback. |
-| `tiers` | - | `{ name: threshold }` or `{ name: { at, points?, rarity?, icon?, name?, description? } }`, ascending. |
+| `celebration` | - | Unlock celebration preset, such as `'modal'` or `'epic'`. See [Celebrations](guide/celebrations.md). |
+| `tiers` | - | `{ name: threshold }` or `{ name: { at, points?, rarity?, icon?, name?, description?, celebration? } }`, ascending. |
 | `metadata` | - | Anything else; opaque to the engine. |
 
 ## Rule builders
@@ -124,17 +125,21 @@ Resolution order: `overrides[code]`, `overrides[series.code]`, `icon`, `categori
 
 **Tiers.** The built-in icons are tinted per tier name (`bronze`, `silver`, `gold`, `platinum`, `diamond`). Image assets are never tinted.
 
+## Celebrations and secret mode
+
+When an achievement unlocks, a notifier can celebrate it on top of the app: a toast in any corner or edge, a modal, or fullscreen with confetti and sound. Pick a preset per achievement with `celebration`, and configure the rest with `createCelebrationResolver`. For a Steam-style list, secret mode leaves hidden achievements out and shows "N hidden achievements remaining" instead: `renderCatalog(views, { secret: true })`, `<badgetrip-catalog secret>`, or `splitConcealed(views)` in your own UI. The [celebrations guide](guide/celebrations.md) covers both.
+
 ## Frameworks
 
 Every adapter binds to `observe(engine)` (or an `@walangstudio/badgetrip-ipc` remote), renders the same badge markup, and uses `displayIcon` for locked and reduced-motion still frames. Each package README has the full API.
 
 | Target | Package | Entry points |
 |---|---|---|
-| React | `@walangstudio/badgetrip-react` | `BadgetripProvider`, `useAchievementCatalog`, `AchievementBadge`, `IconProvider` |
-| React Native / Expo | `@walangstudio/badgetrip-react-native` | same hooks, native `AchievementBadge` |
-| Vue | `@walangstudio/badgetrip-vue` | `app.use(createBadgetrip(engine, { icons }))`, `useAchievementCatalog`, `AchievementBadge` |
-| Angular | `@walangstudio/badgetrip-angular` | `provideBadgetrip(engine, { icons })`, `BadgetripService.catalog(actor)`, `badgetrip-achievement-badge` |
-| htmx, SSR, vanilla, any framework | `@walangstudio/badgetrip-html` | `renderCatalog(views)`, `defineBadgetripElements(observe(engine))` |
+| React | `@walangstudio/badgetrip-react` | `BadgetripProvider`, `useAchievementCatalog`, `AchievementBadge`, `IconProvider`, `UnlockNotifier`, `useUnlocks` |
+| React Native / Expo | `@walangstudio/badgetrip-react-native` | same hooks (including `useUnlocks`), native `AchievementBadge` |
+| Vue | `@walangstudio/badgetrip-vue` | `app.use(createBadgetrip(engine, { icons }))`, `useAchievementCatalog`, `AchievementBadge`, `UnlockNotifier`, `useUnlocks` |
+| Angular | `@walangstudio/badgetrip-angular` | `provideBadgetrip(engine, { icons, notifier })`, `BadgetripService.catalog(actor)`, `.unlocks()`, `badgetrip-achievement-badge` |
+| htmx, SSR, vanilla, any framework | `@walangstudio/badgetrip-html` | `renderCatalog(views)`, `defineBadgetripElements(observe(engine))`, `createNotifier(observed)` |
 | Electron, Workers, Tauri webview | `@walangstudio/badgetrip-ipc` | `serveEngine(engine, transport)`, `connectEngine(transport)` |
 
 ## React

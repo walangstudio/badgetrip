@@ -1,5 +1,10 @@
-import { type IconResolver, createIconResolver, displayIcon } from '@walangstudio/badgetrip-assets';
-import type { AchievementView } from '@walangstudio/badgetrip-core';
+import {
+  type IconResolver,
+  createIconResolver,
+  displayIcon,
+  safeSrc,
+} from '@walangstudio/badgetrip-assets';
+import { type AchievementView, splitConcealed } from '@walangstudio/badgetrip-core';
 
 const defaultIcons = createIconResolver();
 
@@ -23,16 +28,6 @@ const ESCAPES: Record<string, string> = {
   "'": '&#39;',
 };
 const esc = (v: unknown) => String(v).replace(/[&<>"']/g, (c) => ESCAPES[c] as string);
-
-// Browsers ignore whitespace and control characters when parsing a URL scheme, so strip
-// them (and any non-printable-ASCII) before checking. Custom schemes stay allowed for
-// webviews (tauri://, app://); only script-capable ones are dropped.
-const safeSrc = (src: string) => {
-  const s = src.replace(/[^!-~]/g, '').toLowerCase();
-  if (/^(?:javascript|vbscript):/.test(s)) return '';
-  if (s.startsWith('data:') && !s.startsWith('data:image/')) return '';
-  return src;
-};
 
 /**
  * A badge as an HTML string: icon (greyscale while locked), name, description, and a
@@ -68,7 +63,25 @@ export function renderBadge(a: AchievementView, opts: BadgeOptions = {}): string
 const FIGURE = 'margin:0;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%';
 const GRID = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:1rem';
 
+export type CatalogOptions = BadgeOptions & {
+  /**
+   * Secret mode: leave hidden, still-locked achievements out and add a
+   * "3 hidden achievements remaining" line instead. Default false.
+   */
+  secret?: boolean;
+  /** Text of that line. */
+  secretLabel?: (remaining: number) => string;
+};
+
+const secretText = (n: number) => `${n} hidden achievement${n === 1 ? '' : 's'} remaining`;
+
 /** Badges in a responsive grid (`repeat(auto-fill, minmax(140px, 1fr))`). */
-export function renderCatalog(views: AchievementView[], opts: BadgeOptions = {}): string {
-  return `<div style="${GRID}">${views.map((v) => renderBadge(v, opts)).join('')}</div>`;
+export function renderCatalog(views: AchievementView[], opts: CatalogOptions = {}): string {
+  const { secret = false, secretLabel = secretText, ...badge } = opts;
+  const { views: shown, hiddenRemaining } = secret
+    ? splitConcealed(views)
+    : { views, hiddenRemaining: 0 };
+  const grid = `<div style="${GRID}">${shown.map((v) => renderBadge(v, badge)).join('')}</div>`;
+  if (!hiddenRemaining) return grid;
+  return `${grid}<p data-hidden-remaining="${esc(hiddenRemaining)}">${esc(secretLabel(hiddenRemaining))}</p>`;
 }

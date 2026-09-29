@@ -1,0 +1,249 @@
+import {
+  type CelebrationSpec,
+  builtinSounds,
+  createCelebrationResolver,
+  safeSrc,
+} from '@walangstudio/badgetrip-assets';
+import { describe, expect, it } from 'vitest';
+
+const subject = { code: 'a' };
+
+describe('createCelebrationResolver defaults', () => {
+  it('gives a top-right toast with the chime and no confetti', () => {
+    expect(createCelebrationResolver().resolve(subject)).toEqual({
+      layout: 'toast',
+      position: 'top-right',
+      duration: 5000,
+      sound: builtinSounds.chime,
+      confetti: null,
+      title: 'Achievement unlocked',
+      quiet: false,
+    });
+  });
+
+  it('ships toast, modal, epic, quiet and secret presets', () => {
+    const r = createCelebrationResolver();
+    expect(r.resolve({ code: 'a', celebration: 'modal' })).toMatchObject({
+      layout: 'modal',
+      duration: 0,
+    });
+    expect(r.resolve({ code: 'a', celebration: 'epic' })).toMatchObject({
+      layout: 'fullscreen',
+      sound: builtinSounds.fanfare,
+      confetti: { particles: 150, duration: 3000 },
+    });
+    expect(r.resolve({ code: 'a', celebration: 'quiet' }).quiet).toBe(true);
+    expect(r.resolve({ code: 'a', hidden: true })).toMatchObject({
+      title: 'Secret achievement unlocked',
+      sound: builtinSounds.sparkle,
+    });
+    expect(r.resolve({ code: 'a', celebration: 'toast' }).layout).toBe('toast');
+  });
+});
+
+describe('layering', () => {
+  const r = createCelebrationResolver({
+    default: { position: 'bottom-left', duration: 4000 },
+    rarity: { 5: { layout: 'modal', sound: 'pop' } },
+    categories: { social: { position: 'top', title: 'Social!' } },
+    presets: {
+      big: { layout: 'fullscreen', confetti: { particles: 40 } },
+      secret: { layout: 'modal' },
+    },
+    overrides: {
+      rich: { sound: false },
+      solo: 'quiet',
+      'rich.gold': { title: 'Gold!' },
+    },
+  });
+
+  it('merges field by field, the more specific layer winning', () => {
+    expect(r.resolve({ code: 'x', rarity: 5 })).toMatchObject({
+      layout: 'modal',
+      position: 'bottom-left',
+      duration: 4000,
+      sound: builtinSounds.pop,
+    });
+    expect(r.resolve({ code: 'x', rarity: 5, category: 'social' })).toMatchObject({
+      layout: 'modal',
+      position: 'top',
+      title: 'Social!',
+    });
+    expect(
+      r.resolve({ code: 'x', rarity: 5, category: 'social', celebration: 'big' }),
+    ).toMatchObject({
+      layout: 'fullscreen',
+      title: 'Social!',
+      confetti: { particles: 40, duration: 3000 },
+    });
+  });
+
+  it('applies the secret preset to hidden achievements, below their own preset', () => {
+    expect(r.resolve({ code: 'x', hidden: true })).toMatchObject({
+      layout: 'modal',
+      title: 'Secret achievement unlocked',
+    });
+    expect(r.resolve({ code: 'x', hidden: true, celebration: 'big' }).layout).toBe('fullscreen');
+  });
+
+  it('lets a series override cover every tier and a code override win over it', () => {
+    const silver = r.resolve({ code: 'rich.silver', series: { code: 'rich' }, celebration: 'big' });
+    expect(silver).toMatchObject({
+      layout: 'fullscreen',
+      sound: null,
+      title: 'Achievement unlocked',
+    });
+    const gold = r.resolve({ code: 'rich.gold', series: { code: 'rich' } });
+    expect(gold).toMatchObject({ sound: null, title: 'Gold!' });
+    expect(r.resolve({ code: 'solo' }).quiet).toBe(true);
+  });
+
+  it('falls through an unknown preset key, and missing() reports it', () => {
+    expect(r.resolve({ code: 'x', celebration: 'nope' })).toMatchObject({ layout: 'toast' });
+    expect(
+      r.missing([
+        { code: 'a', celebration: 'nope' },
+        { code: 'b', celebration: 'big' },
+        { code: 'c' },
+      ]),
+    ).toEqual(['nope']);
+  });
+
+  it('resolves sound keys to registry entries, URLs to { src }', () => {
+    const s = createCelebrationResolver({
+      sounds: { ding: '/ding.mp3', beep: { tones: [{ freq: 440, at: 0, dur: 0.1 }] } },
+      presets: { a: { sound: 'ding' }, b: { sound: 'beep' } },
+    });
+    expect(s.resolve({ code: 'x', celebration: 'a' }).sound).toEqual({ src: '/ding.mp3' });
+    expect(s.resolve({ code: 'x', celebration: 'b' }).sound).toEqual({
+      tones: [{ freq: 440, at: 0, dur: 0.1 }],
+    });
+  });
+
+  it('turns confetti: true into the default burst and confetti: false into none', () => {
+    const c = createCelebrationResolver({
+      presets: { on: { confetti: true }, off: { confetti: false } },
+    });
+    expect(c.resolve({ code: 'x', celebration: 'on' }).confetti).toMatchObject({
+      particles: 150,
+      duration: 3000,
+    });
+    expect(c.resolve({ code: 'x', celebration: 'on' }).confetti?.colors.length).toBeGreaterThan(0);
+    expect(c.resolve({ code: 'x', celebration: 'off' }).confetti).toBeNull();
+  });
+});
+
+describe('validation', () => {
+  const bad = (opts: Parameters<typeof createCelebrationResolver>[0], msg: RegExp) =>
+    expect(() => createCelebrationResolver(opts)).toThrow(msg);
+
+  it('rejects unknown keys, so typos surface', () => {
+    bad({ default: { positon: 'top' } as CelebrationSpec }, /default: unknown option 'positon'/);
+    bad(
+      { presets: { a: { confetti: { particle: 3 } } as CelebrationSpec } },
+      /presets\.a\.confetti: unknown option 'particle'/,
+    );
+    bad({ extra: 1 } as never, /unknown option 'extra'/);
+  });
+
+  it('checks enums and ranges', () => {
+    bad({ default: { layout: 'popup' as never } }, /layout/);
+    bad({ default: { position: 'middle' as never } }, /position/);
+    bad({ default: { duration: -1 } }, /duration/);
+    bad({ default: { duration: 1.5 } }, /duration/);
+    bad({ default: { duration: 600_001 } }, /duration/);
+    bad({ default: { title: '' } }, /title/);
+    bad({ default: { title: 'x'.repeat(201) } }, /title/);
+    bad({ default: { quiet: 'yes' as never } }, /quiet/);
+    bad({ default: { confetti: 'lots' as never } }, /confetti/);
+    bad({ default: { confetti: { particles: 0 } } }, /particles/);
+    bad({ default: { confetti: { particles: 501 } } }, /particles/);
+    bad({ default: { confetti: { colors: [] } } }, /colors/);
+    bad({ default: { confetti: { colors: [''] } } }, /colors/);
+    bad({ default: { confetti: { duration: 50 } } }, /duration/);
+  });
+
+  it('checks references to presets, sounds and rarity levels', () => {
+    bad({ default: { sound: 'nope' } }, /sound 'nope'/);
+    bad({ overrides: { a: 'nope' } }, /overrides\.a: unknown preset 'nope'/);
+    bad({ categories: { c: 'nope' } }, /categories\.c/);
+    bad({ rarity: { 6: 'epic' } as never }, /rarity: level '6'/);
+    bad({ rarity: { 5: 'nope' } }, /rarity\.5/);
+  });
+
+  it('checks sounds: safe URLs and sane tones', () => {
+    bad({ sounds: { x: 'javascript:alert(1)' } }, /sounds\.x: unsafe URL/);
+    bad({ sounds: { x: ' java\tscript:alert(1)' } }, /unsafe URL/);
+    bad({ sounds: { x: 'data:text/html,<b>' } }, /unsafe URL/);
+    bad({ sounds: { x: { tones: [] } } }, /tones/);
+    bad({ sounds: { x: { tones: [{ freq: 5, at: 0, dur: 1 }] } } }, /freq/);
+    bad({ sounds: { x: { tones: [{ freq: 440, at: -1, dur: 1 }] } } }, /at/);
+    bad({ sounds: { x: { tones: [{ freq: 440, at: 0, dur: 0 }] } } }, /dur/);
+    bad({ sounds: { x: { tones: [{ freq: 440, at: 0, dur: 1, gain: 2 }] } } }, /gain/);
+    bad(
+      { sounds: { x: { tones: [{ freq: 440, at: 0, dur: 1, wave: 'noise' as never }] } } },
+      /wave/,
+    );
+    bad({ sounds: { x: { tones: [{ freq: 440, at: 4.9, dur: 0.2 }] } } }, /5 seconds/);
+    bad(
+      {
+        sounds: {
+          x: { tones: Array.from({ length: 33 }, () => ({ freq: 440, at: 0, dur: 0.1 })) },
+        },
+      },
+      /32/,
+    );
+    bad({ sounds: { x: 3 as never } }, /sounds\.x/);
+  });
+
+  it('reports every problem in one error', () => {
+    try {
+      createCelebrationResolver({
+        default: { layout: 'x' as never, duration: -5 },
+        overrides: { a: 'nope' },
+      });
+      expect.unreachable();
+    } catch (err) {
+      const msg = String((err as Error).message);
+      expect(msg).toMatch(/^invalid badgetrip celebrations:/);
+      expect(msg.split('\n')).toHaveLength(4);
+    }
+  });
+
+  it('accepts every built-in sound as valid', () => {
+    expect(() => createCelebrationResolver({ sounds: { ...builtinSounds } })).not.toThrow();
+  });
+});
+
+describe('safeSrc', () => {
+  it('blocks script schemes for images and audio', () => {
+    for (const kind of ['image', 'audio'] as const) {
+      expect(safeSrc('javascript:alert(1)', kind)).toBe('');
+      expect(safeSrc('  JaVa\nScRiPt:x', kind)).toBe('');
+      expect(safeSrc('vbscript:x', kind)).toBe('');
+      expect(safeSrc('app://sound.ogg', kind)).toBe('app://sound.ogg');
+      expect(safeSrc('/a.mp3', kind)).toBe('/a.mp3');
+    }
+  });
+
+  it('allows only the matching data: type', () => {
+    expect(safeSrc('data:image/png;base64,AA')).toBe('data:image/png;base64,AA');
+    expect(safeSrc('data:audio/wav;base64,AA')).toBe('');
+    expect(safeSrc('data:audio/wav;base64,AA', 'audio')).toBe('data:audio/wav;base64,AA');
+    expect(safeSrc('data:image/png;base64,AA', 'audio')).toBe('');
+    expect(safeSrc('data:text/html,<b>', 'audio')).toBe('');
+  });
+});
+
+describe('sound registry forms', () => {
+  it('accepts { src } objects and rejects unsafe ones', () => {
+    const r = createCelebrationResolver({
+      sounds: { a: { src: '/a.ogg' } },
+      presets: { p: { sound: 'a' } },
+    });
+    expect(r.resolve({ code: 'x', celebration: 'p' }).sound).toEqual({ src: '/a.ogg' });
+    expect(() => createCelebrationResolver({ sounds: { a: { src: 'javascript:x' } } })).toThrow(
+      /sounds\.a: unsafe URL/,
+    );
+  });
+});

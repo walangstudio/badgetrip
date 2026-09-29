@@ -30,7 +30,7 @@ the main process. The Electron transports are tested against fakes, not a real E
 - **Node (built dist, ESM):** `node --input-type=module` importing `packages/core/dist/index.js`
   emits an event and unlocks an achievement. Proves the published artifact (not just source)
   loads under plain Node ESM.
-- **Node (source, vitest):** the full suite (`pnpm test`) - 307 tests (293 root + 14 Angular).
+- **Node (source, vitest):** the full suite (`pnpm test`) - 400 tests (382 root + 18 Angular).
 - **Bun + Expo/Metro (Hermes):** consumed from the todont app via a `file:` dep on the built
   dist; a bun smoke in todont's integration layer builds an engine and runs todont's full
   definitions. Bun executes the same pure-ESM artifact Hermes bundles.

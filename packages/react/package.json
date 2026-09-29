@@ -19,7 +19,8 @@
   },
   "dependencies": {
     "@walangstudio/badgetrip-assets": "workspace:*",
-    "@walangstudio/badgetrip-core": "workspace:*"
+    "@walangstudio/badgetrip-core": "workspace:*",
+    "@walangstudio/badgetrip-html": "workspace:*"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0"

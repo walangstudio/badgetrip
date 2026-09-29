@@ -17,6 +17,8 @@ export type TierSpec = {
   icon?: string;
   name?: string;
   description?: string;
+  /** Celebration preset for this tier only, for example `'epic'` on gold. */
+  celebration?: string;
 };
 
 export type AchievementSpec = {
@@ -30,6 +32,8 @@ export type AchievementSpec = {
   lockedDescription?: string;
   icon?: string;
   category?: string;
+  /** Celebration preset key for the unlock popup, such as `'modal'` or `'epic'`. */
+  celebration?: string;
   metadata?: Record<string, unknown>;
   /**
    * One unlock per tier, in ascending order: `{ bronze: 10, silver: 50, gold: 100 }`.
@@ -147,6 +151,7 @@ export function defineAchievements(specs: Record<string, AchievementSpec>): Achi
         rarity: t.rarity ?? rarity ?? (Math.min(5, index + 1) as Rarity),
         ...(t.points !== undefined ? { points: t.points } : {}),
         ...(t.icon !== undefined ? { icon: t.icon } : {}),
+        ...(t.celebration !== undefined ? { celebration: t.celebration } : {}),
         rule: { ...when, gte: t.at } as Rule,
         series: { code, tier, index, of: entries.length },
       });
