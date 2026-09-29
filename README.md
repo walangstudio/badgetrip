@@ -3,7 +3,7 @@
 ![version](https://img.shields.io/badge/version-0.0.1-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![typescript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)
-![tests](https://img.shields.io/badge/tests-400%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-442%20passing-brightgreen)
 ![core deps](https://img.shields.io/badge/core%20deps-0-brightgreen)
 
 Points, streaks, tiers, leaderboards and achievements for any JavaScript app. You tell the engine what your users did. It works out their score, their streaks, and which badges they just unlocked.
@@ -37,6 +37,15 @@ badgetrip keeps the rules in one place and stays out of everything else:
 - **Unlock celebrations.** Toasts in any corner or edge, a modal, or fullscreen with confetti, with optional sound. Configure once, override per achievement. Secret mode hides hidden achievements the way consoles do.
 - **Progress you can see.** Badges show "3/5" under locked achievements, and optional popups report progress along the way, every step or at milestones.
 - **Cross-process.** `@walangstudio/badgetrip-ipc` runs the engine in Electron's main process or a worker, behind a method allowlist and an `authorize` hook.
+
+## Try it
+
+The [playground](examples/playground) is a sandbox: edit a config, fire events, and watch achievements unlock with the real celebrations. Nothing is saved.
+
+```sh
+pnpm install
+pnpm --filter @badgetrip-example/playground dev
+```
 
 ## Install
 
@@ -338,6 +347,7 @@ It returns what changed: score deltas, streak changes, escalations and newly unl
 
 | Example | Shows |
 |---|---|
+| [`examples/playground`](examples/playground) | A browser sandbox: edit a config, fire events, see the celebrations |
 | [`examples/node-cli`](examples/node-cli) | The engine in a plain Node script |
 | [`examples/react-spa`](examples/react-spa) | A Vite app on `@walangstudio/badgetrip-react` |
 | [`examples/todont-extract`](examples/todont-extract) | A production ruleset (12 badges) moved onto badgetrip |
@@ -350,7 +360,7 @@ Requires Node 22 and pnpm 11.
 ```sh
 pnpm install
 pnpm build          # tsc -b, then ng-packagr for Angular
-pnpm test           # 382 root tests + 18 Angular
+pnpm test           # 422 root tests + 20 Angular
 pnpm typecheck      # sources, tests and Angular specs
 pnpm lint           # biome
 pnpm test:coverage  # line and branch coverage

@@ -818,3 +818,35 @@ describe('progress popups for tiers and combined rules', () => {
     expect(names).toEqual(['Prolific (bronze)']);
   });
 });
+
+describe('toast priority', () => {
+  it('lets a waiting unlock go ahead of waiting progress popups', async () => {
+    const { engine: e } = makeTestEngine({
+      achievements: defineAchievements({
+        collect: { name: 'Collector', description: '', when: rules.count('item', 5) },
+        level: { name: 'First level', description: '', when: rules.count('level', 1) },
+      }),
+    });
+    const observed = observe(e);
+    make(observed, {
+      actor: 'u',
+      maxVisible: 1,
+      celebrations: createCelebrationResolver({
+        default: { duration: 0 },
+        overrides: { collect: { progress: { every: 1, duration: 0 } } },
+      }),
+    });
+    await new Promise((r) => setTimeout(r, 10));
+    const emit = (id: string, type: string) =>
+      observed.engine.emit({ id, actor: 'u', type, ts: 0, payload: {} });
+    for (const id of ['1', '2', '3']) {
+      await emit(id, 'item');
+      await new Promise((r) => setTimeout(r, 5));
+    }
+    await emit('4', 'level');
+    await vi.waitFor(() => expect(toasts()).toEqual(['Collector']));
+    await new Promise((r) => setTimeout(r, 10));
+    (shadow().querySelector('.toast button') as HTMLButtonElement).click();
+    expect(toasts()).toEqual(['First level']);
+  });
+});

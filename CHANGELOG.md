@@ -14,6 +14,7 @@ All notable changes to badgetrip are documented here. The format follows [Keep a
 - Secret mode: `splitConcealed`, `renderCatalog(views, { secret: true })` and `<badgetrip-catalog secret>` hide hidden achievements and count the ones left.
 - `@walangstudio/badgetrip-ipc` forwards unlocks to clients. The new `unlocks` option on `serveEngine` filters or disables them. It defaults to off when `authorize` is set, so a scoped server never broadcasts other users' unlocks.
 - `safeSrc` moved to `@walangstudio/badgetrip-assets`, with audio support.
+- `examples/playground`: a browser sandbox with an editable JSON config, event buttons, a live badge grid and the real notifier. Nothing is saved.
 - **Progress you can see.** Every badge shows a "3/5" count under locked multi-step achievements (`showCount`, `formatCount`). Optional progress popups (`progress` in a celebration: `at` percentages or `every` N steps, with their own position, duration, sound and title) report progress before the unlock. `watchProgress` in core and `progressCount`/`crossesMilestone` in assets for custom UIs.
 
 ## [0.0.1] - 2026-09-28

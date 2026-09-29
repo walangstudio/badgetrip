@@ -427,8 +427,12 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
   };
   const queueToast = (item: Item) => {
     const pos = item.c.position;
-    if ((visible.get(pos) ?? 0) < maxVisible) showToast(item);
-    else waiting.get(pos)?.push(item);
+    if ((visible.get(pos) ?? 0) < maxVisible) return showToast(item);
+    const queue = waiting.get(pos) ?? [];
+    // An unlock waits behind other unlocks, but ahead of any waiting progress popup.
+    const at = item.progress ? -1 : queue.findIndex((q) => q.progress);
+    if (at === -1) queue.push(item);
+    else queue.splice(at, 0, item);
   };
 
   // Modal and fullscreen: one at a time, focus trapped while open.
