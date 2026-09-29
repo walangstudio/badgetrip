@@ -2,7 +2,7 @@
 
 When someone unlocks an achievement, badgetrip can celebrate it on top of your app: a toast in any corner or edge, a centered modal, or a fullscreen moment with confetti, with an optional sound. You set it up once and override it per achievement.
 
-This guide uses the `engine` from [Getting started](getting-started.md).
+This guide uses the `engine` from [Getting started](getting-started.md). To try every option live, run the [playground](../../examples/playground).
 
 ## Turn it on
 

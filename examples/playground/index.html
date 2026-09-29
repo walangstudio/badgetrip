@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>badgetrip playground</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>badgetrip playground</h1>
+      <p>
+        Edit the config, press <kbd>Apply</kbd>, then fire events and watch what unlocks.
+        Everything runs in your browser and nothing is saved.
+      </p>
+    </header>
+    <main>
+      <section class="panel editor" aria-labelledby="config-title">
+        <div class="bar">
+          <h2 id="config-title">Config</h2>
+          <div class="actions">
+            <button type="button" id="apply" class="primary" title="Ctrl+Enter">Apply</button>
+            <button type="button" id="sample">Load sample</button>
+          </div>
+        </div>
+        <textarea id="config" spellcheck="false" aria-label="Config (JSON)" autocomplete="off"></textarea>
+        <p id="message" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="panel try" aria-labelledby="try-title">
+        <div class="bar">
+          <h2 id="try-title">Try it</h2>
+          <button type="button" id="restart">Start over</button>
+        </div>
+
+        <h3>Fire an event</h3>
+        <div id="events" class="chips"></div>
+        <form id="custom" class="row">
+          <input id="custom-type" placeholder="event type, e.g. item.collect" aria-label="Event type" required />
+          <input id="custom-payload" placeholder='payload, e.g. {"level": 3}' aria-label="Payload (JSON)" />
+          <button type="submit">Fire</button>
+        </form>
+
+        <h3>Preview a celebration</h3>
+        <div class="row">
+          <select id="preview-code" aria-label="Achievement to preview"></select>
+          <button type="button" id="preview">Preview</button>
+        </div>
+
+        <div class="row toggles">
+          <label><input type="checkbox" id="sound" /> Sound</label>
+          <label><input type="checkbox" id="secret" /> Secret mode</label>
+        </div>
+
+        <p id="stats" class="stats"></p>
+        <h3>Achievements</h3>
+        <div id="catalog"></div>
+      </section>
+    </main>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>
