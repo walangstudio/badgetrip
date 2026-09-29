@@ -32,8 +32,21 @@ export function UnlockNotifier({ sound, volume, muted, ...opts }: UnlockNotifier
         ? { actor: (a: string) => (latest.current.actor as (a: string) => boolean)(a) }
         : {}),
       ...(onError ? { onError: (err: unknown) => latest.current.onError?.(err) } : {}),
-      ...(labels?.more
-        ? { labels: { ...labels, more: (n: number) => latest.current.labels?.more?.(n) ?? '' } }
+      ...(labels
+        ? {
+            labels: {
+              ...labels,
+              ...(labels.more
+                ? { more: (n: number) => latest.current.labels?.more?.(n) ?? '' }
+                : {}),
+              ...(labels.count
+                ? {
+                    count: (p: { current: number; target: number }) =>
+                      latest.current.labels?.count?.(p) ?? `${p.current}/${p.target}`,
+                  }
+                : {}),
+            },
+          }
         : {}),
       sound,
       volume,
@@ -54,6 +67,9 @@ export function UnlockNotifier({ sound, volume, muted, ...opts }: UnlockNotifier
     opts.maxQueue,
     opts.zIndex,
     opts.labels?.close,
+    !!opts.onError,
+    !!opts.labels?.more,
+    !!opts.labels?.count,
   ]);
 
   useEffect(() => {

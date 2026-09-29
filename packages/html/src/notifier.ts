@@ -183,8 +183,12 @@ function checkOptions(o: NotifierOptions) {
   }
   if (!resolver(o.icons))
     throw new TypeError(`${where}: icons must come from createIconResolver()`);
-  if (o.actor !== undefined && typeof o.actor !== 'string' && typeof o.actor !== 'function') {
-    throw new TypeError(`${where}: actor must be a string or a function`);
+  if (
+    o.actor !== undefined &&
+    !(typeof o.actor === 'string' && o.actor) &&
+    typeof o.actor !== 'function'
+  ) {
+    throw new TypeError(`${where}: actor must be a non-empty string or a function`);
   }
   checkSound(o, where);
   if (o.maxVisible !== undefined && !isInt(o.maxVisible, 1, 10)) {
@@ -304,11 +308,13 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
 
   const reducedMotion = () => !!globalThis.matchMedia?.(MOTION)?.matches;
   const cleanups = new Set<() => void>();
+  // Each announcement is its own line, so ones that land close together (an unlock
+  // and a progress update) are all read out; old lines are cleared after a while.
   const announce = (text: string) => {
-    live.textContent = '';
-    queueMicrotask(() => {
-      if (!disposed) live.textContent = text;
-    });
+    const line = document.createElement('div');
+    line.textContent = text;
+    live.appendChild(line);
+    setTimeout(() => line.remove(), 10_000);
   };
   const confetti = (c: Celebration) => {
     if (!c.confetti || reducedMotion()) return;
@@ -397,7 +403,9 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
   // Toasts: up to maxVisible per position, the rest wait in order.
   const waiting = new Map<Position, Item[]>(POSITIONS.map((p) => [p, []]));
   const visible = new Map<Position, number>(POSITIONS.map((p) => [p, 0]));
-  const pending = () => [...waiting.values()].reduce((n, q) => n + q.length, 0);
+  // Only waiting unlocks count toward maxQueue; progress popups never crowd them out.
+  const pending = () =>
+    [...waiting.values()].reduce((n, q) => n + q.filter((i) => !i.progress).length, 0);
   // The "+N more" toast still waiting to be shown; later overflow adds to it.
   let summary: Item | undefined;
 
@@ -429,6 +437,12 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
     const pos = item.c.position;
     if ((visible.get(pos) ?? 0) < maxVisible) return showToast(item);
     const queue = waiting.get(pos) ?? [];
+    if (item.progress) {
+      // A newer count replaces a waiting one for the same achievement; a full queue drops it.
+      const same = queue.findIndex((q) => q.progress && q.view?.code === item.view?.code);
+      if (same !== -1) return void queue.splice(same, 1, item);
+      if (queue.length >= maxQueue) return;
+    }
     // An unlock waits behind other unlocks, but ahead of any waiting progress popup.
     const at = item.progress ? -1 : queue.findIndex((q) => q.progress);
     if (at === -1) queue.push(item);
@@ -498,6 +512,14 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
       .map((view): Item => ({ view, c: celebrations.resolve(view) }))
       .filter((i) => !i.c.quiet);
     if (!items.length) return;
+    // Waiting progress popups for what just unlocked are out of date.
+    const done = new Set(views.map((v) => v.series?.code ?? v.code));
+    for (const q of waiting.values()) {
+      for (let i = q.length - 1; i >= 0; i--) {
+        const v = q[i]?.view;
+        if (q[i]?.progress && v && done.has(v.series?.code ?? v.code)) q.splice(i, 1);
+      }
+    }
     announce(items.map((i) => `${i.c.title}: ${i.view?.name}`).join('. '));
     if (sound && !muted) {
       const loudest = items
@@ -527,9 +549,11 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
   };
 
   // Progress popups: a quieter toast when an achievement passes a milestone.
-  const progressed = (changes: ProgressChange[]) => {
+  const progressed = (changes: ProgressChange[], unlocked: AchievementView[]) => {
     if (disposed) return;
     const items: Item[] = [];
+    // A series that just unlocked a tier celebrates that; its next tier can wait.
+    const justUnlocked = new Set(unlocked.flatMap((v) => (v.series ? [v.series.code] : [])));
     // A tier series reports progress toward its next tier only, not every tier.
     const next = new Map<string, number>();
     for (const { view } of changes) {
@@ -541,6 +565,7 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
     for (const { view, from } of changes) {
       if (view.progress.countable === false) continue;
       if (view.series && next.get(view.series.code) !== view.series.index) continue;
+      if (view.series && justUnlocked.has(view.series.code)) continue;
       const c = celebrations.resolve(view);
       const p = c.progress;
       if (
@@ -567,7 +592,10 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
     if (!items.length) return;
     announce(
       items
-        .map((i) => `${i.c.title}: ${i.view?.name}, ${countText(i.view as AchievementView)}`)
+        .map((i) => {
+          const p = (i.view as AchievementView).progress;
+          return `${i.c.title}: ${i.view?.name}, ${Math.min(p.current, p.target)} of ${p.target}`;
+        })
         .join('. '),
     );
     const loud = items.find((i) => i.c.sound)?.c.sound;

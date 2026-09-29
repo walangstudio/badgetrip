@@ -39,10 +39,7 @@ export function crossesMilestone(
 ): boolean {
   if (!(to > from) || to >= target || target <= 1) return false;
   if (rule.every && Math.floor(to / rule.every) > Math.floor(from / rule.every)) return true;
-  if (rule.at) {
-    const a = (from / target) * 100;
-    const b = (to / target) * 100;
-    return rule.at.some((m) => m > a && m <= b);
-  }
+  // Compare in integers: (57 / 100) * 100 is 56.99999999999999 in floating point.
+  if (rule.at) return rule.at.some((m) => m * target > from * 100 && m * target <= to * 100);
   return false;
 }

@@ -72,3 +72,11 @@ describe('progressCount for combined rules', () => {
     ).toBeNull();
   });
 });
+
+describe('crossesMilestone precision', () => {
+  it('fires exactly at the mark, even where floating point would round down', () => {
+    const at57 = { at: [57], every: null };
+    expect(crossesMilestone(at57, 56, 57, 100)).toBe(true);
+    expect(crossesMilestone(at57, 57, 58, 100)).toBe(false);
+  });
+});

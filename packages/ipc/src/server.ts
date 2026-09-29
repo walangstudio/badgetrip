@@ -135,8 +135,8 @@ export function serveEngine(
       (err) => reply({ id, ok: false, error: toWire(err) }),
     );
   });
-  const offChange = observed.subscribe(() =>
-    send({ type: 'changed', version: observed.getVersion() }),
+  const offChange = observed.subscribe((kind) =>
+    send({ type: 'changed', version: observed.getVersion(), ...(kind ? { kind } : {}) }),
   );
   const offUnlock =
     unlocks === false

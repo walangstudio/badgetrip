@@ -7,6 +7,7 @@ export {
   type Observable,
   type EngineApi,
   type Unlock,
+  type ChangeKind,
 } from './observe.js';
 export {
   watchUnlocks,

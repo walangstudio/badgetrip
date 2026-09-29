@@ -1,4 +1,4 @@
-import { type Unlock, notifyAll } from '@badgetrip/core';
+import { type ChangeKind, type Unlock, notifyAll } from '@badgetrip/core';
 import {
   type DefaultMethod,
   REMOTE_METHODS,
@@ -20,8 +20,8 @@ export type ConnectOptions = {
  */
 export type RemoteEngine<M extends RemoteMethod = DefaultMethod> = Pick<RemoteMethods, M> & {
   engine: Pick<RemoteMethods, M>;
-  /** Called after each change the server reports. Returns an unsubscribe. */
-  subscribe: (cb: () => void) => () => void;
+  /** Called after each change the server reports, with its kind. Returns an unsubscribe. */
+  subscribe: (cb: (change?: ChangeKind) => void) => () => void;
   /** The server's version from its latest change notification. */
   getVersion: () => number;
   /** Called with each batch of unlocks the server reports. Returns an unsubscribe. */
@@ -39,6 +39,7 @@ type Pending = {
 const named = (name: string, message: string) => Object.assign(new Error(message), { name });
 
 const MAX_UNLOCKS = 1000;
+const KINDS = new Set(['emit', 'refresh', 'replay', 'seed']);
 
 /** The well-formed `{actor, code}` entries of an untrusted `unlocks` payload. */
 function readUnlocks(raw: unknown): readonly Unlock[] {
@@ -60,7 +61,7 @@ export function connectEngine<M extends RemoteMethod = DefaultMethod>(
 ): RemoteEngine<M> {
   const timeoutMs = opts.timeoutMs ?? 10000;
   const pending = new Map<string, Pending>();
-  const listeners = new Set<() => void>();
+  const listeners = new Set<(change?: ChangeKind) => void>();
   const unlockListeners = new Set<(unlocks: readonly Unlock[]) => void>();
   // Replies reach every listener on a shared channel (two clients, a reload), so ids
   // must be unique per client, not just per call.
@@ -77,7 +78,8 @@ export function connectEngine<M extends RemoteMethod = DefaultMethod>(
       // Versions restart when a server is re-created, so never dedupe on them.
       if (typeof msg.version !== 'number') return;
       version = msg.version;
-      notifyAll(listeners);
+      const kind = KINDS.has(msg.kind as string) ? (msg.kind as ChangeKind) : undefined;
+      notifyAll([...listeners].map((l) => () => l(kind)));
       return;
     }
     if (msg.type === 'unlocked') {

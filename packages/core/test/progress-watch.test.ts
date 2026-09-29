@@ -51,7 +51,7 @@ describe('watchProgress', () => {
     ]);
   });
 
-  it('folds changes that land while a query runs into one diff', async () => {
+  it('never loses or repeats a step when changes overlap a running query', async () => {
     const observed = setup();
     const got: string[] = [];
     watchProgress(observed, { actor: 'u' }, (items) =>
@@ -87,5 +87,62 @@ describe('watchProgress', () => {
   it('needs a non-empty actor', () => {
     const observed = setup();
     expect(() => watchProgress(observed, { actor: '' }, () => {})).toThrow(/actor/);
+  });
+});
+
+describe('watchProgress review fixes', () => {
+  it('reports newly unlocked views next to the progress changes', async () => {
+    const observed = setup();
+    const got: string[] = [];
+    watchProgress(observed, { actor: 'u' }, (changes, unlocked) =>
+      got.push(
+        `${changes.map((c) => c.view.code).join(',')}|${unlocked.map((v) => v.code).join(',')}`,
+      ),
+    );
+    await new Promise((r) => setTimeout(r));
+    await observed.engine.emit(ev('1'));
+    await vi.waitFor(() => expect(got).toEqual(['todo_5|one']));
+  });
+
+  it('re-baselines after seed and replay instead of reporting them', async () => {
+    const observed = setup();
+    const cb = vi.fn();
+    watchProgress(observed, { actor: 'u' }, cb);
+    await new Promise((r) => setTimeout(r));
+    await observed.engine.replay([ev('r1'), ev('r2')]);
+    await observed.engine.seed({ achievements: [] });
+    await new Promise((r) => setTimeout(r, 10));
+    expect(cb).not.toHaveBeenCalled();
+    await observed.engine.emit(ev('3'));
+    await vi.waitFor(() => expect(cb).toHaveBeenCalledOnce());
+    expect(cb.mock.calls[0]?.[0][0].from).toBe(2);
+  });
+
+  it('survives a throwing onError and keeps watching', async () => {
+    const observed = setup();
+    let later: (() => void) | undefined;
+    const micro = vi.spyOn(globalThis, 'queueMicrotask').mockImplementation((cb) => {
+      later = cb;
+    });
+    const cb = vi.fn();
+    watchProgress(
+      observed,
+      {
+        actor: 'u',
+        onError: () => {
+          throw new Error('handler broke');
+        },
+      },
+      cb,
+    );
+    await new Promise((r) => setTimeout(r));
+    vi.spyOn(observed.engine, 'catalog').mockRejectedValueOnce(new Error('db down'));
+    await observed.engine.emit(ev('1'));
+    await vi.waitFor(() => expect(later).toBeDefined());
+    micro.mockRestore();
+    expect(() => later?.()).toThrow('handler broke');
+    await observed.engine.emit(ev('2'));
+    await observed.engine.emit(ev('3'));
+    await vi.waitFor(() => expect(cb).toHaveBeenCalled());
   });
 });

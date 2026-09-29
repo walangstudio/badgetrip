@@ -6,7 +6,7 @@
   "description": "Try badgetrip in the browser: edit a config, fire events, watch the celebrations. Nothing is saved.",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc -p . && vite build",
     "preview": "vite preview"
   },
   "dependencies": {

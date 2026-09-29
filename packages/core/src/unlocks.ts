@@ -95,22 +95,25 @@ export function splitConcealed(views: AchievementView[]): {
 export type ProgressChange = { view: AchievementView; from: number };
 
 /**
- * Call `cb` when locked, visible achievements of `actor` move forward. One catalog
- * query per change; changes that land while a query runs fold into the next one. The
- * first query only sets the baseline, so earlier progress is never reported.
+ * Call `cb` when locked, visible achievements of `actor` move forward, with the views
+ * that became unlocked since the last check (so a UI can skip a series that just
+ * unlocked a tier). One catalog query per change; changes that land while a query runs
+ * fold into the next one. The first query only sets the baseline, and so does the
+ * first one after `seed` or `replay`, so imported or rebuilt progress is never reported.
  */
 export function watchProgress(
   source: Observable,
   opts: { actor: string; onError?: (err: unknown) => void },
-  cb: (changes: ProgressChange[]) => void,
+  cb: (changes: ProgressChange[], unlocked: AchievementView[]) => void,
 ): () => void {
   const { actor, onError = rethrow } = opts;
   if (typeof actor !== 'string' || !actor) {
     throw new TypeError('watchProgress: actor must be a non-empty string');
   }
-  let last: Map<string, number> | undefined;
+  let last: Map<string, { current: number; unlocked: boolean }> | undefined;
   let running = false;
   let again = false;
+  let rebase = false;
   let stopped = false;
   const run = async () => {
     if (running) {
@@ -121,25 +124,45 @@ export function watchProgress(
     try {
       do {
         again = false;
+        const rebasing = rebase;
+        rebase = false;
         const views = await source.engine.catalog(actor);
         if (stopped) return;
-        const prev = last;
-        last = new Map(views.map((v) => [v.code, v.progress.current]));
+        const prev = rebasing ? undefined : last;
+        last = new Map(
+          views.map((v) => [v.code, { current: v.progress.current, unlocked: v.unlocked }]),
+        );
         if (!prev) continue;
-        const changes = views
-          .filter((v) => !v.unlocked && !v.concealed && prev.has(v.code))
-          .filter((v) => v.progress.current > (prev.get(v.code) as number))
-          .map((view) => ({ view, from: prev.get(view.code) as number }));
-        if (changes.length) cb(changes);
+        const changes: ProgressChange[] = [];
+        const unlocked: AchievementView[] = [];
+        for (const v of views) {
+          const before = prev.get(v.code);
+          if (!before) continue;
+          if (v.unlocked && !before.unlocked) unlocked.push(v);
+          else if (!v.unlocked && !v.concealed && v.progress.current > before.current) {
+            changes.push({ view: v, from: before.current });
+          }
+        }
+        if (changes.length) cb(changes, unlocked);
       } while (again && !stopped);
     } catch (err) {
-      if (!stopped) onError(err);
+      if (stopped) return;
+      try {
+        onError(err);
+      } catch (thrown) {
+        rethrow(thrown);
+      }
     } finally {
       running = false;
+      // A change that arrived while a failed query ran still deserves a look.
+      if (again && !stopped) void run();
     }
   };
   void run();
-  const off = source.subscribe(() => void run());
+  const off = source.subscribe((kind) => {
+    if (kind === 'seed' || kind === 'replay') rebase = true;
+    void run();
+  });
   return () => {
     stopped = true;
     off();
