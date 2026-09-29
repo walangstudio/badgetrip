@@ -22,3 +22,10 @@ export {
   useAchievementIcon,
   type AchievementBadgeProps,
 } from './badge.js';
+export {
+  UnlockNotifier,
+  useUnlocks,
+  type UnlockItem,
+  type UnlockNotifierProps,
+  type UseUnlocksOptions,
+} from './notifier.js';

@@ -48,6 +48,10 @@ Achievements run last so that a rule like `{ kind: 'streak', streak: 'daily_clea
 
 `replay(events)` sorts the log by `(ts, id)` and calls `emit` on each event. Because `emit` is idempotent, replaying an already-seen log is safe.
 
+## The change and unlock streams
+
+UI adapters bind to `observe(engine)`, which wraps the state-changing methods. After each one it bumps a version and calls `subscribe` listeners. After `emit` and `refresh` it also calls `onUnlock` listeners with the batch of `{ actor, code }` pairs that were just unlocked, in definition order. `replay` and `seed` never report unlocks: they rebuild or import history rather than record something new. `watchUnlocks` turns batches into catalog views (one `catalog` query per actor per batch, batches kept in order), and the celebration notifiers and `useUnlocks` hooks are built on it. `@walangstudio/badgetrip-ipc` carries both streams across a transport.
+
 ## Determinism
 
 The engine never calls `Date.now()`. All timestamps come from two sources:

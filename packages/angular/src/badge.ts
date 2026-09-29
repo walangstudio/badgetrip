@@ -10,7 +10,12 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { type IconAsset, displayIcon } from '@walangstudio/badgetrip-assets';
+import {
+  type CountFormat,
+  type IconAsset,
+  displayIcon,
+  progressCount,
+} from '@walangstudio/badgetrip-assets';
 import type { AchievementView } from '@walangstudio/badgetrip-core';
 import { BADGETRIP_ICONS } from './service.js';
 
@@ -80,6 +85,9 @@ export function achievementIcon(achievement: Signal<AchievementView>): Signal<Ic
           [attr.aria-label]="achievement().name + ': ' + achievement().progress.percent + '%'"
         ></progress>
       }
+      @if (count(); as c) {
+        <small data-count style="font-size: 12px; opacity: 0.7">{{ c }}</small>
+      }
     </figure>
   `,
 })
@@ -89,5 +97,12 @@ export class AchievementBadgeComponent {
   readonly size = input(48);
   /** Show a progress bar while locked. */
   readonly showProgress = input(true);
+  /** Show a "3/5" count under locked multi-step achievements. */
+  readonly showCount = input(true);
+  /** Wording of the count. */
+  readonly formatCount = input<CountFormat | undefined>(undefined);
   protected readonly icon = achievementIcon(this.achievement);
+  protected readonly count = computed(() =>
+    this.showCount() ? progressCount(this.achievement(), this.formatCount()) : null,
+  );
 }

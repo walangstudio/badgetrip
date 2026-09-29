@@ -14,6 +14,9 @@ export {
   useAchievementProgress,
   IconProvider,
   useIconResolver,
+  useUnlocks,
+  type UnlockItem,
+  type UseUnlocksOptions,
 } from '@walangstudio/badgetrip-react';
 export {
   AchievementBadge,

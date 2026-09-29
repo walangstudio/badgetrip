@@ -1,5 +1,5 @@
 import { getPath, matchFilter } from './path.js';
-import type { Event, EventStore, Rule, ScoreStore, StreakStore } from './types.js';
+import type { Event, EventStore, Progress, Rule, ScoreStore, StreakStore } from './types.js';
 
 export type RuleContext = {
   actor: string;
@@ -152,7 +152,7 @@ export async function ruleProgress(
   ctx: ProgressContext,
   /** Shares measurements between rules that differ only in `gte` (e.g. tiers). */
   cache?: Map<string, Promise<number>>,
-): Promise<{ current: number; target: number; percent: number }> {
+): Promise<Progress> {
   const leaf = (current: number, target: number) => ({
     current,
     target,
@@ -173,8 +173,8 @@ export async function ruleProgress(
           ? Math.floor(percents.reduce((a, b) => a + b, 0) / (parts.length || 1))
           : Math.max(0, ...percents);
       return rule.kind === 'all'
-        ? { current: done, target: parts.length, percent }
-        : { current: Math.min(1, done), target: 1, percent };
+        ? { current: done, target: parts.length, percent, countable: false }
+        : { current: Math.min(1, done), target: 1, percent, countable: false };
     }
     default: {
       if (!cache) return leaf(await measure(rule, ctx), rule.gte);

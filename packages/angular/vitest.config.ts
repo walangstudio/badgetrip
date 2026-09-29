@@ -11,6 +11,7 @@ export default defineConfig({
       '@walangstudio/badgetrip-core': r('../core/src/index.ts'),
       '@walangstudio/badgetrip-assets': r('../assets/src/index.ts'),
       '@walangstudio/badgetrip-ipc': r('../ipc/src/index.ts'),
+      '@walangstudio/badgetrip-html': r('../html/src/index.ts'),
       '@walangstudio/badgetrip-angular': r('./src/index.ts'),
     },
   },

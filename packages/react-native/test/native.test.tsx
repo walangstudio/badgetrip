@@ -20,6 +20,7 @@ import {
   useAchievementProgress,
   useBadgetrip,
   useScore,
+  useUnlocks,
 } from '../src/index.js';
 
 const motion = vi.hoisted(() => ({
@@ -87,7 +88,7 @@ describe('AchievementBadge', () => {
     expect(bar.props.accessibilityLabel).toBe('Alpha: 25%');
     expect(bar.props.accessibilityValue).toEqual({ min: 0, max: 100, now: 25 });
     const texts = t.root.findAllByType('Text' as never).map((n) => n.props.children);
-    expect(texts).toEqual(['Alpha', 'Do the thing']);
+    expect(texts).toEqual(['Alpha', 'Do the thing', '1/4']);
   });
 
   it('unlocked: full-colour tier-tinted SVG, no progress bar', async () => {
@@ -233,6 +234,42 @@ describe('re-exported hooks', () => {
   });
 });
 
+describe('useUnlocks', () => {
+  it('queues new unlocks with their celebration for a native overlay', async () => {
+    const engine = createEngine({
+      events: memoryEventStore(),
+      scores: memoryScoreStore(),
+      achievements: memoryAchievementStore(),
+      streaks: memoryStreakStore(),
+      clock: { now: () => 0 },
+      definitions: {
+        achievements: defineAchievements({
+          big: { name: 'Big', description: '', celebration: 'epic', when: rules.count('win', 1) },
+        }),
+      },
+    });
+    let latest: ReturnType<typeof useUnlocks> | undefined;
+    let emit: ReturnType<typeof useBadgetrip>['emit'] | undefined;
+    function Probe() {
+      emit = useBadgetrip().emit;
+      latest = useUnlocks();
+      return null;
+    }
+    await mount(
+      <BadgetripProvider engine={engine}>
+        <Probe />
+      </BadgetripProvider>,
+    );
+    await act(async () => {
+      await emit?.({ id: 'w', actor: 'u', type: 'win', ts: 0, payload: {} });
+    });
+    await act(async () => {});
+    expect(latest?.queue.map((q) => [q.view.name, q.celebration.layout])).toEqual([
+      ['Big', 'fullscreen'],
+    ]);
+  });
+});
+
 describe('svg handling review fixes', () => {
   it('parses SVG data URLs with params, raw %, and UTF-8 base64 without throwing', async () => {
     const { svgMarkup } = await import('../src/badge.js');
@@ -256,5 +293,19 @@ describe('svg handling review fixes', () => {
     );
     expect(t.root.findByType('SvgUri' as never).props.uri).toBe('https://cdn.example/a.svg');
     expect(t.root.findAllByType('Image' as never)).toHaveLength(0);
+  });
+});
+
+describe('progress count', () => {
+  const texts = (t: ReactTestRenderer) =>
+    t.root.findAllByType('Text' as never).map((n) => n.props.children);
+
+  it('can be hidden or reworded', async () => {
+    const hidden = await mount(<AchievementBadge achievement={view()} showCount={false} />);
+    expect(texts(hidden)).toEqual(['Alpha', 'Do the thing']);
+    const worded = await mount(
+      <AchievementBadge achievement={view()} formatCount={(p) => `${p.current} of ${p.target}`} />,
+    );
+    expect(texts(worded)).toContain('1 of 4');
   });
 });

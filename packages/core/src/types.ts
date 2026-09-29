@@ -99,10 +99,16 @@ export type AchievementDef = {
   category?: string;
   /** Set on achievements expanded from a tiered spec by `defineAchievements`. */
   series?: { code: string; tier: string; index: number; of: number };
+  /** Celebration preset key, resolved by `createCelebrationResolver` in `@walangstudio/badgetrip-assets`. */
+  celebration?: string;
 };
 
-/** How close an actor is to an achievement. `percent` is 0-100, floored. */
-export type Progress = { current: number; target: number; percent: number };
+/**
+ * How close an actor is to an achievement. `percent` is 0-100, floored. `countable` is
+ * false for `all`/`any` rules, where current/target count satisfied sub-rules rather
+ * than steps, so a "1/2" label would mislead.
+ */
+export type Progress = { current: number; target: number; percent: number; countable?: false };
 
 /** One achievement as a UI should render it for one actor. Hidden ones arrive concealed. */
 export type AchievementView = {
@@ -118,6 +124,9 @@ export type AchievementView = {
   unlockedAt?: number;
   /** True while a hidden achievement is still locked, so its details are withheld. */
   concealed: boolean;
+  /** Set on a hidden achievement once it is unlocked (a secret achievement). */
+  hidden?: true;
+  celebration?: string;
   progress: Progress;
 };
 

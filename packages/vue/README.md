@@ -36,7 +36,8 @@ const { data: badges } = useAchievementCatalog(() => props.actor);
 - They re-query after every `emit`/`replay`/`seed`/`refresh` and on arg change. Only the latest request applies.
 - A rejected query sets `error` and goes to `onErrorCaptured` / `app.config.errorHandler`.
 - `provideBadgetrip(engine, opts)` scopes an engine to a component subtree.
-- `AchievementBadge` (`achievement`, `size`, `showProgress`) matches the React badge. `useAchievementIcon(view)` gives the motion-aware icon for custom badges.
+- `<UnlockNotifier :actor="id" :sound="on" />` celebrates unlocks on top of the page; `useUnlocks()` returns `{ queue, dismiss, clear }` for a custom UI. See the [celebrations guide](../../docs/guide/celebrations.md).
+- `AchievementBadge` (`achievement`, `size`, `showProgress`, `showCount`, `formatCount`) matches the React badge. `useAchievementIcon(view)` gives the motion-aware icon for custom badges.
 
 ## License
 

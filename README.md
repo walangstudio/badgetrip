@@ -1,9 +1,9 @@
 # badgetrip
 
-![version](https://img.shields.io/badge/version-0.0.1-blue)
-![license](https://img.shields.io/badge/license-MIT-green)
+[![release](https://img.shields.io/github/v/release/walangstudio/badgetrip?include_prereleases&sort=semver)](https://github.com/walangstudio/badgetrip/releases)
+[![license](https://img.shields.io/github/license/walangstudio/badgetrip)](LICENSE)
 ![typescript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)
-![tests](https://img.shields.io/badge/tests-307%20passing-brightgreen)
+[![CI](https://github.com/walangstudio/badgetrip/actions/workflows/ci.yml/badge.svg)](https://github.com/walangstudio/badgetrip/actions/workflows/ci.yml)
 ![core deps](https://img.shields.io/badge/core%20deps-0-brightgreen)
 
 Points, streaks, tiers, leaderboards and achievements for any JavaScript app. You tell the engine what your users did. It works out their score, their streaks, and which badges they just unlocked.
@@ -13,7 +13,7 @@ const result = await engine.emit({ id, actor: 'ana', type: 'habit.done', ts: Dat
 result.unlocked; // ['first_step']
 ```
 
-> **Status:** 0.0.1, the first release. Not yet on npm. Changes are listed in the [CHANGELOG](CHANGELOG.md).
+> **Status:** early (0.0.x). APIs may change before 1.0. Changes are listed in the [CHANGELOG](CHANGELOG.md).
 
 ## Why
 
@@ -34,7 +34,18 @@ badgetrip keeps the rules in one place and stays out of everything else:
 - **Validated up front.** `createEngine` rejects typos and impossible rules before the first event.
 - **Swappable icons.** 18 built-in SVG icons, including an animated one. Override any icon per achievement, per tier series or per category, with GIFs, PNGs or your own SVGs.
 - **Accessible badges.** Every adapter shows a still frame while locked or when the user prefers reduced motion, and labels its progress bar.
+- **Unlock celebrations.** Toasts in any corner or edge, a modal, or fullscreen with confetti, with optional sound. Configure once, override per achievement. Secret mode hides hidden achievements the way consoles do.
+- **Progress you can see.** Badges show "3/5" under locked achievements, and optional popups report progress along the way, every step or at milestones.
 - **Cross-process.** `@walangstudio/badgetrip-ipc` runs the engine in Electron's main process or a worker, behind a method allowlist and an `authorize` hook.
+
+## Try it
+
+The [playground](examples/playground) is a sandbox: edit a config, fire events, and watch achievements unlock with the real celebrations. Nothing is saved.
+
+```sh
+pnpm install
+pnpm --filter @badgetrip-example/playground dev
+```
 
 ## Install
 
@@ -42,8 +53,6 @@ badgetrip keeps the rules in one place and stays out of everything else:
 npm install @walangstudio/badgetrip-core
 npm install @walangstudio/badgetrip-react   # or vue, angular, react-native, html
 ```
-
-Until the first npm release, build from source (see [Development](#development)) and depend on the packages with `file:` paths.
 
 ## Quick start
 
@@ -228,6 +237,14 @@ const badges = await engine.catalog('ana');
 - `engine.replay(log)` rebuilds state from a stored event log, in `ts` order.
 - `engine.seed(snapshot)` loads existing scores, achievements and streaks when moving from another system.
 
+### Celebrate unlocks
+
+```tsx
+<UnlockNotifier actor="ana" sound={soundOn} celebrations={celebrations} />
+```
+
+Each unlock pops up on top of the page. Give an achievement `celebration: 'epic'` for fullscreen confetti, or `'modal'`, `'quiet'`, or your own preset. The [celebrations guide](docs/guide/celebrations.md) covers positions, sounds, secret mode and styling.
+
 ### Show it in your UI
 
 Wrap the engine once with the package for your stack, and every badge updates after each `emit`. See [Frameworks](#frameworks).
@@ -316,6 +333,7 @@ It returns what changed: score deltas, streak changes, escalations and newly unl
 | Doc | Covers |
 |---|---|
 | [Guides](docs/guide/getting-started.md) | Getting started, then one guide per framework |
+| [Celebrations](docs/guide/celebrations.md) | Unlock popups, sound, confetti, secret mode |
 | [ACHIEVEMENTS.md](docs/ACHIEVEMENTS.md) | Achievement config, tiers, hidden badges, progress, icons |
 | [RULES.md](docs/RULES.md) | Every rule kind, filters and the path convention |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Interfaces, data model, the emit pipeline, determinism |
@@ -327,6 +345,7 @@ It returns what changed: score deltas, streak changes, escalations and newly unl
 
 | Example | Shows |
 |---|---|
+| [`examples/playground`](examples/playground) | A browser sandbox: edit a config, fire events, see the celebrations |
 | [`examples/node-cli`](examples/node-cli) | The engine in a plain Node script |
 | [`examples/react-spa`](examples/react-spa) | A Vite app on `@walangstudio/badgetrip-react` |
 | [`examples/todont-extract`](examples/todont-extract) | A production ruleset (12 badges) moved onto badgetrip |
@@ -339,7 +358,7 @@ Requires Node 22 and pnpm 11.
 ```sh
 pnpm install
 pnpm build          # tsc -b, then ng-packagr for Angular
-pnpm test           # 293 root tests + 14 Angular
+pnpm test           # vitest, then the Angular suite
 pnpm typecheck      # sources, tests and Angular specs
 pnpm lint           # biome
 pnpm test:coverage  # line and branch coverage
@@ -350,6 +369,17 @@ Run the store contract against Postgres with a throwaway database:
 ```sh
 BADGETRIP_PG_URL=postgres://... pnpm --filter @badgetrip-example/adapter-postgres test
 ```
+
+### Releasing
+
+All packages share one version. Bump it in every `package.json`, add a dated `## [x.y.z]` entry to the [CHANGELOG](CHANGELOG.md), merge to `main`, then tag:
+
+```sh
+git tag -a v0.0.1 -m v0.0.1
+git push origin v0.0.1
+```
+
+The [release workflow](.github/workflows/release.yml) checks the tag against every package version and the changelog, runs the full gate, publishes to npm with provenance, and creates the GitHub release from the changelog entry. It needs an `NPM_TOKEN` repository secret.
 
 ## License
 

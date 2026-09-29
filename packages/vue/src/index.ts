@@ -20,3 +20,9 @@ export {
   type EngineQuery,
 } from './composables.js';
 export { AchievementBadge, useAchievementIcon } from './badge.js';
+export {
+  UnlockNotifier,
+  useUnlocks,
+  type UnlockItem,
+  type UseUnlocksOptions,
+} from './notifier.js';

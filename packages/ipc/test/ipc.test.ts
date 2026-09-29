@@ -594,3 +594,149 @@ describe('connectEngine edge cases', () => {
     await expect(p).rejects.toMatchObject({ name: 'Error', message: 'remote call failed' });
   });
 });
+
+describe('unlock notifications', () => {
+  const firstWin = (id: string, actor = 'u1') => ev(id, actor);
+
+  it('reaches a remote onUnlock after the change notification', async () => {
+    const { remote } = pair();
+    const order: string[] = [];
+    remote.subscribe(() => order.push('changed'));
+    remote.onUnlock((u) =>
+      order.push(`unlocked ${u.map((x) => `${x.actor}:${x.code}`).join(',')}`),
+    );
+    await remote.emit(firstWin('a'));
+    await vi.waitFor(() => expect(order).toContain('unlocked u1:first'));
+    expect(order.indexOf('changed')).toBeLessThan(order.indexOf('unlocked u1:first'));
+  });
+
+  it('honours unlocks: false and a filter', async () => {
+    const off = pair(makeEngine(), { unlocks: false });
+    const offSeen = vi.fn();
+    off.remote.onUnlock(offSeen);
+    await off.remote.emit(firstWin('a'));
+
+    const only = pair(makeEngine(), { unlocks: (u) => u.actor === 'u2' });
+    const seen: string[] = [];
+    only.remote.onUnlock((u) => seen.push(...u.map((x) => x.actor)));
+    await only.remote.emit(firstWin('b', 'u1'));
+    await only.remote.emit(firstWin('c', 'u2'));
+    await vi.waitFor(() => expect(seen).toEqual(['u2']));
+    await tick();
+    expect(offSeen).not.toHaveBeenCalled();
+  });
+
+  it('rejects a bad unlocks option at startup', () => {
+    const { port1 } = new MessageChannel();
+    expect(() =>
+      serveEngine(makeEngine(), messagePortTransport(port1), { unlocks: 'yes' as never }),
+    ).toThrow(/unlocks/);
+    port1.close();
+  });
+
+  it('drops malformed and oversized unlock messages, keeping valid entries', () => {
+    let listener: ((m: unknown) => void) | undefined;
+    const remote = connectEngine({
+      send: () => {},
+      onMessage: (l) => {
+        listener = l;
+        return () => {};
+      },
+    });
+    cleanups.push(remote.dispose);
+    const got: unknown[] = [];
+    remote.onUnlock((u) => got.push(u));
+    listener?.({ type: 'unlocked', unlocks: 'nope' });
+    listener?.({
+      type: 'unlocked',
+      unlocks: Array.from({ length: 1001 }, () => ({ actor: 'a', code: 'b' })),
+    });
+    listener?.({
+      type: 'unlocked',
+      unlocks: [
+        { actor: 1, code: 'x' },
+        { actor: '', code: 'x' },
+      ],
+    });
+    listener?.({
+      type: 'unlocked',
+      unlocks: [
+        { actor: 'a', code: 'x' },
+        { actor: 'a' },
+        null,
+        { actor: 'a', code: 'y', extra: 1 },
+      ],
+    });
+    expect(got).toEqual([
+      [
+        { actor: 'a', code: 'x' },
+        { actor: 'a', code: 'y' },
+      ],
+    ]);
+  });
+
+  it('stops delivering after dispose on either side', async () => {
+    const client = pair();
+    const seen = vi.fn();
+    client.remote.onUnlock(seen);
+    client.remote.dispose();
+    await observe(client.engine).engine.emit(firstWin('a'));
+    await tick();
+    expect(seen).not.toHaveBeenCalled();
+
+    const engine = makeEngine();
+    const { port1, port2 } = new MessageChannel();
+    const stop = serveEngine(engine, messagePortTransport(port1));
+    const remote = connectEngine(messagePortTransport(port2));
+    cleanups.push(() => {
+      remote.dispose();
+      port1.close();
+      port2.close();
+    });
+    const later = vi.fn();
+    remote.onUnlock(later);
+    stop();
+    await observe(engine).engine.emit(firstWin('b'));
+    await tick();
+    expect(later).not.toHaveBeenCalled();
+  });
+
+  it('does not push unlocks by default when authorize scopes the peer', async () => {
+    const scoped = pair(makeEngine(), { authorize: () => true });
+    const seen = vi.fn();
+    scoped.remote.onUnlock(seen);
+    await scoped.remote.emit(firstWin('a'));
+    await tick();
+    expect(seen).not.toHaveBeenCalled();
+
+    const opted = pair(makeEngine(), { authorize: () => true, unlocks: (u) => u.actor === 'u1' });
+    const got = vi.fn();
+    opted.remote.onUnlock(got);
+    await opted.remote.emit(firstWin('b'));
+    await vi.waitFor(() => expect(got).toHaveBeenCalledOnce());
+  });
+
+  it('delivers to every client sharing the engine', async () => {
+    const engine = makeEngine();
+    const a = pair(engine);
+    const b = pair(engine);
+    const got: string[] = [];
+    a.remote.onUnlock(() => got.push('a'));
+    b.remote.onUnlock(() => got.push('b'));
+    await observe(engine).engine.emit(firstWin('x'));
+    await vi.waitFor(() => expect(got.sort()).toEqual(['a', 'b']));
+  });
+});
+
+describe('change kinds', () => {
+  it('tells remote listeners which kind of call changed the state', async () => {
+    const { remote } = pair(makeEngine(), { methods: ['emit', 'seed', 'score'] }) as unknown as {
+      remote: RemoteEngine<'emit' | 'seed' | 'score'>;
+    };
+    const kinds: (string | undefined)[] = [];
+    remote.subscribe((kind) => kinds.push(kind));
+    await remote.emit(ev('a'));
+    await remote.seed({ scores: [] });
+    await vi.waitFor(() => expect(kinds).toEqual(['emit', 'seed']));
+  });
+});

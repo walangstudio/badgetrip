@@ -322,8 +322,10 @@ export function createEngine(config: EngineConfig) {
             rarity: def.rarity,
             points: def.points ?? 0,
             ...(def.series ? { series: def.series } : {}),
+            ...(def.celebration !== undefined ? { celebration: def.celebration } : {}),
             unlocked,
             ...(unlocked ? { unlockedAt: at } : {}),
+            ...(def.hidden && unlocked ? { hidden: true as const } : {}),
             concealed: false,
             progress: unlocked ? complete(def) : await ruleProgress(def.rule, ctx, cache),
           };

@@ -27,11 +27,11 @@ function Badges({ actor }: { actor: string }) {
 </BadgetripProvider>;
 ```
 
-Hooks (`useScore`, `useAchievements`, `useAchievementCatalog`, `useAchievementProgress`, `useLeaderboard`, `useStreak`, `useTier`, `useEscalator`, `useBadgetrip`) are re-exported from `@walangstudio/badgetrip-react` unchanged.
+Hooks (`useScore`, `useAchievements`, `useAchievementCatalog`, `useAchievementProgress`, `useLeaderboard`, `useStreak`, `useTier`, `useEscalator`, `useBadgetrip`, `useUnlocks`) are re-exported from `@walangstudio/badgetrip-react` unchanged. `useUnlocks` gives you the queue of new unlocks to draw a native celebration; the built-in overlay is web-only for now.
 
 ## Badge
 
-`AchievementBadge` props: `achievement`, `size` (dp, default 48), `showProgress` (default true), `style`.
+`AchievementBadge` props: `achievement`, `size` (dp, default 48), `showProgress` (default true), `showCount` ("3/5", default true), `formatCount`, `style`.
 
 - Built-in SVG icons render through `SvgXml`. RN `Image` cannot show SVG data URLs.
 - Other assets (PNG, WebP, GIF, remote URLs) render through `Image`. Remote `.svg` files are not supported; register their markup as a data URL instead.

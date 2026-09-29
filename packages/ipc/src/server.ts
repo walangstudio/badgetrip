@@ -1,4 +1,9 @@
-import { type Engine, type ObservedEngine, observe } from '@walangstudio/badgetrip-core';
+import {
+  type Engine,
+  type ObservedEngine,
+  type Unlock,
+  observe,
+} from '@walangstudio/badgetrip-core';
 import {
   DEFAULT_METHODS,
   REMOTE_METHODS,
@@ -21,6 +26,13 @@ export type ServeOptions = {
    * payload is unbounded storage growth per call. Default 65536.
    */
   maxPayloadSize?: number;
+  /**
+   * Push `{type:'unlocked', unlocks}` to the peer after changes that unlock achievements.
+   * It reveals actor ids and achievement codes. Default true, or false when `authorize`
+   * is set; a server shared by several users should pass a filter such as the peer's
+   * own actor.
+   */
+  unlocks?: boolean | ((unlock: Unlock) => boolean);
 };
 
 type Check = (v: unknown) => boolean;
@@ -76,6 +88,11 @@ export function serveEngine(
     }
   }
   const allowed = new Set<string>(methods);
+  // With authorize, peers are scoped per actor, so never broadcast unlocks unless asked.
+  const unlocks = opts.unlocks ?? !opts.authorize;
+  if (typeof unlocks !== 'boolean' && typeof unlocks !== 'function') {
+    throw new TypeError('serveEngine: unlocks must be a boolean or a function');
+  }
   const maxPayloadSize = opts.maxPayloadSize ?? 65536;
   let disposed = false;
 
@@ -123,14 +140,22 @@ export function serveEngine(
       (err) => reply({ id, ok: false, error: toWire(err) }),
     );
   });
-  const offChange = observed.subscribe(() =>
-    send({ type: 'changed', version: observed.getVersion() }),
+  const offChange = observed.subscribe((kind) =>
+    send({ type: 'changed', version: observed.getVersion(), ...(kind ? { kind } : {}) }),
   );
+  const offUnlock =
+    unlocks === false
+      ? undefined
+      : observed.onUnlock?.((batch) => {
+          const out = unlocks === true ? batch : batch.filter(unlocks);
+          if (out.length) send({ type: 'unlocked', unlocks: out });
+        });
 
   return () => {
     disposed = true;
     offMessage();
     offChange();
+    offUnlock?.();
   };
 }
 

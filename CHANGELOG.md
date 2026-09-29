@@ -2,9 +2,9 @@
 
 All notable changes to badgetrip are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [SemVer](https://semver.org/).
 
-## [0.0.1] - 2026-09-28
+## [0.0.1] - 2026-09-29
 
-First release. Not yet published to npm.
+First release. Packages are published under the `@walangstudio` npm org.
 
 ### Added
 
@@ -26,9 +26,20 @@ First release. Not yet published to npm.
 - **`@walangstudio/badgetrip-html`**: escaped `renderBadge` / `renderCatalog` strings for servers and htmx, and `<badgetrip-catalog>` / `<badgetrip-badge>` custom elements.
 - **`@walangstudio/badgetrip-ipc`**: serve an engine in one process and use it from another over MessagePort or Electron IPC, behind a method allowlist, argument checks, a size cap and an `authorize` hook.
 - **`@walangstudio/badgetrip-testing`**: `makeTestEngine`, a steppable clock, event and id helpers, and `runStoreContract`, the conformance suite for custom stores.
-- **Docs**: a getting-started guide and one guide per framework (React, React Native, Vue, Angular, HTML, htmx, Electron, Tauri), plus references for achievements, rules, architecture, store adapters and platform support.
-- **Examples**: `node-cli`, `react-spa`, `todont-extract` (a production 12-badge ruleset) and `adapter-postgres` (a store that passes the contract suite).
-- **Tooling**: 307 tests with line and branch coverage (`pnpm test:coverage`), typechecked tests, and CI running lint, build, typecheck, tests and the examples.
+- **Celebrations and progress**:
+  - **Unlock celebrations.** `createNotifier` in `@walangstudio/badgetrip-html` shows each unlock on top of the page: toasts in eight positions, a modal, or fullscreen with confetti, with optional sound (off by default, synthesized, no audio files). It is accessible (live region, dialog focus handling, reduced motion) and styled in a shadow root. `<UnlockNotifier>` in React and Vue, and `provideBadgetrip(engine, { notifier })` in Angular, mount it.
+  - `createCelebrationResolver` and `builtinSounds` in `@walangstudio/badgetrip-assets`: presets (`toast`, `modal`, `epic`, `quiet`, `secret`), layered by rarity, category, preset, series and code, with the whole config validated up front.
+  - A `celebration` preset key on achievements and tiers.
+  - `observe(engine).onUnlock` and `watchUnlocks` in `@walangstudio/badgetrip-core`. They report new unlocks from `emit` and `refresh`, never from `replay` or `seed`.
+  - `useUnlocks` for React, React Native and Vue, and `BadgetripService.unlocks()` for Angular, to build your own celebration UI.
+  - Secret mode: `splitConcealed`, `renderCatalog(views, { secret: true })` and `<badgetrip-catalog secret>` hide hidden achievements and count the ones left.
+  - `@walangstudio/badgetrip-ipc` forwards unlocks to clients. The `unlocks` option on `serveEngine` filters or disables them. It defaults to off when `authorize` is set, so a scoped server never broadcasts other users' unlocks.
+  - `safeSrc` in `@walangstudio/badgetrip-assets` vets image and audio URLs.
+  - **Progress you can see.** Every badge shows a "3/5" count under locked multi-step achievements (`showCount`, `formatCount`). Optional progress popups (`progress` in a celebration: `at` percentages or `every` N steps, with their own position, duration, sound and title) report progress before the unlock. `watchProgress` in core and `progressCount`/`crossesMilestone` in assets for custom UIs. Unlock toasts go ahead of waiting progress popups, which never crowd unlocks out of the queue.
+  - `subscribe` listeners receive the kind of change (`emit`, `refresh`, `replay`, `seed`), also over `@walangstudio/badgetrip-ipc`.
+- **Docs**: a getting-started guide and one guide per framework (React, React Native, Vue, Angular, HTML, htmx, Electron, Tauri), a celebrations guide, plus references for achievements, rules, architecture, store adapters and platform support.
+- **Examples**: `playground` (a browser sandbox: edit a config, fire events, watch the celebrations; nothing is saved), `node-cli`, `react-spa`, `todont-extract` (a production 12-badge ruleset) and `adapter-postgres` (a store that passes the contract suite).
+- **Tooling**: tests with line and branch coverage (`pnpm test:coverage`), typechecked tests, CI running lint, build, typecheck, tests and the examples, and a release workflow that publishes every package to npm with provenance when a `v*` tag is pushed.
 
 ### Decided
 

@@ -47,6 +47,10 @@ All are 24x24, drawn in `currentColor`, and tinted per tier (`bronze`, `silver`,
 | `resolver.missing(subjects)` | Icon keys the registry can't resolve. |
 | `displayIcon(asset, { unlocked, reducedMotion })` | The frame to show now: animated only when unlocked and motion is allowed. |
 | `svgs`, `svgToDataUrl`, `tierColors` | Raw markup, the encoder and the default tints. |
+| `createCelebrationResolver(opts)` | How each unlock is celebrated: layout, position, sound, confetti. See the [celebrations guide](../../docs/guide/celebrations.md). |
+| `progressCount(view, format?)`, `crossesMilestone(rule, from, to, target)` | The "3/5" badge label and the progress popup rule. |
+| `builtinSounds` | `chime`, `fanfare`, `sparkle`, `pop`, synthesized with Web Audio. |
+| `safeSrc(src, kind)` | Blanks script URLs and mismatched `data:` URLs for images and audio. |
 
 An override is either an icon key (a string) or an asset `{ src, still?, animated? }`. A bare URL string is treated as a key, so wrap URLs in `{ src }`. Any format an `<img>` takes works: GIF, APNG, WebP, PNG, SVG. Give animated icons a `still` frame, or they play in every state.
 

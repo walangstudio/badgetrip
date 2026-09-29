@@ -138,3 +138,55 @@ describe('renderCatalog', () => {
     ).toEqual(['false', 'true']);
   });
 });
+
+describe('secret mode', () => {
+  const views = [
+    view({ code: 'a' }),
+    view({ code: 'b', name: 'Hidden achievement', concealed: true }),
+    view({ code: 'c', name: 'Hidden achievement', concealed: true }),
+    view({ code: 'd', unlocked: true, hidden: true, name: 'Found' }),
+  ];
+
+  it('omits concealed achievements and counts them', () => {
+    const out = parse(renderCatalog(views, { secret: true }));
+    expect(out.querySelectorAll('figure')).toHaveLength(2);
+    expect(out.textContent).not.toContain('Hidden achievement');
+    const line = out.querySelector('[data-hidden-remaining]');
+    expect(line?.getAttribute('data-hidden-remaining')).toBe('2');
+    expect(line?.textContent).toBe('2 hidden achievements remaining');
+  });
+
+  it('uses the singular, a custom escaped label, and nothing when none are hidden', () => {
+    const one = parse(renderCatalog(views.slice(0, 2), { secret: true }));
+    expect(one.querySelector('[data-hidden-remaining]')?.textContent).toBe(
+      '1 hidden achievement remaining',
+    );
+    const custom = parse(
+      renderCatalog(views, { secret: true, secretLabel: (n) => `<i>${n}</i> secrets` }),
+    );
+    expect(custom.querySelector('i')).toBeNull();
+    expect(custom.querySelector('[data-hidden-remaining]')?.textContent).toBe('<i>2</i> secrets');
+    expect(renderCatalog([view()], { secret: true })).not.toContain('data-hidden-remaining');
+    expect(parse(renderCatalog(views)).querySelectorAll('figure')).toHaveLength(4);
+  });
+});
+
+describe('progress count', () => {
+  it('shows current/target under locked multi-step badges only', () => {
+    expect(badge(view()).querySelector('[data-count]')?.textContent).toBe('1/4');
+    expect(badge(view({ unlocked: true })).querySelector('[data-count]')).toBeNull();
+    expect(badge(view({ concealed: true })).querySelector('[data-count]')).toBeNull();
+    expect(
+      badge(view({ progress: { current: 0, target: 1, percent: 0 } })).querySelector(
+        '[data-count]',
+      ),
+    ).toBeNull();
+  });
+
+  it('can be hidden, reworded, and escapes the wording', () => {
+    expect(badge(view(), { showCount: false }).querySelector('[data-count]')).toBeNull();
+    const worded = badge(view(), { formatCount: (p) => `<b>${p.current}</b> of ${p.target}` });
+    expect(worded.querySelector('b')).toBeNull();
+    expect(worded.querySelector('[data-count]')?.textContent).toBe('<b>1</b> of 4');
+  });
+});

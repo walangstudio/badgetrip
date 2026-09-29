@@ -23,7 +23,7 @@ const one = renderBadge(view, { size: 64, reducedMotion: true, icons });
 
 `renderBadge(view, opts?)` returns a `<figure data-unlocked data-concealed>` with the icon (greyscale while locked), name, description, and a `<progress>` bar while locked and not concealed. It stretches to its grid cell so bars align. `renderCatalog(views, opts?)` wraps badges in a `repeat(auto-fill, minmax(140px, 1fr))` grid.
 
-Options: `icons` (a `createIconResolver(...)` from `@walangstudio/badgetrip-assets`), `reducedMotion` (animated icons show their still frame), `size` (px, default 48), `showProgress` (default true), `className`.
+Options: `icons` (a `createIconResolver(...)` from `@walangstudio/badgetrip-assets`), `reducedMotion` (animated icons show their still frame), `size` (px, default 48), `showProgress` (default true), `showCount` (a "3/5" count under locked multi-step achievements, default true), `formatCount`, `className`.
 
 Every text and attribute value is HTML-escaped. Icon URLs with `javascript:`, `vbscript:` or a non-image `data:` scheme render as an empty `src`.
 
@@ -48,6 +48,18 @@ await observed.engine.emit({ id, actor: 'u1', type: 'win', ts: Date.now(), paylo
 Elements re-render after every emit/replay/seed/refresh on `observed.engine`, when `actor` or `code` changes, and when `prefers-reduced-motion` flips. They unsubscribe when removed. A failed query (e.g. an unknown `code`) dispatches a bubbling `badgetrip-error` event with the error as `detail`.
 
 `defineBadgetripElements` is safe to import and call on the server (no DOM, it does nothing). Calling it again with the same prefix is a no-op: the first engine stays bound.
+
+## Unlock celebrations
+
+```ts
+import { createNotifier } from '@walangstudio/badgetrip-html';
+
+const notifier = createNotifier(observed, { actor: 'u1', sound: true });
+```
+
+Shows each unlock on top of the page: toasts in any corner or edge, a modal, or fullscreen with confetti, with optional sound. It's configured per achievement through `createCelebrationResolver` from `@walangstudio/badgetrip-assets`. The overlay lives in a shadow root, announces unlocks to screen readers, and respects `prefers-reduced-motion`. Outside a browser it's a no-op. `notifier.update({ sound, volume, muted })` changes sound in place, and `dispose()` removes it. Full options are in the [celebrations guide](../../docs/guide/celebrations.md).
+
+Secret mode: `renderCatalog(views, { secret: true })` or `<badgetrip-catalog secret>` leaves hidden, locked achievements out and adds a "2 hidden achievements remaining" line.
 
 ## htmx
 
