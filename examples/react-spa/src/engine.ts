@@ -108,4 +108,6 @@ export const ACTOR = 'demo_user';
 // Toasts bottom-right by default; `celebration` on an achievement picks a preset.
 export const celebrations = createCelebrationResolver({
   default: { position: 'bottom-right' },
+  // Show progress on the way to each Prolific tier.
+  overrides: { prolific: { progress: { every: 1 } } },
 });

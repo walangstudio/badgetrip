@@ -126,3 +126,19 @@ describe('AchievementBadgeComponent', () => {
     expect(src(view({ unlocked: true }))).toBe('/a.png');
   });
 });
+
+describe('AchievementBadgeComponent progress count', () => {
+  it('shows 1/4 by default, and can be hidden or reworded', () => {
+    setReducedMotion(false);
+    const count = (a: AchievementView, inputs: Record<string, unknown> = {}) =>
+      render(a, inputs).el.querySelector('[data-count]')?.textContent;
+    expect(count(view())).toBe('1/4');
+    expect(count(view(), { showCount: false })).toBeUndefined();
+    expect(
+      count(view(), {
+        formatCount: (p: { current: number; target: number }) => `${p.current} of ${p.target}`,
+      }),
+    ).toBe('1 of 4');
+    expect(count(view({ unlocked: true }))).toBeUndefined();
+  });
+});

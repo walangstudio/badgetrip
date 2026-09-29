@@ -50,7 +50,7 @@ function LogHabit({ userId }: { userId: string }) {
 | `useAchievements(actor)` | Unlocked codes with unlock times. |
 | `useAchievementCatalog(actor)` | Every achievement, ready to draw. |
 | `useAchievementProgress(actor, code)` | `{ current, target, percent }`. |
-| `AchievementBadge` | Props: `achievement`, `size` (px, default 48), `showProgress` (default true), `className`. Greyscale while locked, labelled progress bar, stretches to its grid cell. |
+| `AchievementBadge` | Props: `achievement`, `size` (px, default 48), `showProgress` (default true), `showCount` ("3/5", default true), `formatCount`, `className`. Greyscale while locked, labelled progress bar, stretches to its grid cell. |
 | `IconProvider` | Takes a `createIconResolver(...)` from [`@badgetrip/assets`](../assets) to swap icons. |
 | `<UnlockNotifier />` | Celebrates unlocks on top of the page. Takes the notifier options (`actor`, `celebrations`, `sound`, ...); see the [celebrations guide](../../docs/guide/celebrations.md). |
 | `useUnlocks({ actor?, celebrations? })` | `{ queue, dismiss, clear }` of new unlocks with their resolved celebration, for your own UI. |

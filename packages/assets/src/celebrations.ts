@@ -14,6 +14,35 @@ export type Position =
 
 export type ConfettiSpec = { particles?: number; colors?: string[]; duration?: number };
 
+/**
+ * Progress popups ("Create 5 todos: 3/5") before an achievement unlocks. Give `at`
+ * (percentages) or `every` (steps); `true` means `{ at: [25, 50, 75] }`.
+ */
+export type ProgressSpec = {
+  /** Show a popup when progress passes these percentages, 1-99. */
+  at?: number[];
+  /** Show a popup every N steps. */
+  every?: number;
+  /** Where progress toasts appear. Defaults to the celebration's position. */
+  position?: Position;
+  /** Milliseconds on screen. Default 3000. */
+  duration?: number;
+  /** A sound key, or `false`. Default `false`: progress is quiet. */
+  sound?: string | false;
+  /** Heading above the name. Default "Achievement progress". */
+  title?: string;
+};
+
+/** A resolved progress popup setting. */
+export type ProgressCelebration = {
+  at: number[] | null;
+  every: number | null;
+  position: Position;
+  duration: number;
+  sound: SoundAsset | null;
+  title: string;
+};
+
 /** How an unlock is celebrated. Every field is optional; layers merge field by field. */
 export type CelebrationSpec = {
   /** `toast` (default), `modal`, or `fullscreen`. */
@@ -29,6 +58,8 @@ export type CelebrationSpec = {
   title?: string;
   /** Record the unlock without any popup or sound. */
   quiet?: boolean;
+  /** Progress popups before the unlock. Off by default. */
+  progress?: boolean | ProgressSpec;
 };
 
 /** A fully resolved celebration, ready for a notifier. */
@@ -40,6 +71,8 @@ export type Celebration = {
   confetti: Required<ConfettiSpec> | null;
   title: string;
   quiet: boolean;
+  /** Progress popup settings, or null when off. */
+  progress: ProgressCelebration | null;
 };
 
 /** What the resolver needs from an achievement. `AchievementView` fits. */
@@ -78,6 +111,8 @@ export type CelebrationResolver = {
   resolve(subject: CelebrationSubject): Celebration;
   /** Preset keys the given achievements name that no preset defines. */
   missing(subjects: CelebrationSubject[]): string[];
+  /** Whether any layer turns on progress popups, so notifiers can skip watching progress. */
+  usesProgress(): boolean;
 };
 
 const LAYOUTS = new Set<string>(['toast', 'modal', 'fullscreen']);
@@ -100,7 +135,9 @@ const SPEC_KEYS = new Set([
   'confetti',
   'title',
   'quiet',
+  'progress',
 ]);
+const PROGRESS_KEYS = new Set(['at', 'every', 'position', 'duration', 'sound', 'title']);
 const CONFETTI_KEYS = new Set(['particles', 'colors', 'duration']);
 const OPTION_KEYS = new Set(['default', 'presets', 'overrides', 'categories', 'rarity', 'sounds']);
 
@@ -110,7 +147,10 @@ const DEFAULT_CONFETTI: Required<ConfettiSpec> = {
   duration: 3000,
 };
 
-const BASE: Required<Omit<CelebrationSpec, 'confetti'>> & { confetti: boolean } = {
+const BASE: Required<Omit<CelebrationSpec, 'confetti' | 'progress'>> & {
+  confetti: boolean;
+  progress: boolean | ProgressSpec;
+} = {
   layout: 'toast',
   position: 'top-right',
   duration: 5000,
@@ -118,6 +158,7 @@ const BASE: Required<Omit<CelebrationSpec, 'confetti'>> & { confetti: boolean } 
   confetti: false,
   title: 'Achievement unlocked',
   quiet: false,
+  progress: false,
 };
 
 const BUILTIN_PRESETS: Record<string, CelebrationSpec> = {
@@ -204,6 +245,7 @@ function checkSpec(where: string, spec: unknown, sounds: Map<string, SoundAsset>
   }
   if (s.quiet !== undefined && typeof s.quiet !== 'boolean')
     errs.push(`${where}.quiet must be true or false`);
+  checkProgress(`${where}.progress`, s.progress, sounds, errs);
   const c = s.confetti;
   if (c === undefined || typeof c === 'boolean') return;
   if (!isObj(c)) return void errs.push(`${where}.confetti must be true, false or an object`);
@@ -226,6 +268,48 @@ function checkSpec(where: string, spec: unknown, sounds: Map<string, SoundAsset>
   }
   if (c.duration !== undefined && !isInt(c.duration, 100, 10_000)) {
     errs.push(`${where}.confetti.duration must be 100-10000 ms`);
+  }
+}
+
+function checkProgress(where: string, v: unknown, sounds: Map<string, SoundAsset>, errs: string[]) {
+  if (v === undefined || typeof v === 'boolean') return;
+  if (!isObj(v)) return void errs.push(`${where} must be true, false or an object`);
+  for (const k of Object.keys(v)) {
+    if (!PROGRESS_KEYS.has(k)) errs.push(`${where}: unknown option '${k}'`);
+  }
+  const p = v as ProgressSpec;
+  if (
+    p.at !== undefined &&
+    !(
+      Array.isArray(p.at) &&
+      p.at.length >= 1 &&
+      p.at.length <= 20 &&
+      p.at.every((n) => isNum(n, 1, 99))
+    )
+  ) {
+    errs.push(`${where}.at must be 1-20 percentages from 1 to 99`);
+  }
+  if (p.every !== undefined && !isInt(p.every, 1, 1_000_000)) {
+    errs.push(`${where}.every must be a whole number of steps, 1 or more`);
+  }
+  if (p.position !== undefined && !POSITIONS.has(p.position)) {
+    errs.push(`${where}.position must be one of ${[...POSITIONS].join(', ')}`);
+  }
+  if (p.duration !== undefined && !isInt(p.duration, 0, 600_000)) {
+    errs.push(`${where}.duration must be a whole number of ms, 0-600000`);
+  }
+  if (
+    p.sound !== undefined &&
+    p.sound !== false &&
+    !(typeof p.sound === 'string' && sounds.has(p.sound))
+  ) {
+    errs.push(`${where}: unknown sound '${String(p.sound)}'`);
+  }
+  if (
+    p.title !== undefined &&
+    !(typeof p.title === 'string' && p.title.length >= 1 && p.title.length <= 200)
+  ) {
+    errs.push(`${where}.title must be 1-200 characters`);
   }
 }
 
@@ -291,6 +375,7 @@ export function createCelebrationResolver(
       ];
       const m = Object.assign({ ...base }, ...layers.filter(Boolean)) as typeof base;
       const c = m.confetti;
+      const pr = m.progress === true ? {} : m.progress;
       return {
         layout: m.layout,
         position: m.position,
@@ -299,8 +384,26 @@ export function createCelebrationResolver(
         confetti: c ? { ...DEFAULT_CONFETTI, ...(c === true ? {} : c) } : null,
         title: m.title,
         quiet: m.quiet,
+        progress: pr
+          ? {
+              at: pr.at ?? (pr.every === undefined ? [25, 50, 75] : null),
+              every: pr.every ?? null,
+              position: pr.position ?? m.position,
+              duration: pr.duration ?? 3000,
+              sound: pr.sound ? (sounds.get(pr.sound) ?? null) : null,
+              title: pr.title ?? 'Achievement progress',
+            }
+          : null,
       };
     },
+    usesProgress: () =>
+      [
+        base,
+        ...presets.values(),
+        ...overrides.values(),
+        ...categories.values(),
+        ...rarity.values(),
+      ].some((spec) => !!spec.progress),
     missing(subjects) {
       const keys = new Set<string>();
       for (const s of subjects) {

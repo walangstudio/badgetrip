@@ -23,7 +23,7 @@ const one = renderBadge(view, { size: 64, reducedMotion: true, icons });
 
 `renderBadge(view, opts?)` returns a `<figure data-unlocked data-concealed>` with the icon (greyscale while locked), name, description, and a `<progress>` bar while locked and not concealed. It stretches to its grid cell so bars align. `renderCatalog(views, opts?)` wraps badges in a `repeat(auto-fill, minmax(140px, 1fr))` grid.
 
-Options: `icons` (a `createIconResolver(...)` from `@badgetrip/assets`), `reducedMotion` (animated icons show their still frame), `size` (px, default 48), `showProgress` (default true), `className`.
+Options: `icons` (a `createIconResolver(...)` from `@badgetrip/assets`), `reducedMotion` (animated icons show their still frame), `size` (px, default 48), `showProgress` (default true), `showCount` (a "3/5" count under locked multi-step achievements, default true), `formatCount`, `className`.
 
 Every text and attribute value is HTML-escaped. Icon URLs with `javascript:`, `vbscript:` or a non-image `data:` scheme render as an empty `src`.
 

@@ -48,6 +48,7 @@ All are 24x24, drawn in `currentColor`, and tinted per tier (`bronze`, `silver`,
 | `displayIcon(asset, { unlocked, reducedMotion })` | The frame to show now: animated only when unlocked and motion is allowed. |
 | `svgs`, `svgToDataUrl`, `tierColors` | Raw markup, the encoder and the default tints. |
 | `createCelebrationResolver(opts)` | How each unlock is celebrated: layout, position, sound, confetti. See the [celebrations guide](../../docs/guide/celebrations.md). |
+| `progressCount(view, format?)`, `crossesMilestone(rule, from, to, target)` | The "3/5" badge label and the progress popup rule. |
 | `builtinSounds` | `chime`, `fanfare`, `sparkle`, `pop`, synthesized with Web Audio. |
 | `safeSrc(src, kind)` | Blanks script URLs and mismatched `data:` URLs for images and audio. |
 

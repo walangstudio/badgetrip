@@ -1,8 +1,10 @@
 import {
+  type CountFormat,
   type IconAsset,
   type IconResolver,
   createIconResolver,
   displayIcon,
+  progressCount,
 } from '@badgetrip/assets';
 import type { AchievementView } from '@badgetrip/core';
 import { type ReactNode, createContext, useContext, useMemo, useSyncExternalStore } from 'react';
@@ -50,6 +52,10 @@ export type AchievementBadgeProps = {
   size?: number;
   /** Show a progress bar while locked. Default true. */
   showProgress?: boolean;
+  /** Show a "3/5" count under locked multi-step achievements. Default true. */
+  showCount?: boolean;
+  /** Wording of the count, e.g. `(p) => \`${p.current} of ${p.target}\``. */
+  formatCount?: CountFormat;
   className?: string;
 };
 
@@ -61,9 +67,12 @@ export function AchievementBadge({
   achievement: a,
   size = 48,
   showProgress = true,
+  showCount = true,
+  formatCount,
   className,
 }: AchievementBadgeProps) {
   const icon = useAchievementIcon(a);
+  const count = showCount ? progressCount(a, formatCount) : null;
   return (
     <figure
       className={className}
@@ -97,6 +106,11 @@ export function AchievementBadge({
           aria-label={`${a.name}: ${a.progress.percent}%`}
         />
       ) : null}
+      {count === null ? null : (
+        <small data-count style={{ fontSize: 12, opacity: 0.7 }}>
+          {count}
+        </small>
+      )}
     </figure>
   );
 }

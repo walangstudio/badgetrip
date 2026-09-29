@@ -180,3 +180,31 @@ describe('AchievementBadge layout props', () => {
     expect(fig.style.height).toBe('100%');
   });
 });
+
+describe('AchievementBadge progress count', () => {
+  it('shows 1/4 by default, and can be hidden or reworded', () => {
+    setReducedMotion(false);
+    const count = (el: ReturnType<typeof render>) =>
+      el.container.querySelector('[data-count]')?.textContent;
+    expect(count(render(<AchievementBadge achievement={view()} />))).toBe('1/4');
+    cleanup();
+    expect(
+      count(render(<AchievementBadge achievement={view()} showCount={false} />)),
+    ).toBeUndefined();
+    cleanup();
+    expect(
+      count(
+        render(
+          <AchievementBadge
+            achievement={view()}
+            formatCount={(p) => `${p.current} of ${p.target}`}
+          />,
+        ),
+      ),
+    ).toBe('1 of 4');
+    cleanup();
+    expect(
+      count(render(<AchievementBadge achievement={view({ unlocked: true })} />)),
+    ).toBeUndefined();
+  });
+});

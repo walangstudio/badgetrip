@@ -13,6 +13,8 @@ export {
   type ConfettiSpec,
   type Layout,
   type Position,
+  type ProgressCelebration,
+  type ProgressSpec,
 } from './celebrations.js';
 
 /**
@@ -172,3 +174,10 @@ export function displayIcon(
   if (!asset.animated || !asset.still || (state.unlocked && !state.reducedMotion)) return asset;
   return { ...asset, src: asset.still, animated: false };
 }
+export {
+  crossesMilestone,
+  defaultCountFormat,
+  progressCount,
+  type CountFormat,
+  type CountSubject,
+} from './progress.js';

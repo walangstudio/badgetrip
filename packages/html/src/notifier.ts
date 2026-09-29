@@ -1,10 +1,13 @@
 import {
   type Celebration,
   type CelebrationResolver,
+  type CountFormat,
   type IconResolver,
   type Position,
   createCelebrationResolver,
   createIconResolver,
+  crossesMilestone,
+  defaultCountFormat,
   displayIcon,
   safeSrc,
 } from '@badgetrip/assets';
@@ -12,7 +15,9 @@ import {
   type AchievementView,
   type Engine,
   type Observable,
+  type ProgressChange,
   toObservable,
+  watchProgress,
   watchUnlocks,
 } from '@badgetrip/core';
 import { createPlayer } from './audio.js';
@@ -23,6 +28,8 @@ export type NotifierLabels = {
   close?: string;
   /** Text of the summary toast when too many unlocks queue up. */
   more?: (count: number) => string;
+  /** Wording of the count in progress popups. Default "3/5". */
+  count?: CountFormat;
 };
 
 export type NotifierOptions = {
@@ -30,7 +37,10 @@ export type NotifierOptions = {
   celebrations?: CelebrationResolver;
   /** Icons for the popups. Defaults to the built-in pack. */
   icons?: IconResolver;
-  /** Only celebrate this actor (the signed-in user), or actors the predicate accepts. */
+  /**
+   * Only celebrate this actor (the signed-in user), or actors the predicate accepts.
+   * Progress popups need a single actor, so they only run when this is a string.
+   */
   actor?: string | ((actor: string) => boolean);
   /** Play sounds. Default false; browsers also need one user gesture first. */
   sound?: boolean;
@@ -112,6 +122,8 @@ const CSS = `
   color:var(--badgetrip-accent,#f9c74f)}
 .name{font-weight:700}
 .description{opacity:.8}
+.count{font-size:12px;opacity:.8;font-variant-numeric:tabular-nums}
+.bar{display:block;width:100%;height:4px;margin-top:4px;accent-color:var(--badgetrip-accent,#f9c74f)}
 .close{position:absolute;top:6px;right:6px;width:28px;height:28px;border:0;border-radius:50%;
   background:transparent;color:inherit;font:18px/1 system-ui,sans-serif;cursor:pointer}
 .close:hover{background:rgba(255,255,255,.12)}
@@ -197,12 +209,15 @@ function checkOptions(o: NotifierOptions) {
     if (l.more !== undefined && typeof l.more !== 'function') {
       throw new TypeError(`${where}: labels.more must be a function`);
     }
+    if (l.count !== undefined && typeof l.count !== 'function') {
+      throw new TypeError(`${where}: labels.count must be a function`);
+    }
   }
 }
 
 const NOOP: Notifier = { update() {}, show() {}, dismissAll() {}, dispose() {} };
 
-type Item = { view?: AchievementView; more?: number; c: Celebration };
+type Item = { view?: AchievementView; more?: number; progress?: boolean; c: Celebration };
 
 /**
  * Celebrate unlocks on top of the page: toasts in any corner or edge, a modal, or
@@ -229,6 +244,11 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
   const closeLabel = opts.labels?.close ?? 'Close';
   const moreText =
     opts.labels?.more ?? ((n: number) => `+${n} more achievement${n === 1 ? '' : 's'} unlocked`);
+  const countText = (v: AchievementView) =>
+    (opts.labels?.count ?? defaultCountFormat)({
+      current: Math.min(v.progress.current, v.progress.target),
+      target: v.progress.target,
+    });
   let sound = opts.sound ?? false;
   let volume = opts.volume ?? 0.5;
   let muted = opts.muted ?? false;
@@ -312,7 +332,16 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
     if (idPrefix) title.id = `${idPrefix}-title`;
     if (item.view) {
       text.append(title, el('div', 'name', item.view.name));
-      if (item.view.description) text.appendChild(el('div', 'description', item.view.description));
+      if (item.progress) {
+        text.appendChild(el('div', 'count', countText(item.view)));
+        const bar = el('progress', 'bar') as HTMLProgressElement;
+        bar.max = 100;
+        bar.value = item.view.progress.percent;
+        bar.setAttribute('aria-hidden', 'true');
+        text.appendChild(bar);
+      } else if (item.view.description) {
+        text.appendChild(el('div', 'description', item.view.description));
+      }
     } else {
       text.appendChild(el('div', 'name', moreText(item.more ?? 0)));
     }
@@ -375,6 +404,7 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
   const showToast = (item: Item) => {
     const pos = item.c.position;
     const box = el('div', 'toast');
+    if (item.progress) box.dataset.kind = 'progress';
     const close = content(box, item);
     visible.set(pos, (visible.get(pos) ?? 0) + 1);
     regions.get(pos)?.appendChild(box);
@@ -492,6 +522,59 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
     }
   };
 
+  // Progress popups: a quieter toast when an achievement passes a milestone.
+  const progressed = (changes: ProgressChange[]) => {
+    if (disposed) return;
+    const items: Item[] = [];
+    // A tier series reports progress toward its next tier only, not every tier.
+    const next = new Map<string, number>();
+    for (const { view } of changes) {
+      if (!view.series) continue;
+      const seen = next.get(view.series.code);
+      if (seen === undefined || view.series.index < seen)
+        next.set(view.series.code, view.series.index);
+    }
+    for (const { view, from } of changes) {
+      if (view.progress.countable === false) continue;
+      if (view.series && next.get(view.series.code) !== view.series.index) continue;
+      const c = celebrations.resolve(view);
+      const p = c.progress;
+      if (
+        c.quiet ||
+        !p ||
+        !crossesMilestone(p, from, view.progress.current, view.progress.target)
+      ) {
+        continue;
+      }
+      items.push({
+        view,
+        progress: true,
+        c: {
+          ...c,
+          layout: 'toast',
+          position: p.position,
+          duration: p.duration,
+          sound: p.sound,
+          title: p.title,
+          confetti: null,
+        },
+      });
+    }
+    if (!items.length) return;
+    announce(
+      items
+        .map((i) => `${i.c.title}: ${i.view?.name}, ${countText(i.view as AchievementView)}`)
+        .join('. '),
+    );
+    const loud = items.find((i) => i.c.sound)?.c.sound;
+    if (sound && !muted && loud) player.play(loud, volume);
+    for (const item of items) queueToast(item);
+  };
+  const stopProgress =
+    typeof opts.actor === 'string' && celebrations.usesProgress?.()
+      ? watchProgress(observed, { actor: opts.actor, onError: opts.onError }, progressed)
+      : () => {};
+
   const stopWatching = watchUnlocks(
     observed,
     { actor: opts.actor, onError: opts.onError },
@@ -526,6 +609,7 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
     dispose() {
       if (disposed) return;
       stopWatching();
+      stopProgress();
       dismissAll();
       disposed = true;
       player.dispose();

@@ -35,6 +35,7 @@ badgetrip keeps the rules in one place and stays out of everything else:
 - **Swappable icons.** 18 built-in SVG icons, including an animated one. Override any icon per achievement, per tier series or per category, with GIFs, PNGs or your own SVGs.
 - **Accessible badges.** Every adapter shows a still frame while locked or when the user prefers reduced motion, and labels its progress bar.
 - **Unlock celebrations.** Toasts in any corner or edge, a modal, or fullscreen with confetti, with optional sound. Configure once, override per achievement. Secret mode hides hidden achievements the way consoles do.
+- **Progress you can see.** Badges show "3/5" under locked achievements, and optional popups report progress along the way, every step or at milestones.
 - **Cross-process.** `@badgetrip/ipc` runs the engine in Electron's main process or a worker, behind a method allowlist and an `authorize` hook.
 
 ## Install

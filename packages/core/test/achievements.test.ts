@@ -205,11 +205,13 @@ describe('engine.progress', () => {
       current: 0,
       target: 2,
       percent: 37,
+      countable: false,
     });
     expect(await engine.progress('u', 'either')).toEqual({
       current: 0,
       target: 1,
       percent: 50,
+      countable: false,
     });
     expect(await engine.progress('u', 'explorer')).toEqual({
       current: 1,

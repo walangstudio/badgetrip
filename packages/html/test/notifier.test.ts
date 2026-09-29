@@ -653,3 +653,168 @@ describe('review fixes', () => {
     expect(ramps).toEqual([]);
   });
 });
+
+describe('progress popups', () => {
+  const todos = () =>
+    makeTestEngine({
+      achievements: defineAchievements({
+        todo_5: { name: 'Create 5 todos', description: '', when: rules.count('todo', 5) },
+        todo_4q: {
+          name: 'Quiet four',
+          description: '',
+          celebration: 'quiet',
+          when: rules.count('todo', 4),
+        },
+      }),
+    }).engine;
+  const todo = (id: string, actor = 'u') => ({ id, actor, type: 'todo', ts: 0, payload: {} });
+  const progressToasts = () =>
+    [...shadow().querySelectorAll('.toast[data-kind="progress"]')].map(
+      (t) => `${t.querySelector('.name')?.textContent} ${t.querySelector('.count')?.textContent}`,
+    );
+  const ready = () => new Promise((r) => setTimeout(r, 10));
+
+  it('are off by default', async () => {
+    const observed = observe(todos());
+    make(observed, { actor: 'u' });
+    await ready();
+    await observed.engine.emit(todo('1'));
+    await ready();
+    expect(progressToasts()).toEqual([]);
+  });
+
+  it('show every step up to the unlock, which gets the normal celebration instead', async () => {
+    const observed = observe(todos());
+    make(observed, {
+      actor: 'u',
+      maxVisible: 5,
+      celebrations: createCelebrationResolver({
+        overrides: { todo_5: { progress: { every: 1 } } },
+      }),
+    });
+    await ready();
+    for (const id of ['1', '2', '3', '4', '5']) await observed.engine.emit(todo(id));
+    await vi.waitFor(() => expect(toasts()).toContain('Create 5 todos'));
+    await ready();
+    expect(progressToasts()).toEqual([
+      'Create 5 todos 1/5',
+      'Create 5 todos 2/5',
+      'Create 5 todos 3/5',
+      'Create 5 todos 4/5',
+    ]);
+    const unlock = [...shadow().querySelectorAll('.toast:not([data-kind])')];
+    expect(unlock.map((t) => t.querySelector('.title')?.textContent)).toEqual([
+      'Achievement unlocked',
+    ]);
+  });
+
+  it('fire only at the configured marks, with custom wording and a quieter default look', async () => {
+    const observed = observe(todos());
+    make(observed, {
+      actor: 'u',
+      labels: { count: (p) => `${p.current} of ${p.target}` },
+      celebrations: createCelebrationResolver({ default: { progress: { at: [50] } } }),
+    });
+    await ready();
+    for (const id of ['1', '2', '3']) await observed.engine.emit(todo(id));
+    await vi.waitFor(() => expect(progressToasts()).toEqual(['Create 5 todos 3 of 5']));
+    const toast = shadow().querySelector('.toast[data-kind="progress"]');
+    expect(toast?.querySelector('.title')?.textContent).toBe('Achievement progress');
+    expect((toast?.querySelector('progress') as HTMLProgressElement).value).toBe(60);
+    expect(toast?.closest('[data-position]')?.getAttribute('data-position')).toBe('top-right');
+  });
+
+  it('need a single actor, and skip quiet achievements', async () => {
+    const observed = observe(todos());
+    const celebrations = createCelebrationResolver({ default: { progress: { every: 1 } } });
+    make(observed, { actor: (a) => a === 'u', celebrations });
+    make(observed, { actor: 'u', celebrations });
+    await ready();
+    await observed.engine.emit(todo('1'));
+    await vi.waitFor(() =>
+      expect(shadow(1).querySelectorAll('.toast[data-kind="progress"]')).toHaveLength(1),
+    );
+    expect(shadow(0).querySelectorAll('.toast')).toHaveLength(0);
+    expect(shadow(1).textContent).not.toContain('Quiet four');
+  });
+
+  it('play their own sound only when set, and stop with dispose', async () => {
+    const ramps: number[] = [];
+    vi.stubGlobal(
+      'AudioContext',
+      class {
+        state = 'running';
+        currentTime = 0;
+        destination = {};
+        resume = () => Promise.resolve();
+        close = () => Promise.resolve();
+        createOscillator = () => ({
+          type: '',
+          frequency: { setValueAtTime() {} },
+          connect() {},
+          start() {},
+          stop() {},
+        });
+        createGain = () => ({
+          gain: {
+            setValueAtTime() {},
+            linearRampToValueAtTime: (v: number) => ramps.push(v),
+            exponentialRampToValueAtTime() {},
+          },
+          connect() {},
+        });
+      },
+    );
+    const observed = observe(todos());
+    const n = make(observed, {
+      actor: 'u',
+      sound: true,
+      celebrations: createCelebrationResolver({
+        default: { progress: { every: 1, sound: 'pop' } },
+      }),
+    });
+    await ready();
+    await observed.engine.emit(todo('1'));
+    await vi.waitFor(() => expect(ramps).toHaveLength(2));
+    n.dispose();
+    await observed.engine.emit(todo('2'));
+    await ready();
+    expect(ramps).toHaveLength(2);
+  });
+});
+
+describe('progress popups for tiers and combined rules', () => {
+  it('report only the next tier of a series, and never all/any rules', async () => {
+    const { engine: e } = makeTestEngine({
+      achievements: defineAchievements({
+        prolific: {
+          name: 'Prolific ({tier})',
+          description: '',
+          when: rules.count('todo'),
+          tiers: { bronze: 2, silver: 5, gold: 10 },
+        },
+        combo: {
+          name: 'Combo',
+          description: '',
+          when: rules.all(rules.count('todo', 3), rules.count('other', 1)),
+        },
+      }),
+    });
+    const observed = observe(e);
+    make(observed, {
+      actor: 'u',
+      maxVisible: 5,
+      celebrations: createCelebrationResolver({ default: { progress: { every: 1 } } }),
+    });
+    await new Promise((r) => setTimeout(r, 10));
+    await observed.engine.emit({ id: '1', actor: 'u', type: 'todo', ts: 0, payload: {} });
+    await vi.waitFor(() =>
+      expect(shadow().querySelectorAll('.toast[data-kind="progress"]')).toHaveLength(1),
+    );
+    await new Promise((r) => setTimeout(r, 10));
+    const names = [...shadow().querySelectorAll('.toast[data-kind="progress"] .name')].map(
+      (n) => n.textContent,
+    );
+    expect(names).toEqual(['Prolific (bronze)']);
+  });
+});

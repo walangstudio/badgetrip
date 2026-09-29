@@ -90,3 +90,58 @@ export function splitConcealed(views: AchievementView[]): {
   const shown = views.filter((v) => !v.concealed);
   return { views: shown, hiddenRemaining: views.length - shown.length };
 }
+
+/** A locked achievement that moved forward, and the step count it moved from. */
+export type ProgressChange = { view: AchievementView; from: number };
+
+/**
+ * Call `cb` when locked, visible achievements of `actor` move forward. One catalog
+ * query per change; changes that land while a query runs fold into the next one. The
+ * first query only sets the baseline, so earlier progress is never reported.
+ */
+export function watchProgress(
+  source: Observable,
+  opts: { actor: string; onError?: (err: unknown) => void },
+  cb: (changes: ProgressChange[]) => void,
+): () => void {
+  const { actor, onError = rethrow } = opts;
+  if (typeof actor !== 'string' || !actor) {
+    throw new TypeError('watchProgress: actor must be a non-empty string');
+  }
+  let last: Map<string, number> | undefined;
+  let running = false;
+  let again = false;
+  let stopped = false;
+  const run = async () => {
+    if (running) {
+      again = true;
+      return;
+    }
+    running = true;
+    try {
+      do {
+        again = false;
+        const views = await source.engine.catalog(actor);
+        if (stopped) return;
+        const prev = last;
+        last = new Map(views.map((v) => [v.code, v.progress.current]));
+        if (!prev) continue;
+        const changes = views
+          .filter((v) => !v.unlocked && !v.concealed && prev.has(v.code))
+          .filter((v) => v.progress.current > (prev.get(v.code) as number))
+          .map((view) => ({ view, from: prev.get(view.code) as number }));
+        if (changes.length) cb(changes);
+      } while (again && !stopped);
+    } catch (err) {
+      if (!stopped) onError(err);
+    } finally {
+      running = false;
+    }
+  };
+  void run();
+  const off = source.subscribe(() => void run());
+  return () => {
+    stopped = true;
+    off();
+  };
+}
