@@ -1,0 +1,17 @@
+packages:
+  - 'packages/*'
+  - 'examples/*'
+allowBuilds:
+  '@biomejs/biome': true
+  esbuild: true
+  better-sqlite3: true
+  '@parcel/watcher': false # via ng-packagr > sass
+  lmdb: false # via @angular/build
+  msgpackr-extract: false
+packageExtensions:
+  '@analogjs/vite-plugin-angular':
+    peerDependencies:
+      typescript: '*'
+overrides:
+  # metro (react-native dev dependency, never run here) pins image-size 1, which has DoS advisories.
+  'metro>image-size': ^2.0.3

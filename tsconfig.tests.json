@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@walangstudio/badgetrip-core": ["./packages/core/src/index.ts"],
+      "@walangstudio/badgetrip-testing": ["./packages/testing/src/index.ts"],
+      "@walangstudio/badgetrip-assets": ["./packages/assets/src/index.ts"],
+      "@walangstudio/badgetrip-react": ["./packages/react/src/index.ts"],
+      "@walangstudio/badgetrip-react-native": ["./packages/react-native/src/index.ts"],
+      "@walangstudio/badgetrip-vue": ["./packages/vue/src/index.ts"],
+      "@walangstudio/badgetrip-html": ["./packages/html/src/index.ts"],
+      "@walangstudio/badgetrip-ipc": ["./packages/ipc/src/index.ts"]
+    }
+  },
+  "include": ["packages/*/test", "vitest.config.ts"],
+  "exclude": ["packages/angular"]
+}
