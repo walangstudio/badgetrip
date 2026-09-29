@@ -36,6 +36,10 @@ header p {
   color: var(--muted);
 }
 
+header a {
+  color: var(--accent);
+}
+
 main {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
