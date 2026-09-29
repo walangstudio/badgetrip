@@ -1,6 +1,6 @@
 {
   "name": "@badgetrip/assets",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Default SVG achievement icons for badgetrip plus a key-based override resolver. Framework-agnostic.",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,11 +12,21 @@
     }
   },
   "files": ["dist", "src"],
+  "publishConfig": {
+    "access": "public"
+  },
   "sideEffects": false,
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc -b"
   },
   "keywords": ["gamification", "achievements", "icons", "svg"],
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/walangstudio/badgetrip.git",
+    "directory": "packages/assets"
+  },
+  "homepage": "https://github.com/walangstudio/badgetrip#readme",
+  "bugs": "https://github.com/walangstudio/badgetrip/issues"
 }

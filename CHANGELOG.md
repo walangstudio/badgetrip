@@ -2,7 +2,9 @@
 
 All notable changes to badgetrip are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [SemVer](https://semver.org/).
 
-## [Unreleased]
+## [0.0.2] - 2026-09-29
+
+First release published to npm.
 
 ### Added
 
@@ -17,6 +19,8 @@ All notable changes to badgetrip are documented here. The format follows [Keep a
 - `examples/playground`: a browser sandbox with an editable JSON config, event buttons, a live badge grid and the real notifier. Nothing is saved.
 - **Progress you can see.** Every badge shows a "3/5" count under locked multi-step achievements (`showCount`, `formatCount`). Optional progress popups (`progress` in a celebration: `at` percentages or `every` N steps, with their own position, duration, sound and title) report progress before the unlock. `watchProgress` in core and `progressCount`/`crossesMilestone` in assets for custom UIs. Unlock toasts go ahead of waiting progress popups, which never crowd unlocks out of the queue.
 - `subscribe` listeners receive the kind of change (`emit`, `refresh`, `replay`, `seed`), also over `@badgetrip/ipc`.
+- A release workflow publishes every package to npm with provenance when a `v*` tag is pushed, and creates the GitHub release from this changelog.
+- Package manifests carry `repository`, `homepage` and `bugs`, so links work on npm.
 
 ## [0.0.1] - 2026-09-28
 

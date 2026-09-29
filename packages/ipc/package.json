@@ -1,6 +1,6 @@
 {
   "name": "@badgetrip/ipc",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Run a badgetrip engine in one process (Electron main, a worker, a server) and use it from another over a message transport.",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,6 +12,9 @@
     }
   },
   "files": ["dist", "src"],
+  "publishConfig": {
+    "access": "public"
+  },
   "sideEffects": false,
   "scripts": {
     "build": "tsc -b",
@@ -20,5 +23,12 @@
   "dependencies": {
     "@badgetrip/core": "workspace:*"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/walangstudio/badgetrip.git",
+    "directory": "packages/ipc"
+  },
+  "homepage": "https://github.com/walangstudio/badgetrip#readme",
+  "bugs": "https://github.com/walangstudio/badgetrip/issues"
 }

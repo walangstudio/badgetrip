@@ -1,6 +1,6 @@
 {
   "name": "@badgetrip/html",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Framework-agnostic HTML for badgetrip: badge and catalog strings for servers and htmx, plus custom elements.",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,6 +12,9 @@
     }
   },
   "files": ["dist", "src"],
+  "publishConfig": {
+    "access": "public"
+  },
   "sideEffects": false,
   "scripts": {
     "build": "tsc -b",
@@ -25,5 +28,12 @@
     "jsdom": "^25.0.1"
   },
   "keywords": ["gamification", "html", "htmx", "web-components", "ssr"],
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/walangstudio/badgetrip.git",
+    "directory": "packages/html"
+  },
+  "homepage": "https://github.com/walangstudio/badgetrip#readme",
+  "bugs": "https://github.com/walangstudio/badgetrip/issues"
 }

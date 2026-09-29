@@ -1,6 +1,6 @@
 {
   "name": "@badgetrip/angular",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Angular signals, provider and badge component for badgetrip. Standalone, zoneless-ready.",
   "type": "module",
   "sideEffects": false,
@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "publishConfig": {
+    "access": "public",
     "directory": "dist"
   },
   "dependencies": {
@@ -39,5 +40,12 @@
     "vitest": "^4.1.11"
   },
   "keywords": ["gamification", "angular", "signals"],
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/walangstudio/badgetrip.git",
+    "directory": "packages/angular"
+  },
+  "homepage": "https://github.com/walangstudio/badgetrip#readme",
+  "bugs": "https://github.com/walangstudio/badgetrip/issues"
 }
