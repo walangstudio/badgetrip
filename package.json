@@ -12,6 +12,9 @@
     "test": "vitest run && pnpm --filter @walangstudio/badgetrip-angular test",
     "test:watch": "vitest",
     "lint": "biome check .",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs && pnpm --filter @badgetrip-example/playground build && node -e \"require('node:fs').cpSync('examples/playground/dist', 'docs/.vitepress/dist/playground', { recursive: true })\"",
+    "docs:preview": "vitepress preview docs",
     "format": "biome format --write ."
   },
   "devDependencies": {
@@ -20,6 +23,7 @@
     "@vitest/coverage-v8": "4.1.11",
     "jsdom": "25.0.1",
     "typescript": "5.7.2",
+    "vitepress": "2.0.0-alpha.20",
     "vitest": "4.1.11"
   },
   "packageManager": "pnpm@11.3.0",

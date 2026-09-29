@@ -40,7 +40,7 @@ badgetrip keeps the rules in one place and stays out of everything else:
 
 ## Try it
 
-The [playground](examples/playground) is a sandbox: edit a config, fire events, and watch achievements unlock with the real celebrations. Nothing is saved.
+The [playground](https://walangstudio.github.io/badgetrip/playground/) is a sandbox: edit a config, fire events, and watch achievements unlock with the real celebrations. Nothing is saved. To run it locally:
 
 ```sh
 pnpm install
@@ -330,6 +330,8 @@ It returns what changed: score deltas, streak changes, escalations and newly unl
 
 ## Documentation
 
+The docs are published at [walangstudio.github.io/badgetrip](https://walangstudio.github.io/badgetrip/). The same files live in [`docs/`](docs).
+
 | Doc | Covers |
 |---|---|
 | [Guides](docs/guide/getting-started.md) | Getting started, then one guide per framework |
@@ -362,6 +364,7 @@ pnpm test           # vitest, then the Angular suite
 pnpm typecheck      # sources, tests and Angular specs
 pnpm lint           # biome
 pnpm test:coverage  # line and branch coverage
+pnpm docs:dev       # the docs site at localhost:5173/badgetrip/
 ```
 
 Run the store contract against Postgres with a throwaway database:
