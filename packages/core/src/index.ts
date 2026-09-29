@@ -6,7 +6,14 @@ export {
   type ObservedEngine,
   type Observable,
   type EngineApi,
+  type Unlock,
 } from './observe.js';
+export {
+  watchUnlocks,
+  splitConcealed,
+  type UnlockedView,
+  type WatchUnlocksOptions,
+} from './unlocks.js';
 export { systemClock, fixedClock, utcDayStart } from './clock.js';
 export { evalTier } from './tiers.js';
 export { evalEscalator } from './escalators.js';

@@ -75,3 +75,7 @@ provideBadgetrip(engine, { icons: createIconResolver({ icons: { medal: { src: '/
 ```
 
 For a badge of your own design, `achievementIcon(signal)` returns a signal of the right image.
+
+## Celebrate unlocks
+
+Add `notifier` to the provider: `provideBadgetrip(engine, { notifier: () => ({ actor: inject(Auth).userId }) })`. A function runs in the injection context, so it can read services; a plain options object works too. Every unlock then pops up on top of the page, in the browser only. `inject(BADGETRIP_NOTIFIER)?.update({ sound: true })` changes sound settings later. See [Unlock celebrations](celebrations.md). For a custom UI, `inject(BadgetripService).unlocks()` returns a signal queue.

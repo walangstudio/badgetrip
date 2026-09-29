@@ -77,3 +77,7 @@ app.use(createBadgetrip(engine, { icons: createIconResolver({ icons: { medal: { 
 ```
 
 For a custom badge, `useAchievementIcon(() => badge)` gives you the right image for the badge's state.
+
+## Celebrate unlocks
+
+Put `<UnlockNotifier :actor="userId" />` in your root component, and every unlock pops up on top of the page. See [Unlock celebrations](celebrations.md) for per-achievement looks and sound. `useUnlocks()` gives you the queue for a custom UI.

@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@badgetrip/assets": "workspace:*",
     "@badgetrip/core": "workspace:*",
     "@badgetrip/react": "workspace:*",
     "react": "^18.3.1",

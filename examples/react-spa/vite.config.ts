@@ -11,6 +11,7 @@ export default defineConfig({
       '@badgetrip/core': r('../../packages/core/src/index.ts'),
       '@badgetrip/react': r('../../packages/react/src/index.ts'),
       '@badgetrip/assets': r('../../packages/assets/src/index.ts'),
+      '@badgetrip/html': r('../../packages/html/src/index.ts'),
     },
   },
 });

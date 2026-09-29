@@ -27,7 +27,7 @@ function Badges({ actor }: { actor: string }) {
 </BadgetripProvider>;
 ```
 
-Hooks (`useScore`, `useAchievements`, `useAchievementCatalog`, `useAchievementProgress`, `useLeaderboard`, `useStreak`, `useTier`, `useEscalator`, `useBadgetrip`) are re-exported from `@badgetrip/react` unchanged.
+Hooks (`useScore`, `useAchievements`, `useAchievementCatalog`, `useAchievementProgress`, `useLeaderboard`, `useStreak`, `useTier`, `useEscalator`, `useBadgetrip`, `useUnlocks`) are re-exported from `@badgetrip/react` unchanged. `useUnlocks` gives you the queue of new unlocks to draw a native celebration; the built-in overlay is web-only for now.
 
 ## Badge
 

@@ -1,6 +1,7 @@
 import type { Event } from '@badgetrip/core';
 import {
   AchievementBadge,
+  UnlockNotifier,
   useAchievementCatalog,
   useBadgetrip,
   useLeaderboard,
@@ -8,7 +9,8 @@ import {
   useStreak,
   useTier,
 } from '@badgetrip/react';
-import { ACTOR } from './engine.js';
+import { useState } from 'react';
+import { ACTOR, celebrations } from './engine.js';
 
 let seq = 0;
 const id = () => `evt_${(seq++).toString().padStart(6, '0')}`;
@@ -23,6 +25,7 @@ export function App() {
   const achievements = useAchievementCatalog(ACTOR);
   const points = achievements.reduce((n, a) => n + (a.unlocked ? a.points : 0), 0);
   const board = useLeaderboard('honor_board');
+  const [sound, setSound] = useState(false);
 
   const emit = (type: string, payload: Record<string, unknown> = {}) => {
     const e: Event = { id: id(), actor: ACTOR, type, ts: Date.now(), payload };
@@ -39,6 +42,10 @@ export function App() {
       }}
     >
       <h1>badgetrip demo</h1>
+      <UnlockNotifier actor={ACTOR} celebrations={celebrations} sound={sound} />
+      <label style={{ display: 'block', marginBottom: '1rem' }}>
+        <input type="checkbox" checked={sound} onChange={(e) => setSound(e.target.checked)} /> sound
+      </label>
 
       <section
         style={{

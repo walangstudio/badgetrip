@@ -124,6 +124,8 @@ That's the whole loop: `emit` when something happens, `catalog` when you draw. T
 - [Electron](electron.md)
 - [Tauri](tauri.md)
 
+To pop up a toast, a modal or a fullscreen moment when something unlocks, see [Unlock celebrations](celebrations.md).
+
 ## Before you ship
 
 The `memory*Store` functions keep everything in memory, which is perfect for trying things out and useless after a restart. For real data, implement the four store interfaces against your own database. [ADAPTERS.md](../ADAPTERS.md) explains the contract, and [examples/adapter-postgres](../../examples/adapter-postgres) is a complete Postgres version you can copy.

@@ -14,6 +14,9 @@ export {
   useAchievementProgress,
   IconProvider,
   useIconResolver,
+  useUnlocks,
+  type UnlockItem,
+  type UseUnlocksOptions,
 } from '@badgetrip/react';
 export {
   AchievementBadge,

@@ -100,3 +100,7 @@ function Pill({ badge }: { badge: AchievementView }) {
 ```
 
 To change the icons themselves, wrap the tree in `<IconProvider icons={createIconResolver({ ... })}>`. See [Getting started](getting-started.md#your-own-icons).
+
+## Celebrate unlocks
+
+Render `<UnlockNotifier actor={userId} />` once inside the provider, and every unlock pops up on top of the page. Toasts, modals, fullscreen confetti and sound are all configurable per achievement; see [Unlock celebrations](celebrations.md). For your own celebration UI, `useUnlocks()` gives you the queue instead.

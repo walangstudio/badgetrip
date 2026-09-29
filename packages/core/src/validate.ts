@@ -132,6 +132,9 @@ export function assertDefinitions(d: Required<Definitions>, stores: Stores): voi
     if (a.points !== undefined && !(Number.isFinite(a.points) && a.points >= 0)) {
       errs.push(`achievement ${a.code}: points must be a finite number >= 0`);
     }
+    if (a.celebration !== undefined && !isStr(a.celebration)) {
+      errs.push(`achievement ${a.code}: celebration must be a non-empty string`);
+    }
   }
 
   if (errs.length) throw new Error(`invalid badgetrip definitions:\n  ${errs.join('\n  ')}`);

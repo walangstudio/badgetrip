@@ -45,7 +45,7 @@ export function defineBadgetripElements(
   };
 
   abstract class BadgetripElement extends HTMLElement {
-    static observedAttributes = ['actor', 'code'];
+    static observedAttributes = ['actor', 'code', 'secret'];
     #unsubscribe?: () => void;
     #motion?: MediaQueryList;
     #run = 0;
@@ -93,7 +93,11 @@ export function defineBadgetripElements(
     `${prefix}-catalog`,
     class extends BadgetripElement {
       protected async html(actor: string, reducedMotion: boolean) {
-        return renderCatalog(await catalog(actor), { icons, reducedMotion });
+        return renderCatalog(await catalog(actor), {
+          icons,
+          reducedMotion,
+          secret: this.hasAttribute('secret'),
+        });
       }
     },
   );

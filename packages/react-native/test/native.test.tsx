@@ -20,6 +20,7 @@ import {
   useAchievementProgress,
   useBadgetrip,
   useScore,
+  useUnlocks,
 } from '../src/index.js';
 
 const motion = vi.hoisted(() => ({
@@ -230,6 +231,42 @@ describe('re-exported hooks', () => {
       ['winner.silver', false],
     ]);
     expect(last?.silver).toBe(33);
+  });
+});
+
+describe('useUnlocks', () => {
+  it('queues new unlocks with their celebration for a native overlay', async () => {
+    const engine = createEngine({
+      events: memoryEventStore(),
+      scores: memoryScoreStore(),
+      achievements: memoryAchievementStore(),
+      streaks: memoryStreakStore(),
+      clock: { now: () => 0 },
+      definitions: {
+        achievements: defineAchievements({
+          big: { name: 'Big', description: '', celebration: 'epic', when: rules.count('win', 1) },
+        }),
+      },
+    });
+    let latest: ReturnType<typeof useUnlocks> | undefined;
+    let emit: ReturnType<typeof useBadgetrip>['emit'] | undefined;
+    function Probe() {
+      emit = useBadgetrip().emit;
+      latest = useUnlocks();
+      return null;
+    }
+    await mount(
+      <BadgetripProvider engine={engine}>
+        <Probe />
+      </BadgetripProvider>,
+    );
+    await act(async () => {
+      await emit?.({ id: 'w', actor: 'u', type: 'win', ts: 0, payload: {} });
+    });
+    await act(async () => {});
+    expect(latest?.queue.map((q) => [q.view.name, q.celebration.layout])).toEqual([
+      ['Big', 'fullscreen'],
+    ]);
   });
 });
 

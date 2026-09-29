@@ -3,7 +3,7 @@
 ![version](https://img.shields.io/badge/version-0.0.1-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![typescript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)
-![tests](https://img.shields.io/badge/tests-307%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-400%20passing-brightgreen)
 ![core deps](https://img.shields.io/badge/core%20deps-0-brightgreen)
 
 Points, streaks, tiers, leaderboards and achievements for any JavaScript app. You tell the engine what your users did. It works out their score, their streaks, and which badges they just unlocked.
@@ -34,6 +34,7 @@ badgetrip keeps the rules in one place and stays out of everything else:
 - **Validated up front.** `createEngine` rejects typos and impossible rules before the first event.
 - **Swappable icons.** 18 built-in SVG icons, including an animated one. Override any icon per achievement, per tier series or per category, with GIFs, PNGs or your own SVGs.
 - **Accessible badges.** Every adapter shows a still frame while locked or when the user prefers reduced motion, and labels its progress bar.
+- **Unlock celebrations.** Toasts in any corner or edge, a modal, or fullscreen with confetti, with optional sound. Configure once, override per achievement. Secret mode hides hidden achievements the way consoles do.
 - **Cross-process.** `@badgetrip/ipc` runs the engine in Electron's main process or a worker, behind a method allowlist and an `authorize` hook.
 
 ## Install
@@ -228,6 +229,14 @@ const badges = await engine.catalog('ana');
 - `engine.replay(log)` rebuilds state from a stored event log, in `ts` order.
 - `engine.seed(snapshot)` loads existing scores, achievements and streaks when moving from another system.
 
+### Celebrate unlocks
+
+```tsx
+<UnlockNotifier actor="ana" sound={soundOn} celebrations={celebrations} />
+```
+
+Each unlock pops up on top of the page. Give an achievement `celebration: 'epic'` for fullscreen confetti, or `'modal'`, `'quiet'`, or your own preset. The [celebrations guide](docs/guide/celebrations.md) covers positions, sounds, secret mode and styling.
+
 ### Show it in your UI
 
 Wrap the engine once with the package for your stack, and every badge updates after each `emit`. See [Frameworks](#frameworks).
@@ -316,6 +325,7 @@ It returns what changed: score deltas, streak changes, escalations and newly unl
 | Doc | Covers |
 |---|---|
 | [Guides](docs/guide/getting-started.md) | Getting started, then one guide per framework |
+| [Celebrations](docs/guide/celebrations.md) | Unlock popups, sound, confetti, secret mode |
 | [ACHIEVEMENTS.md](docs/ACHIEVEMENTS.md) | Achievement config, tiers, hidden badges, progress, icons |
 | [RULES.md](docs/RULES.md) | Every rule kind, filters and the path convention |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Interfaces, data model, the emit pipeline, determinism |
@@ -339,7 +349,7 @@ Requires Node 22 and pnpm 11.
 ```sh
 pnpm install
 pnpm build          # tsc -b, then ng-packagr for Angular
-pnpm test           # 293 root tests + 14 Angular
+pnpm test           # 382 root tests + 18 Angular
 pnpm typecheck      # sources, tests and Angular specs
 pnpm lint           # biome
 pnpm test:coverage  # line and branch coverage

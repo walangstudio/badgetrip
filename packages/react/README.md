@@ -52,6 +52,8 @@ function LogHabit({ userId }: { userId: string }) {
 | `useAchievementProgress(actor, code)` | `{ current, target, percent }`. |
 | `AchievementBadge` | Props: `achievement`, `size` (px, default 48), `showProgress` (default true), `className`. Greyscale while locked, labelled progress bar, stretches to its grid cell. |
 | `IconProvider` | Takes a `createIconResolver(...)` from [`@badgetrip/assets`](../assets) to swap icons. |
+| `<UnlockNotifier />` | Celebrates unlocks on top of the page. Takes the notifier options (`actor`, `celebrations`, `sound`, ...); see the [celebrations guide](../../docs/guide/celebrations.md). |
+| `useUnlocks({ actor?, celebrations? })` | `{ queue, dismiss, clear }` of new unlocks with their resolved celebration, for your own UI. |
 | `useAchievementIcon(view)` | The icon to show right now, for building your own badge. Animated icons show their still frame while locked or when the user prefers reduced motion. |
 
 Hooks re-query when their arguments change, and only the latest result applies. A failed query throws during render, so wrap the part of the page that uses it in an error boundary.

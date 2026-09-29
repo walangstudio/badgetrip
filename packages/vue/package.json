@@ -19,7 +19,8 @@
   },
   "dependencies": {
     "@badgetrip/assets": "workspace:*",
-    "@badgetrip/core": "workspace:*"
+    "@badgetrip/core": "workspace:*",
+    "@badgetrip/html": "workspace:*"
   },
   "peerDependencies": {
     "vue": "^3.4.0"

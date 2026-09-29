@@ -210,3 +210,38 @@ describe('element review fixes', () => {
     expect(spy).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('<catalog secret>', () => {
+  it('leaves hidden achievements out and says how many remain', async () => {
+    const observed = observe(
+      createEngine({
+        events: memoryEventStore(),
+        scores: memoryScoreStore(),
+        achievements: memoryAchievementStore(),
+        streaks: memoryStreakStore(),
+        clock: { now: () => 0 },
+        definitions: {
+          achievements: defineAchievements({
+            first: { name: 'First', description: '', when: rules.count('win', 1) },
+            shh: { name: 'Shh', description: '', hidden: true, when: rules.count('hush', 1) },
+          }),
+        },
+      }),
+    );
+    const p = prefix();
+    defineBadgetripElements(observed, { tagPrefix: p });
+    const el = mount(`<${p}-catalog actor="u1" secret></${p}-catalog>`);
+    await vi.waitFor(() =>
+      expect(el.querySelector('[data-hidden-remaining]')?.textContent).toBe(
+        '1 hidden achievement remaining',
+      ),
+    );
+    expect(el.querySelectorAll('figure')).toHaveLength(1);
+    el.removeAttribute('secret');
+    await vi.waitFor(() => expect(el.querySelectorAll('figure')).toHaveLength(2));
+    await observed.engine.emit({ id: 'h', actor: 'u1', type: 'hush', ts: 0, payload: {} });
+    el.setAttribute('secret', '');
+    await vi.waitFor(() => expect(el.querySelectorAll('figure')).toHaveLength(2));
+    expect(el.querySelector('[data-hidden-remaining]')).toBeNull();
+  });
+});

@@ -2,6 +2,19 @@
 
 All notable changes to badgetrip are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **Unlock celebrations.** `createNotifier` in `@badgetrip/html` shows each unlock on top of the page: toasts in eight positions, a modal, or fullscreen with confetti, with optional sound (off by default, synthesized, no audio files). It is accessible (live region, dialog focus handling, reduced motion) and styled in a shadow root. `<UnlockNotifier>` in React and Vue, and `provideBadgetrip(engine, { notifier })` in Angular, mount it.
+- `createCelebrationResolver` and `builtinSounds` in `@badgetrip/assets`: presets (`toast`, `modal`, `epic`, `quiet`, `secret`), layered by rarity, category, preset, series and code, with the whole config validated up front.
+- A `celebration` preset key on achievements and tiers.
+- `observe(engine).onUnlock` and `watchUnlocks` in `@badgetrip/core`. They report new unlocks from `emit` and `refresh`, never from `replay` or `seed`.
+- `useUnlocks` for React, React Native and Vue, and `BadgetripService.unlocks()` for Angular, to build your own celebration UI.
+- Secret mode: `splitConcealed`, `renderCatalog(views, { secret: true })` and `<badgetrip-catalog secret>` hide hidden achievements and count the ones left.
+- `@badgetrip/ipc` forwards unlocks to clients. The new `unlocks` option on `serveEngine` filters or disables them. It defaults to off when `authorize` is set, so a scoped server never broadcasts other users' unlocks.
+- `safeSrc` moved to `@badgetrip/assets`, with audio support.
+
 ## [0.0.1] - 2026-09-28
 
 First release. Not yet published to npm.

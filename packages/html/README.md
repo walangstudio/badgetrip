@@ -49,6 +49,18 @@ Elements re-render after every emit/replay/seed/refresh on `observed.engine`, wh
 
 `defineBadgetripElements` is safe to import and call on the server (no DOM, it does nothing). Calling it again with the same prefix is a no-op: the first engine stays bound.
 
+## Unlock celebrations
+
+```ts
+import { createNotifier } from '@badgetrip/html';
+
+const notifier = createNotifier(observed, { actor: 'u1', sound: true });
+```
+
+Shows each unlock on top of the page: toasts in any corner or edge, a modal, or fullscreen with confetti, with optional sound. It's configured per achievement through `createCelebrationResolver` from `@badgetrip/assets`. The overlay lives in a shadow root, announces unlocks to screen readers, and respects `prefers-reduced-motion`. Outside a browser it's a no-op. `notifier.update({ sound, volume, muted })` changes sound in place, and `dispose()` removes it. Full options are in the [celebrations guide](../../docs/guide/celebrations.md).
+
+Secret mode: `renderCatalog(views, { secret: true })` or `<badgetrip-catalog secret>` leaves hidden, locked achievements out and adds a "2 hidden achievements remaining" line.
+
 ## htmx
 
 Render on the server, swap on change. No client-side engine.

@@ -99,6 +99,8 @@ export type AchievementDef = {
   category?: string;
   /** Set on achievements expanded from a tiered spec by `defineAchievements`. */
   series?: { code: string; tier: string; index: number; of: number };
+  /** Celebration preset key, resolved by `createCelebrationResolver` in `@badgetrip/assets`. */
+  celebration?: string;
 };
 
 /** How close an actor is to an achievement. `percent` is 0-100, floored. */
@@ -118,6 +120,9 @@ export type AchievementView = {
   unlockedAt?: number;
   /** True while a hidden achievement is still locked, so its details are withheld. */
   concealed: boolean;
+  /** Set on a hidden achievement once it is unlocked (a secret achievement). */
+  hidden?: true;
+  celebration?: string;
   progress: Progress;
 };
 

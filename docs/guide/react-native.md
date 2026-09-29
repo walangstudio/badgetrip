@@ -60,3 +60,7 @@ export default function App() {
 - **Animated SVGs** (like the built-in `sparkle-animated`) don't move, because `react-native-svg` doesn't run SVG animations. Use a GIF or WebP for motion.
 
 Screen readers get each progress bar as a real progress bar, labelled like "On a roll: 43%".
+
+## Celebrate unlocks
+
+The built-in overlay is web-only for now. `useUnlocks()` gives you the queue of new unlocks, each with its resolved celebration (layout, sound, confetti), so you can draw your own with `Modal` and `Animated`. See [Unlock celebrations](celebrations.md#your-own-celebration-ui).

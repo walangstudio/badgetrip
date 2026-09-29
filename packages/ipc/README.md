@@ -57,6 +57,7 @@ The peer is untrusted: a compromised renderer can send any message on the channe
 | Shape checks per method | Query args must be strings (`leaderboard`'s `now` a finite number); `emit` takes one object, which `assertEvent` then validates. Extra args are rejected. Malformed envelopes (no id, non-string method, non-array args) are dropped silently. |
 | `maxPayloadSize` (default 65536, measured as `JSON.stringify(args).length`) | Events are persisted forever, so an uncapped payload is unbounded storage growth per call. Non-JSON args (cycles, BigInt) are rejected too. It does not stop the transport itself deserializing a huge message. |
 | `authorize(method, args)` | Per-call hook after the checks above; anything but `true` denies with `Forbidden`. Bind a peer to its own actor here. |
+| `unlocks` (default `true`, or `false` when `authorize` is set) | New unlocks are pushed to the peer as `{type: 'unlocked', unlocks}` so celebration notifiers work remotely. They reveal actor ids and codes, so a server that scopes peers with `authorize` sends none unless you pass a filter such as `(u) => u.actor === peerUser`. The client ignores oversized batches and malformed entries. |
 | Errors cross as `{name, message}` | No stack traces. Store errors (e.g. SQL messages) are forwarded as-is; wrap your stores if their messages are sensitive. |
 | No `eval`, no dynamic code | Messages are data only. |
 

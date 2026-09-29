@@ -19,7 +19,8 @@
   },
   "dependencies": {
     "@badgetrip/assets": "workspace:*",
-    "@badgetrip/core": "workspace:*"
+    "@badgetrip/core": "workspace:*",
+    "@badgetrip/html": "workspace:*"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0"
