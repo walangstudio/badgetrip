@@ -791,7 +791,7 @@ describe('progress popups for tiers and combined rules', () => {
           name: 'Prolific ({tier})',
           description: '',
           when: rules.count('todo'),
-          tiers: { bronze: 2, silver: 5, gold: 10 },
+          tiers: { bronze: 5, silver: 10, gold: 20 },
         },
         combo: {
           name: 'Combo',
@@ -807,15 +807,16 @@ describe('progress popups for tiers and combined rules', () => {
       celebrations: createCelebrationResolver({ default: { progress: { every: 1 } } }),
     });
     await new Promise((r) => setTimeout(r, 10));
-    await observed.engine.emit({ id: '1', actor: 'u', type: 'todo', ts: 0, payload: {} });
-    await vi.waitFor(() =>
-      expect(shadow().querySelectorAll('.toast[data-kind="progress"]')).toHaveLength(1),
-    );
-    await new Promise((r) => setTimeout(r, 10));
+    // Three todos take combo from 0/2 to 1/2 sub-rules: it moves, but is not countable.
+    for (const id of ['1', '2', '3']) {
+      await observed.engine.emit({ id, actor: 'u', type: 'todo', ts: 0, payload: {} });
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    expect((await observed.engine.progress('u', 'combo')).current).toBe(1);
     const names = [...shadow().querySelectorAll('.toast[data-kind="progress"] .name')].map(
       (n) => n.textContent,
     );
-    expect(names).toEqual(['Prolific (bronze)']);
+    expect(names).toEqual(['Prolific (bronze)', 'Prolific (bronze)', 'Prolific (bronze)']);
   });
 });
 
@@ -848,5 +849,128 @@ describe('toast priority', () => {
     await new Promise((r) => setTimeout(r, 10));
     (shadow().querySelector('.toast button') as HTMLButtonElement).click();
     expect(toasts()).toEqual(['First level']);
+  });
+});
+
+describe('progress review fixes', () => {
+  const setup = (
+    celebrations = createCelebrationResolver({ default: { progress: { every: 1, duration: 0 } } }),
+  ) => {
+    const { engine: e } = makeTestEngine({
+      achievements: defineAchievements({
+        many: { name: 'Many', description: '', when: rules.count('item', 50) },
+        ladder: {
+          name: 'Ladder ({tier})',
+          description: '',
+          when: rules.count('step'),
+          tiers: { bronze: 2, silver: 5 },
+        },
+        level: { name: 'Level', description: '', when: rules.count('level', 1) },
+      }),
+    });
+    const observed = observe(e);
+    return { observed, celebrations };
+  };
+  const emit = (o: ReturnType<typeof observe>, id: string, type: string) =>
+    o.engine.emit({ id, actor: 'u', type, ts: 0, payload: {} });
+  const settle = () => new Promise((r) => setTimeout(r, 10));
+  const progressNames = () =>
+    [...shadow().querySelectorAll('.toast[data-kind="progress"]')].map(
+      (t) => `${t.querySelector('.name')?.textContent} ${t.querySelector('.count')?.textContent}`,
+    );
+
+  it('rejects an empty actor before touching the page', () => {
+    expect(() => createNotifier(observe(engine()), { actor: '' })).toThrow(/non-empty string/);
+    expect(hosts()).toHaveLength(0);
+  });
+
+  it('never lets a burst of progress push a real unlock into "+N more"', async () => {
+    const { observed, celebrations } = setup();
+    make(observed, { actor: 'u', celebrations, maxVisible: 1, maxQueue: 2 });
+    await settle();
+    for (let i = 0; i < 6; i++) {
+      await emit(observed, `i${i}`, 'item');
+      await settle();
+    }
+    await emit(observed, 'l', 'level');
+    await settle();
+    const waitingText = () => {
+      const seen: string[] = [];
+      for (let i = 0; i < 6; i++) {
+        const t = shadow().querySelector('.toast');
+        if (!t) break;
+        seen.push(t.querySelector('.name')?.textContent ?? '');
+        (t.querySelector('button') as HTMLButtonElement).click();
+      }
+      return seen;
+    };
+    const seen = waitingText();
+    expect(seen).toContain('Level');
+    expect(seen.join(' ')).not.toMatch(/more achievement/);
+    expect(seen.length).toBeLessThanOrEqual(4);
+  });
+
+  it('keeps one waiting count per achievement, the newest', async () => {
+    const { observed, celebrations } = setup();
+    make(observed, { actor: 'u', celebrations, maxVisible: 1 });
+    await settle();
+    for (let i = 0; i < 4; i++) {
+      await emit(observed, `i${i}`, 'item');
+      await settle();
+    }
+    expect(progressNames()).toEqual(['Many 1/50']);
+    (shadow().querySelector('.toast button') as HTMLButtonElement).click();
+    expect(progressNames()).toEqual(['Many 4/50']);
+  });
+
+  it('skips the next tier when a tier just unlocked, and drops its stale waiting count', async () => {
+    const { observed, celebrations } = setup();
+    make(observed, { actor: 'u', celebrations, maxVisible: 1 });
+    await settle();
+    await emit(observed, 's1', 'step');
+    await settle();
+    expect(progressNames()).toEqual(['Ladder (bronze) 1/2']);
+    await emit(observed, 's2', 'step');
+    await settle();
+    (shadow().querySelector('.toast button') as HTMLButtonElement).click();
+    expect(toasts()).toEqual(['Ladder (bronze)']);
+    (shadow().querySelector('.toast button') as HTMLButtonElement).click();
+    expect(toasts()).toEqual([]);
+  });
+
+  it('announces a progress update and an unlock that land together', async () => {
+    const { engine: e } = makeTestEngine({
+      achievements: defineAchievements({
+        first: { name: 'First item', description: '', when: rules.count('item', 1) },
+        many: { name: 'Many', description: '', when: rules.count('item', 50) },
+      }),
+    });
+    const observed = observe(e);
+    make(observed, {
+      actor: 'u',
+      maxVisible: 5,
+      celebrations: createCelebrationResolver({ default: { progress: { every: 1 } } }),
+    });
+    await settle();
+    await emit(observed, 'i', 'item');
+    await vi.waitFor(() => {
+      const text = shadow().querySelector('[aria-live]')?.textContent ?? '';
+      expect(text).toContain('Achievement unlocked: First item');
+      expect(text).toContain('Achievement progress: Many, 1 of 50');
+    });
+  });
+
+  it('does not report progress imported by seed', async () => {
+    const { observed, celebrations } = setup();
+    make(observed, { actor: 'u', celebrations, maxVisible: 5 });
+    await settle();
+    await observed.engine.seed({ achievements: [] });
+    for (let i = 0; i < 3; i++)
+      await observed.engine.replay([{ id: `r${i}`, actor: 'u', type: 'item', ts: 0, payload: {} }]);
+    await settle();
+    expect(progressNames()).toEqual([]);
+    await emit(observed, 'live', 'item');
+    await settle();
+    expect(progressNames()).toEqual(['Many 4/50']);
   });
 });

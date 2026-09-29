@@ -60,8 +60,17 @@ export const UnlockNotifier = defineComponent({
         opts.actor = (a: string) => (props.actor as (a: string) => boolean)(a);
       }
       if (props.onError) opts.onError = (err: unknown) => props.onError?.(err);
-      if (props.labels?.more) {
-        opts.labels = { ...props.labels, more: (n: number) => props.labels?.more?.(n) ?? '' };
+      if (props.labels) {
+        opts.labels = {
+          ...props.labels,
+          ...(props.labels.more ? { more: (n: number) => props.labels?.more?.(n) ?? '' } : {}),
+          ...(props.labels.count
+            ? {
+                count: (p: { current: number; target: number }) =>
+                  props.labels?.count?.(p) ?? `${p.current}/${p.target}`,
+              }
+            : {}),
+        };
       }
       notifier = createNotifier(reactive, opts);
     };
@@ -78,6 +87,7 @@ export const UnlockNotifier = defineComponent({
         props.labels?.close,
         !!props.onError,
         !!props.labels?.more,
+        !!props.labels?.count,
       ],
       (next, prev) => {
         if (notifier && next.some((v, i) => v !== prev[i])) create();

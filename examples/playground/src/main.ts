@@ -101,6 +101,10 @@ function apply() {
     say(`That isn't valid JSON: ${(err as Error).message}`, true);
     return;
   }
+  if (typeof cfg !== 'object' || cfg === null || Array.isArray(cfg)) {
+    say('The config must be a JSON object: { "achievements": { ... } }.', true);
+    return;
+  }
   // Build both halves even if one fails, so every mistake shows at once.
   const errors: string[] = [];
   const attempt = <T>(fn: () => T): T | undefined => {

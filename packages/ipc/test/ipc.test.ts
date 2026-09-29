@@ -727,3 +727,16 @@ describe('unlock notifications', () => {
     await vi.waitFor(() => expect(got.sort()).toEqual(['a', 'b']));
   });
 });
+
+describe('change kinds', () => {
+  it('tells remote listeners which kind of call changed the state', async () => {
+    const { remote } = pair(makeEngine(), { methods: ['emit', 'seed', 'score'] }) as unknown as {
+      remote: RemoteEngine<'emit' | 'seed' | 'score'>;
+    };
+    const kinds: (string | undefined)[] = [];
+    remote.subscribe((kind) => kinds.push(kind));
+    await remote.emit(ev('a'));
+    await remote.seed({ scores: [] });
+    await vi.waitFor(() => expect(kinds).toEqual(['emit', 'seed']));
+  });
+});

@@ -1,4 +1,4 @@
-import type { Engine, Unlock } from '@walangstudio/badgetrip-core';
+import type { ChangeKind, Engine, Unlock } from '@walangstudio/badgetrip-core';
 
 /** A bidirectional message channel. `onMessage` returns an unsubscribe. */
 export type Transport = {
@@ -56,7 +56,7 @@ export type Response =
       error: { name: string; message: string };
     };
 
-export type Changed = { type: 'changed'; version: number };
+export type Changed = { type: 'changed'; version: number; kind?: ChangeKind };
 
 /** Pushed after `Changed` when the change unlocked achievements. */
 export type Unlocked = { type: 'unlocked'; unlocks: Unlock[] };

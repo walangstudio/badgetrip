@@ -3,7 +3,7 @@
 ![version](https://img.shields.io/badge/version-0.0.1-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![typescript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)
-![tests](https://img.shields.io/badge/tests-442%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-454%20passing-brightgreen)
 ![core deps](https://img.shields.io/badge/core%20deps-0-brightgreen)
 
 Points, streaks, tiers, leaderboards and achievements for any JavaScript app. You tell the engine what your users did. It works out their score, their streaks, and which badges they just unlocked.
@@ -360,7 +360,7 @@ Requires Node 22 and pnpm 11.
 ```sh
 pnpm install
 pnpm build          # tsc -b, then ng-packagr for Angular
-pnpm test           # 422 root tests + 20 Angular
+pnpm test           # 434 root tests + 20 Angular
 pnpm typecheck      # sources, tests and Angular specs
 pnpm lint           # biome
 pnpm test:coverage  # line and branch coverage

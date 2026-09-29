@@ -142,7 +142,7 @@ Sound is off until you turn it on:
 
 ## Progress along the way
 
-Badges show a "3/5" count under locked achievements that take more than one step. It's on by default. Hide it with `showCount={false}`, or reword it with `formatCount`:
+Badges show a "3/5" count under locked achievements that take more than one step. It's on by default. Hide it with `showCount={false}` (`hide-count` on the custom elements), or reword it with `formatCount`:
 
 ```tsx
 <AchievementBadge achievement={a} formatCount={(p) => `${p.current} of ${p.target} todos`} />
@@ -169,7 +169,7 @@ createCelebrationResolver({
 | `sound` | A sound key, or `false` | `false` |
 | `title` | Heading above the name | "Achievement progress" |
 
-`progress: true` means the defaults. Reaching the target never shows a progress popup, because the unlock celebration takes over. Quiet and hidden achievements never show one. Progress popups follow one user, so they need a string `actor` on the notifier: `<UnlockNotifier actor={user.id} />`. The count wording in popups is `labels.count`.
+`progress: true` means the defaults. Reaching the target never shows a progress popup, because the unlock celebration takes over. Progress popups wait behind unlocks, a newer count replaces a waiting one, and they never push an unlock into the "+N more" summary. After `seed` or `replay`, imported progress is not reported. Quiet and hidden achievements never show one. Progress popups follow one user, so they need a string `actor` on the notifier: `<UnlockNotifier actor={user.id} />`. The count wording in popups is `labels.count`.
 
 To build your own, `watchProgress(observed, { actor }, cb)` from `@walangstudio/badgetrip-core` reports each locked achievement that moved forward with where it came from, and `crossesMilestone` from `@walangstudio/badgetrip-assets` applies the same `at`/`every` rules.
 

@@ -18,11 +18,17 @@ export type EngineApi = Pick<
 /** One achievement one actor just unlocked. */
 export type Unlock = { actor: string; code: string };
 
+/** Which engine call caused a change. `replay` and `seed` rebuild or import history. */
+export type ChangeKind = 'emit' | 'refresh' | 'replay' | 'seed';
+
 /** Anything UI adapters bind to: `observe(engine)`, or a remote from `@walangstudio/badgetrip-ipc`. */
 export type Observable<E extends EngineApi = EngineApi> = {
   engine: E;
-  /** Called after every state change through `engine`. Returns an unsubscribe. */
-  subscribe: (cb: () => void) => () => void;
+  /**
+   * Called after every state change through `engine`, with the kind of call when known.
+   * Returns an unsubscribe.
+   */
+  subscribe: (cb: (change?: ChangeKind) => void) => () => void;
   /** Increments on every notification; use it as a cache key or snapshot. */
   getVersion: () => number;
   /**
@@ -64,21 +70,21 @@ export function notifyAll(listeners: Iterable<() => void>): void {
 export function observe(engine: Engine): ObservedEngine {
   const hit = observed.get(engine);
   if (hit) return hit;
-  const listeners = new Set<() => void>();
+  const listeners = new Set<(change?: ChangeKind) => void>();
   const unlockListeners = new Set<(unlocks: readonly Unlock[]) => void>();
   let version = 0;
-  const notify = () => {
+  const notify = (kind: ChangeKind) => {
     version += 1;
-    notifyAll(listeners);
+    notifyAll([...listeners].map((l) => () => l(kind)));
   };
   // Notify even on failure: a partly applied call still changed state.
   const tracked =
-    <A extends unknown[], R>(fn: (...a: A) => Promise<R>) =>
+    <A extends unknown[], R>(fn: (...a: A) => Promise<R>, kind: ChangeKind) =>
     async (...a: A): Promise<R> => {
       try {
         return await fn(...a);
       } finally {
-        notify();
+        notify(kind);
       }
     };
 
@@ -87,8 +93,8 @@ export function observe(engine: Engine): ObservedEngine {
     const batch: readonly Unlock[] = Object.freeze(codes.map((code) => ({ actor, code })));
     notifyAll([...unlockListeners].map((l) => () => l(batch)));
   };
-  const emit = tracked(engine.emit);
-  const refresh = tracked(engine.refresh);
+  const emit = tracked(engine.emit, 'emit');
+  const refresh = tracked(engine.refresh, 'refresh');
 
   const out: ObservedEngine = {
     engine: {
@@ -98,8 +104,8 @@ export function observe(engine: Engine): ObservedEngine {
         report(result.event.actor, result.unlocked);
         return result;
       },
-      replay: tracked(engine.replay),
-      seed: tracked(engine.seed),
+      replay: tracked(engine.replay, 'replay'),
+      seed: tracked(engine.seed, 'seed'),
       refresh: async (actor) => {
         const codes = await refresh(actor);
         report(actor, codes);
