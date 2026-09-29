@@ -1,0 +1,39 @@
+{
+  "name": "@walangstudio/badgetrip-html",
+  "version": "0.0.1",
+  "description": "Framework-agnostic HTML for badgetrip: badge and catalog strings for servers and htmx, plus custom elements.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "src"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "@walangstudio/badgetrip-assets": "workspace:*",
+    "@walangstudio/badgetrip-core": "workspace:*"
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.1"
+  },
+  "keywords": ["gamification", "html", "htmx", "web-components", "ssr"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/walangstudio/badgetrip.git",
+    "directory": "packages/html"
+  },
+  "homepage": "https://github.com/walangstudio/badgetrip#readme",
+  "bugs": "https://github.com/walangstudio/badgetrip/issues"
+}

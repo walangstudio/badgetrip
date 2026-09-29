@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/testing" },
+    { "path": "packages/assets" },
+    { "path": "packages/react" },
+    { "path": "packages/react-native" },
+    { "path": "packages/vue" },
+    { "path": "packages/html" },
+    { "path": "packages/ipc" }
+  ]
+}
