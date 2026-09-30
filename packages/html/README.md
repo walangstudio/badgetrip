@@ -1,6 +1,6 @@
 # @walangstudio/badgetrip-html
 
-Achievement badges as HTML, for anything that is not React: server rendering, htmx, vanilla JS, Tauri/Electron webviews, and Angular/Svelte/Vue through custom elements. Same markup and behaviour as the React `AchievementBadge`.
+Achievement badges as plain HTML, for anything outside React and React Native: server rendering, htmx, vanilla JS, Tauri/Electron webviews, and Angular/Svelte/Vue through custom elements. Same markup and behavior as the React `AchievementBadge`.
 
 [HTML guide](https://github.com/walangstudio/badgetrip/blob/main/docs/guide/html.md) · [htmx guide](https://github.com/walangstudio/badgetrip/blob/main/docs/guide/htmx.md) · [badgetrip](https://github.com/walangstudio/badgetrip#readme)
 
@@ -21,7 +21,7 @@ const html = renderCatalog(await engine.catalog('u1'));
 const one = renderBadge(view, { size: 64, reducedMotion: true, icons });
 ```
 
-`renderBadge(view, opts?)` returns a `<figure data-unlocked data-concealed>` with the icon (greyscale while locked), name, description, and a `<progress>` bar while locked and not concealed. It stretches to its grid cell so bars align. `renderCatalog(views, opts?)` wraps badges in a `repeat(auto-fill, minmax(140px, 1fr))` grid.
+`renderBadge(view, opts?)` returns a `<figure data-unlocked data-concealed>` with the icon (grayscale while locked), name, description, and a `<progress>` bar while locked and not concealed. It stretches to its grid cell so bars align. `renderCatalog(views, opts?)` wraps badges in a `repeat(auto-fill, minmax(140px, 1fr))` grid.
 
 Options: `icons` (a `createIconResolver(...)` from `@walangstudio/badgetrip-assets`), `reducedMotion` (animated icons show their still frame), `size` (px, default 48), `showProgress` (default true), `showCount` (a "3/5" count under locked multi-step achievements, default true), `formatCount`, `className`.
 

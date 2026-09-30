@@ -51,7 +51,7 @@ app.listen(3000);
 <div id="badges" hx-get="/badges" hx-trigger="load"></div>
 ```
 
-The badges load with the page. Every click posts the event and swaps in the updated grid, with any newly unlocked badge now in colour.
+The badges load with the page. Every click posts the event and swaps in the updated grid, with any newly unlocked badge now in color.
 
 ## Things to know
 

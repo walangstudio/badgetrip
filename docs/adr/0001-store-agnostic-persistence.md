@@ -7,13 +7,13 @@
 
 ## Context
 
-badgetrip is a framework-agnostic gamification library. Its original design anticipated shipping first-party adapters for Postgres, Supabase, and SQLite as published packages (`@walangstudio/badgetrip-postgres`, `@walangstudio/badgetrip-supabase`, `@walangstudio/badgetrip-sqlite`). This creates the "adapter explosion" risk the design doc itself flags: each adapter is a maintenance liability, each brings third-party runtime dependencies into the badgetrip dependency tree, and each ties a nominally-generic library to a specific vendor's wire protocol or client library.
+badgetrip is a framework-agnostic gamification library. Its original design anticipated shipping first-party adapters for Postgres, Supabase, and SQLite as published packages (`@walangstudio/badgetrip-postgres`, `@walangstudio/badgetrip-supabase`, `@walangstudio/badgetrip-sqlite`). That is the "adapter explosion" the design doc warns about. Each adapter is something to maintain, pulls third-party runtime dependencies into badgetrip, and ties a generic library to one vendor's client.
 
-The product decision is: badgetrip is store-agnostic. The library owns the rules and projections; the application owns persistence. badgetrip publishes the port interfaces and nothing that locks an application to a specific storage backend.
+The decision: badgetrip is store-agnostic. The library owns the rules and projections; the application owns persistence. badgetrip publishes the port interfaces and nothing that locks an application to a specific storage backend.
 
 Forces:
 - Consuming apps already have a storage layer (Supabase, PlanetScale, SQLite, Redis, IndexedDB, Durable Objects). They should not be forced to add a second DB client.
-- The four interfaces (`EventStore`, `ScoreStore`, `AchievementStore`, `StreakStore`) are narrow (≤3 methods each) and already present in `packages/core/src/types.ts`. They are the right seam.
+- The four interfaces (`EventStore`, `ScoreStore`, `AchievementStore`, `StreakStore`) are narrow (three core methods each) and already present in `packages/core/src/types.ts`. They are the right seam.
 - An in-memory reference exists in `packages/core/src/stores/memory.ts`. It serves as prototype default, test double, and canonical behavioral spec. It is not a DB brand - it is a teaching and testing artifact.
 - Nothing in `@walangstudio/badgetrip-testing` currently gives adapter authors a way to verify behavioral conformance against the spec. The existing `engine-parity.test.ts` files in the adapter packages prove the pattern works but are not exportable to third-party adapters.
 - Three relational assumptions are embedded in the interface contracts that affect non-SQL implementors: `EventStore.read` requires ordered async iteration (cursor semantics), `ScoreStore.top` requires windowed aggregation, and the `seq`/timestamp ordering contract inside `read` is implicit. These are load-bearing; removing them would break the rules engine.
@@ -22,7 +22,7 @@ Forces:
 
 ## Decision
 
-Adopt **Ports & Adapters (Hexagonal Architecture)** explicitly. badgetrip ships exactly two published artifacts beyond the core engine:
+Put persistence behind ports (ports and adapters). For persistence, badgetrip ships exactly two artifacts:
 
 1. **`@walangstudio/badgetrip-core`** - engine, declarative rule types, the four port interfaces, the in-memory reference stores, and the `matchFilter`/`getPath` utilities adapter authors need for filter evaluation. This is unchanged.
 2. **`@walangstudio/badgetrip-testing`** - deterministic clock, id factory, `makeTestEngine`, and a new **store conformance test kit** (`runStoreContract`). This gives any adapter author a single function call that exercises the full behavioral spec.
@@ -96,19 +96,20 @@ No interface changes.
 ## Consequences
 
 **Positive**
-- badgetrip's published surface drops to two packages (`@walangstudio/badgetrip-core`, `@walangstudio/badgetrip-testing`) plus the optional `@walangstudio/badgetrip-react` and `@walangstudio/badgetrip-memory` shim dissolution.
+- Persistence needs only two packages: `@walangstudio/badgetrip-core` and `@walangstudio/badgetrip-testing`. There are no database packages to keep in sync.
 - No published badgetrip package carries a third-party runtime dependency except `@walangstudio/badgetrip-react` (React peer dep).
 - Adapter authors have a single, portable conformance test they can run against any store backend.
 - The `engine-parity.test.ts` pattern is replaced by `runStoreContract`, which is more precise (it tests the interface contract directly, not engine-level output equality).
 - The "adapter explosion" risk is structurally eliminated - badgetrip cannot ship half-finished adapters because it does not ship adapters.
 
 **Negative (accepted)**
-- Rolling leaderboards require implementors to store per-delta timestamps. Implementors using pure KV stores will discover this friction when they attempt `ScoreStore.top` with a window. Mitigated by explicit documentation in ADAPTERS.md.
+- Rolling leaderboards require implementors to store per-delta timestamps. KV-only stores hit this the first time they implement a windowed `ScoreStore.top`. Mitigated by explicit documentation in ADAPTERS.md.
 - The todont migration path in the original design (step 1: `install @walangstudio/badgetrip-supabase`) is invalidated. The migration path changes to: implement the four interfaces against your existing Supabase Postgres connection (the `examples/adapter-postgres/` reference shows exactly how), then pass those stores to `createEngine`. The net code is the same ~300 lines; it lives in the app, not in a badgetrip package.
 - `examples/adapter-postgres/` is not a published package, so it has no semver guarantee. If the port interfaces change, the example must be updated manually.
 
 **Follow-ups**
-- ADAPTERS.md: add explicit statement of the `(ts, insertion-order)` sort contract and the rolling-window delta-timestamp requirement.
-- README packages table needs updating.
-- `runStoreContract` must be implemented in `packages/testing/src/index.ts` before the first release (done in 0.0.1).
-- Consider whether `examples/adapter-postgres/` should include a `README.md` that links back to ADAPTERS.md and explicitly calls out the `score_deltas` table requirement for rolling windows.
+All done in 0.0.1:
+- ADAPTERS.md states the `(ts, insertion-order)` sort contract and the rolling-window timestamp requirement.
+- The README packages table lists what actually ships.
+- `runStoreContract` ships in `@walangstudio/badgetrip-testing`.
+- `examples/adapter-postgres/README.md` explains the `score_deltas` table.

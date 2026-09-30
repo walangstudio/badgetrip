@@ -70,7 +70,7 @@ Everything in the output is escaped, including names and descriptions, and icon 
 
 ## Styling
 
-The badges come with just enough inline style to lay out properly: a flex column, greyscale while locked, and a full-width progress bar. Add a `className` to hang your own CSS on them:
+The badges come with just enough inline style to lay out properly: a flex column, grayscale while locked, and a full-width progress bar. Add a `className` to hang your own CSS on them:
 
 ```js
 renderCatalog(badges, { className: 'trophy', size: 64 });

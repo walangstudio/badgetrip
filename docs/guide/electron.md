@@ -86,4 +86,4 @@ Every call has its arguments checked and its size capped. Errors come back with 
 
 Unlocks can be pushed to the window too, so an [unlock notifier](celebrations.md) there works. They carry actor ids and achievement codes, so with `authorize` set they are off until you pass `unlocks`, as the example above does. Without `authorize` they are on; pass `unlocks: false` to turn them off.
 
-The transports are tested against stand-ins for Electron's IPC objects, not a running Electron app. If something doesn't line up in your version, please open an issue.
+The transports are tested against stand-ins for Electron's IPC objects, not a running Electron app. If your version behaves differently, open an issue.

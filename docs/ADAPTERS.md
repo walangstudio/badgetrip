@@ -1,6 +1,6 @@
 # badgetrip - Adapters
 
-An adapter is a set of plain objects/classes that implement the four store interfaces. No base class, no registration. Pass them directly to `createEngine`.
+An adapter is four plain objects that implement the store interfaces. No base class, no registration: pass them straight to `createEngine`.
 
 ```ts
 import { createEngine } from '@walangstudio/badgetrip-core';
@@ -43,7 +43,7 @@ interface EventStore {
 
 **`count`** - `actor` and `type` are required. Applies `opts.where` if present. The engine calls this for `count` rules without `todBetween`; `unique`, `todBetween`, `first-of-day`, escalators, and `group-count` on a store without `maxGroupSize` use `read`.
 
-For `count` rules with a `where` filter, the store must evaluate the filter against each event. You can reuse the core-exported `matchFilter` / `getPath` utilities to stay in sync with the engine's own evaluation:
+For `count` rules with a `where` filter, the store must evaluate the filter against each event. Reuse core's `matchFilter` and `getPath` so your filtering matches the engine's:
 
 ```ts
 import { matchFilter, getPath } from '@walangstudio/badgetrip-core';
@@ -120,10 +120,9 @@ The `key` parameter scopes the counter to a specific value (e.g. a todont id whe
 
 ## Optional capabilities
 
-These methods are **optional** on the store interfaces. The engine feature-detects them: it
-uses them when present, falls back or throws a precise error only when a definition actually
-needs one. Existing adapters that don't implement them stay valid - and `runStoreContract`
-reports the corresponding checks as skipped.
+These methods are **optional**. The engine uses them when they exist, and falls back or throws a
+clear error only when a definition needs one. Adapters without them stay valid, and
+`runStoreContract` skips the matching checks.
 
 | Method | On | Needed by | Fallback when absent |
 |---|---|---|---|
@@ -153,7 +152,7 @@ to `{ kind: 'score', score }`. `streak-sum` is a point-in-time aggregate, so `wi
 
 ## Minimal example
 
-A synchronous in-memory implementation in under 30 lines:
+An in-memory `EventStore`:
 
 ```ts
 import type { Event, EventStore } from '@walangstudio/badgetrip-core';
@@ -215,7 +214,7 @@ Persistence is the application's responsibility (see [ADR-0001](adr/0001-store-a
 
 ## Verifying your adapter
 
-`@walangstudio/badgetrip-testing` exports `runStoreContract`, the full behavioral spec as a runnable suite. Pass a factory that returns **fresh, empty** stores each call (a DB factory should migrate + truncate). If it passes, your stores are a drop-in replacement for the reference.
+`@walangstudio/badgetrip-testing` exports `runStoreContract`, the full behavioral spec as a runnable suite. Pass a factory that returns **fresh, empty** stores each call (a DB factory should migrate + truncate). If it passes, your stores behave like the reference ones.
 
 ```ts
 import { runStoreContract } from '@walangstudio/badgetrip-testing';
@@ -229,6 +228,15 @@ runStoreContract(async () => {
 });
 ```
 
-It covers: append insert-if-absent (including concurrent appends), read ordering + filters + `since`/`limit`, `count` with a `where` filter, missing-payload tolerance, score get/apply/all-time and windowed `top` (inclusive cutoff, ties, limits), award idempotency, streak tick/reset/key-scoping (reset returns the previous current), concurrent `apply`/`award`/`tick`/`reset`, and the optional capabilities (skipped when absent).
+It covers:
+
+- `append` insert-if-absent, including concurrent appends
+- `read` ordering, filters, `since` and `limit`
+- `count` with a `where` filter, and events with missing payload fields
+- score `get`, `apply`, and all-time and windowed `top` (inclusive cutoff, ties, limits)
+- `award` idempotency
+- streak `tick`, `reset` (returns the previous current) and per-key scoping
+- concurrent `apply`, `award`, `tick` and `reset`
+- the optional capabilities, skipped when absent
 
 To freeze time in your own engine-level tests, use `fixedClock` (or `steppableClock` from `@walangstudio/badgetrip-testing`).

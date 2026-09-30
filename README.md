@@ -378,8 +378,8 @@ BADGETRIP_PG_URL=postgres://... pnpm --filter @badgetrip-example/adapter-postgre
 All packages share one version. Bump it in every `package.json`, add a dated `## [x.y.z]` entry to the [CHANGELOG](CHANGELOG.md), merge to `main`, then tag:
 
 ```sh
-git tag -a v0.0.1 -m v0.0.1
-git push origin v0.0.1
+git tag -a vX.Y.Z -m vX.Y.Z
+git push origin vX.Y.Z
 ```
 
 The [release workflow](.github/workflows/release.yml) checks the tag against every package version and the changelog, runs the full gate, publishes to npm with provenance, and creates the GitHub release from the changelog entry. It needs an `NPM_TOKEN` repository secret.

@@ -1,6 +1,6 @@
 # @walangstudio/badgetrip-vue
 
-Vue 3 composables and an `AchievementBadge` for badgetrip. No SFC build step needed.
+Vue 3 composables and an `AchievementBadge` for badgetrip. Written with render functions, so your app needs no extra build setup for it.
 
 [Vue guide](https://github.com/walangstudio/badgetrip/blob/main/docs/guide/vue.md) · [Achievements](https://github.com/walangstudio/badgetrip/blob/main/docs/ACHIEVEMENTS.md) · [badgetrip](https://github.com/walangstudio/badgetrip#readme)
 

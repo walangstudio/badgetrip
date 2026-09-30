@@ -51,10 +51,10 @@ describe('provideBadgetrip notifier', () => {
     TestBed.configureTestingModule({
       providers: [provideBadgetrip(makeEngine(), { notifier: { sound: false } })],
     });
-    const gk = TestBed.inject(BadgetripService);
+    const service = TestBed.inject(BadgetripService);
     expect(hosts()).toHaveLength(1);
     expect(TestBed.inject(BADGETRIP_NOTIFIER)).not.toBeNull();
-    await gk.engine.emit(ev('a'));
+    await service.engine.emit(ev('a'));
     await vi.waitFor(() => expect(names()).toEqual(['First']));
     TestBed.resetTestingModule();
     expect(hosts()).toHaveLength(0);
@@ -81,12 +81,12 @@ describe('provideBadgetrip notifier', () => {
 describe('BadgetripService.unlocks', () => {
   it('queues unlocks with their celebration, skipping quiet ones, filtered by actor', async () => {
     TestBed.configureTestingModule({ providers: [provideBadgetrip(makeEngine())] });
-    const gk = TestBed.inject(BadgetripService);
-    const u = TestBed.runInInjectionContext(() => gk.unlocks({ actor: 'u' }));
-    await gk.engine.emit(ev('a', 'win', 'someone-else'));
-    await gk.engine.emit(ev('b', 'hush'));
-    await gk.engine.emit(ev('c', 'win'));
-    await gk.engine.emit(ev('d', 'boom'));
+    const service = TestBed.inject(BadgetripService);
+    const u = TestBed.runInInjectionContext(() => service.unlocks({ actor: 'u' }));
+    await service.engine.emit(ev('a', 'win', 'someone-else'));
+    await service.engine.emit(ev('b', 'hush'));
+    await service.engine.emit(ev('c', 'win'));
+    await service.engine.emit(ev('d', 'boom'));
     await vi.waitFor(() => expect(u.queue()).toHaveLength(2));
     expect(u.queue().map((q) => [q.view.code, q.celebration.layout])).toEqual([
       ['first', 'toast'],
@@ -100,10 +100,10 @@ describe('BadgetripService.unlocks', () => {
 
   it('needs an injection context and stops when it is destroyed', async () => {
     TestBed.configureTestingModule({ providers: [provideBadgetrip(makeEngine())] });
-    const gk = TestBed.inject(BadgetripService);
-    expect(() => gk.unlocks()).toThrow(/injection context/);
-    const u = TestBed.runInInjectionContext(() => gk.unlocks());
-    const engine = gk.engine;
+    const service = TestBed.inject(BadgetripService);
+    expect(() => service.unlocks()).toThrow(/injection context/);
+    const u = TestBed.runInInjectionContext(() => service.unlocks());
+    const engine = service.engine;
     TestBed.resetTestingModule();
     await engine.emit(ev('a'));
     await new Promise((r) => setTimeout(r, 10));
@@ -116,10 +116,10 @@ describe('provideBadgetrip notifier factory', () => {
     const e = makeEngine();
     const factory = vi.fn(() => ({ actor: 'u' }));
     TestBed.configureTestingModule({ providers: [provideBadgetrip(e, { notifier: factory })] });
-    const gk = TestBed.inject(BadgetripService);
+    const service = TestBed.inject(BadgetripService);
     expect(factory).toHaveBeenCalledOnce();
-    await gk.engine.emit(ev('a', 'win', 'someone-else'));
-    await gk.engine.emit(ev('b', 'win', 'u'));
+    await service.engine.emit(ev('a', 'win', 'someone-else'));
+    await service.engine.emit(ev('b', 'win', 'u'));
     await vi.waitFor(() => expect(names()).toEqual(['First']));
   });
 });

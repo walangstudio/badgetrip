@@ -7,7 +7,7 @@ npm install @walangstudio/badgetrip-core @walangstudio/badgetrip-react-native
 
 `react-native-svg` draws the built-in icons, since React Native's `<Image>` can't show SVG. This uses the `engine` from [Getting started](getting-started.md).
 
-The hooks are the same ones as the [React guide](react.md), so you can read that for the details. What changes is the badge component, which is built from native views.
+The hooks are the ones from the [React guide](react.md). Only the badge component changes: it is built from native views.
 
 ```tsx
 // App.tsx
@@ -54,12 +54,12 @@ export default function App() {
 
 ## Things that behave differently
 
-- **Locked badges** are drawn grey rather than true greyscale. React Native has no CSS filters, so built-in icons are repainted grey and your own images become grey silhouettes.
+- **Locked badges** are drawn gray rather than true grayscale. React Native has no CSS filters, so built-in icons are repainted gray and your own images become gray silhouettes.
 - **Reduced motion** follows the phone's accessibility setting. Animated icons stay on their still frame until that setting has been read.
 - **Animated GIFs** work on iOS out of the box. On Android, Expo needs its animated-image support switched on in your app config.
 - **Animated SVGs** (like the built-in `sparkle-animated`) don't move, because `react-native-svg` doesn't run SVG animations. Use a GIF or WebP for motion.
 
-Screen readers get each progress bar as a real progress bar, labelled like "On a roll: 43%".
+Screen readers get each progress bar as a real progress bar, labeled like "On a roll: 43%".
 
 ## Celebrate unlocks
 
