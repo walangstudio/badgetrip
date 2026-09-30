@@ -122,6 +122,12 @@ describe('layering', () => {
     });
   });
 
+  it('replaces a built-in sound everywhere when a file reuses its name', () => {
+    const s = createCelebrationResolver({ sounds: { chime: '/ding.mp3', fanfare: '/win.mp3' } });
+    expect(s.resolve(subject).sound).toEqual({ src: '/ding.mp3' });
+    expect(s.resolve({ code: 'x', celebration: 'epic' }).sound).toEqual({ src: '/win.mp3' });
+  });
+
   it('turns confetti: true into the default burst and confetti: false into none', () => {
     const c = createCelebrationResolver({
       presets: { on: { confetti: true }, off: { confetti: false } },
