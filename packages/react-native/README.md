@@ -35,7 +35,7 @@ Hooks (`useScore`, `useAchievements`, `useAchievementCatalog`, `useAchievementPr
 
 - Built-in SVG icons render through `SvgXml`. RN `Image` cannot show SVG data URLs.
 - Other assets (PNG, WebP, GIF, remote URLs) render through `Image`. Remote `.svg` files are not supported; register their markup as a data URL instead.
-- Locked: RN has no CSS `filter`, so there is no true greyscale. Tintable SVGs repaint in grey; images become a grey silhouette (`tintColor`). Both dim to 45% opacity. Want real desaturation? Supply a greyscale `still` frame.
+- Locked: RN has no CSS `filter`, so there is no true grayscale. Tintable SVGs repaint in gray; images become a gray silhouette (`tintColor`). Both dim to 45% opacity. Want real desaturation? Supply a grayscale `still` frame.
 - The progress bar is a `View` with `accessibilityRole="progressbar"`, `accessibilityValue` `{min: 0, max: 100, now}` and label `"Name: N%"`. Hidden when unlocked or concealed.
 
 ## Icons and motion

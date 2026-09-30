@@ -1,10 +1,10 @@
 # badgetrip - Rules
 
-Rules are declarative predicates over the event stream and its projections. They are JSON-friendly objects - storable, sendable over the wire, and configurable at runtime. The engine evaluates each `AchievementDef.rule` after every `emit`, granting the achievement the first time the rule returns `true`.
+Rules are declarative checks over the event stream. They are plain JSON, so you can store them, send them over the wire and change them at runtime. After every `emit` the engine evaluates each achievement's rule and grants it the first time the rule passes. The `rules.*` builders produce these objects; `defineAchievements` takes them as `when`, and a plain `AchievementDef` takes them as `rule`.
 
 ## Path convention
 
-All dotted paths in rules and filters are **event-relative**. The engine passes the full `Event` object as the root when resolving a path.
+Dotted paths in rules and filters resolve against the event itself.
 
 | Path | Resolves to |
 |---|---|
@@ -15,11 +15,11 @@ All dotted paths in rules and filters are **event-relative**. The engine passes 
 | `payload.from_user` | `event.payload.from_user` |
 | `payload.todont_id` | `event.payload.todont_id` |
 
-There is no `event.` prefix - the object is the event itself. Payload fields always require the `payload.` prefix.
+No `event.` prefix. Payload fields need `payload.`.
 
 ## Filter
 
-A `Filter` is a single predicate applied to a path on the event:
+A `Filter` tests one path on the event:
 
 ```ts
 type Filter = {
@@ -36,8 +36,6 @@ type Filter = {
 | `>` | numeric greater-than; both sides must be numbers or returns false |
 | `<` | numeric less-than; both sides must be numbers or returns false |
 | `in` | `value` must be an array; returns true if the path value is in it |
-
-`>` and `<` only compare numbers. Passing a string path with `>` always returns false.
 
 Filters appear in:
 - `PointRule.where` - guards whether the point rule fires
@@ -56,7 +54,7 @@ True when the actor has at least `gte` events of `eventType`, optionally matchin
 
 `todBetween` adds a **time-of-day** window: only events whose offset from day start
 (`event.ts - dayBoundary(event.ts)`, in ms) falls in `[start, end)` are counted. Unlike
-`first-of-day`, this counts ANY matching event in the window, not just the day's first.
+`first-of-day`, this counts **any** matching event in the window, not just the day's first.
 
 ```ts
 // "Posted 10 confessions"
@@ -103,7 +101,7 @@ True when the chosen streak counter is at least `gte`. By default it reads
 - `of: 'best'` thresholds the lifetime best instead of the live counter - so the
   achievement still fires for someone whose streak has since reset (and on `seed`).
 - `key` targets one per-actor-per-key streak (e.g. a specific todont).
-- `anyKey: true` (per-actor-per-key streaks) is satisfied when ANY key meets the threshold
+- `anyKey: true` (per-actor-per-key streaks) is satisfied when **any** key meets the threshold
   - the max across keys. Requires a `StreakStore` that implements the optional
   `statsAcrossKeys`; the engine throws a clear error if it doesn't.
 
@@ -114,7 +112,7 @@ True when the chosen streak counter is at least `gte`. By default it reads
 // "Kept one specific todont clean for 30 days"
 { kind: 'streak', streak: 'todont_clean', gte: 30, key: 'some_todont_id' }
 
-// "Hit a 7-day clean streak on ANY todont, ever" (per-actor-per-key)
+// "Hit a 7-day clean streak on any todont, ever" (per-actor-per-key)
 { kind: 'streak', streak: 'todont_clean', gte: 7, of: 'best', anyKey: true }
 ```
 
@@ -152,7 +150,7 @@ By default the engine folds the event stream in memory. A store may implement th
 `EventStore.maxGroupSize` to push the grouping down (e.g. to SQL); the engine uses it when present.
 
 ```ts
-// "Confessed 10 times on the SAME todont"
+// "Confessed 10 times on the same todont"
 { kind: 'group-count', eventType: 'confession.posted', by: 'payload.todont_id', gte: 10 }
 ```
 
@@ -191,7 +189,7 @@ True when the actor is at exactly rank `eq` (1-indexed) on the named leaderboard
 { kind: 'rank', leaderboard: 'weekly_honor', eq: 1 }
 ```
 
-Rank is evaluated against the live leaderboard state. Because leaderboards are dynamic, this achievement can be won and then become stale (but achievement grant is permanent - `AchievementStore.award` returns false on subsequent attempts).
+Rank is checked against the live leaderboard. You can reach #1 and lose it later, but the achievement stays: `AchievementStore.award` returns false on later attempts.
 
 ---
 
@@ -279,7 +277,7 @@ Both sub-rules must pass. The `count` rule counts total events; the `unique` rul
 
 ## PointRule
 
-`PointRule` is not a `Rule` - it is a separate config type that maps events to score changes. It appears in `Definitions.points`, not inside an `AchievementDef`.
+`PointRule` is not a `Rule`. It maps events to score changes and lives in `Definitions.points`, not inside an achievement.
 
 ```ts
 type PointRule = {

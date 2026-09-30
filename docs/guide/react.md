@@ -45,7 +45,7 @@ export function Trophies({ userId }: { userId: string }) {
 }
 ```
 
-Locked badges are greyed out with a progress bar under them. Hidden ones show a question mark until earned.
+Locked badges are grayed out with a progress bar under them. Hidden ones show a question mark until earned.
 
 ## Record something
 

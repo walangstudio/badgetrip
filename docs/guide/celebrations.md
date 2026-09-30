@@ -169,7 +169,14 @@ createCelebrationResolver({
 | `sound` | A sound key, or `false` | `false` |
 | `title` | Heading above the name | "Achievement progress" |
 
-`progress: true` means the defaults. Reaching the target never shows a progress popup, because the unlock celebration takes over. Progress popups wait behind unlocks, a newer count replaces a waiting one, and they never push an unlock into the "+N more" summary. After `seed` or `replay`, imported progress is not reported. Quiet and hidden achievements never show one. Progress popups follow one user, so they need a string `actor` on the notifier: `<UnlockNotifier actor={user.id} />`. The count wording in popups is `labels.count`.
+`progress: true` means the defaults. A few rules keep progress popups from getting in the way:
+
+- Reaching the target shows the unlock celebration, not a progress popup.
+- Progress popups wait behind unlocks, and a newer count replaces a waiting one. They never push an unlock into the "+N more" summary.
+- Progress imported by `seed` or `replay` is not reported.
+- Quiet and hidden achievements never show one.
+
+Progress popups follow one user, so they need a string `actor` on the notifier: `<UnlockNotifier actor={user.id} />`. The count wording in popups is `labels.count`.
 
 To build your own, `watchProgress(observed, { actor }, cb)` from `@walangstudio/badgetrip-core` reports each locked achievement that moved forward with where it came from, and `crossesMilestone` from `@walangstudio/badgetrip-assets` applies the same `at`/`every` rules.
 
@@ -235,4 +242,6 @@ The others are `--badgetrip-backdrop`, `--badgetrip-fullscreen-bg` and `--badget
 | `labels` | English | `{ close, more(n), count(p) }` for translations. |
 | `onError` | rethrow | Called when a catalog query fails. |
 
-On the server, `createNotifier` returns a no-op, so it's safe in SSR code. With `@walangstudio/badgetrip-ipc`, unlocks cross the process boundary too. When `serveEngine` has an `authorize` hook they are off unless you pass `unlocks`, usually a filter for the peer's own user; see the [Electron guide](electron.md#what-the-window-can-and-cant-do).
+On the server, `createNotifier` returns a no-op, so it's safe in SSR code.
+
+With `@walangstudio/badgetrip-ipc`, unlocks cross the process boundary too. When `serveEngine` has an `authorize` hook they are off unless you pass `unlocks`, usually a filter for the peer's own user; see the [Electron guide](electron.md#what-the-window-can-and-cant-do).

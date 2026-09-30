@@ -36,7 +36,7 @@ const achievements = defineAchievements({
 const engine = createEngine({ /* stores, clock */ definitions: { achievements } });
 ```
 
-`defineAchievements` returns plain `AchievementDef[]`, so it mixes with hand-written defs and JSON config. The flat `AchievementDef` format still works unchanged.
+`defineAchievements` returns plain `AchievementDef[]`, so it mixes with hand-written defs and JSON config.
 
 ## Fields
 
@@ -129,7 +129,7 @@ Resolution order: `overrides[code]`, `overrides[series.code]`, `icon`, `categori
 
 ## Celebrations and secret mode
 
-When an achievement unlocks, a notifier can celebrate it on top of the app: a toast in any corner or edge, a modal, or fullscreen with confetti and sound. Pick a preset per achievement with `celebration`, and configure the rest with `createCelebrationResolver`. For a Steam-style list, secret mode leaves hidden achievements out and shows "N hidden achievements remaining" instead: `renderCatalog(views, { secret: true })`, `<badgetrip-catalog secret>`, or `splitConcealed(views)` in your own UI. The [celebrations guide](guide/celebrations.md) covers both.
+When an achievement unlocks, a notifier can celebrate it on top of the app: a toast in any corner or edge, a modal, or fullscreen with confetti and sound. Pick a preset per achievement with `celebration`, and configure the rest with `createCelebrationResolver`. For a Steam-style list, secret mode leaves hidden achievements out and shows "N hidden achievements remaining" instead: `renderCatalog(views, { secret: true })`, `<badgetrip-catalog secret>`, or `splitConcealed(views)` in your own UI. See the [celebrations guide](guide/celebrations.md).
 
 ## Frameworks
 
@@ -148,7 +148,12 @@ Every adapter binds to `observe(engine)` (or an `@walangstudio/badgetrip-ipc` re
 
 ```tsx
 import { createIconResolver } from '@walangstudio/badgetrip-assets';
-import { AchievementBadge, IconProvider, useAchievementCatalog } from '@walangstudio/badgetrip-react';
+import {
+  AchievementBadge,
+  BadgetripProvider,
+  IconProvider,
+  useAchievementCatalog,
+} from '@walangstudio/badgetrip-react';
 
 function Trophies({ actor }: { actor: string }) {
   const list = useAchievementCatalog(actor);
@@ -156,10 +161,10 @@ function Trophies({ actor }: { actor: string }) {
 }
 
 <BadgetripProvider engine={engine}>
-  <IconProvider icons={createIconResolver({ overrides })}>
+  <IconProvider icons={createIconResolver({ overrides: { first_step: 'crown' } })}>
     <Trophies actor="u1" />
   </IconProvider>
 </BadgetripProvider>;
 ```
 
-`AchievementBadge` renders the icon (greyscale while locked), name, description, and a `<progress>` bar while locked. It stretches to its grid cell so bars align. For a custom look, build your own with `useAchievementIcon(view)` (motion-aware asset) and `useAchievementProgress(actor, code)`. `IconProvider` is optional: without it the built-in pack is used.
+`AchievementBadge` renders the icon (grayscale while locked), name, description, and a `<progress>` bar while locked. It stretches to its grid cell so bars align. For a custom look, build your own with `useAchievementIcon(view)` (motion-aware asset) and `useAchievementProgress(actor, code)`. `IconProvider` is optional: without it the built-in pack is used.

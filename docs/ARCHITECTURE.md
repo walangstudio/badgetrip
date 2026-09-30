@@ -28,7 +28,7 @@ type EmitResult = {
 };
 ```
 
-`Definitions` is the config object passed to `createEngine`. It holds every rule set the engine enforces: `scores`, `points` (PointRules), `achievements`, `streaks`, `tiers`, `leaderboards`, `escalators`. All fields are optional and default to empty arrays.
+`Definitions`, the config passed to `createEngine`, holds every rule set: `scores`, `points` (PointRules), `achievements`, `streaks`, `tiers`, `leaderboards`, `escalators`. All fields are optional and default to empty arrays.
 
 ## The emit pipeline
 
@@ -44,7 +44,7 @@ type EmitResult = {
 
 Live emits must arrive in `ts` order for live state to match `replay`. Out-of-order ingest applies in arrival order (a late reset still resets). If a store call throws mid-emit, the event is already appended; make the adapter transactional if partial projections matter.
 
-Achievements run last so that a rule like `{ kind: 'streak', streak: 'daily_clean', gte: 7 }` sees the streak the current event just advanced, and a `{ kind: 'score', score: 'honor', gte: 100 }` rule sees the points the current event just awarded.
+Achievements run last, so they see everything the current event changed. A rule like `{ kind: 'streak', streak: 'daily_clean', gte: 7 }` sees the streak this event just advanced, and `{ kind: 'score', score: 'honor', gte: 100 }` sees the points it just awarded.
 
 `replay(events)` sorts the log by `(ts, id)` and calls `emit` on each event. Because `emit` is idempotent, replaying an already-seen log is safe.
 

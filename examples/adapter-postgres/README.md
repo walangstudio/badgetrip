@@ -1,9 +1,9 @@
 # Example: a Postgres store for badgetrip
 
-badgetrip ships no database adapters. The application supplies persistence by implementing the
-four store interfaces (`EventStore`, `ScoreStore`, `AchievementStore`, `StreakStore`) against
-whatever store it already uses. This is a complete, working reference for Postgres. Copy
-`src/` into your app and adapt it - it is not a published package.
+badgetrip ships no database adapters. You implement the four store interfaces (`EventStore`,
+`ScoreStore`, `AchievementStore`, `StreakStore`) against the database you already use. This is a
+complete Postgres version to copy: take `src/` into your app and adapt it. It is not a published
+package.
 
 ## What's here
 
@@ -40,7 +40,7 @@ or writes your tables.
 
 ## Verifying your adapter
 
-Prove conformance with the shipped contract kit:
+Check it against the store contract:
 
 ```ts
 import { runStoreContract } from '@walangstudio/badgetrip-testing';
@@ -49,7 +49,7 @@ import { pgStores } from '../src/index.js';
 runStoreContract(async () => {
   const stores = pgStores(pool);
   await stores.migrate();
-  return stores; // return FRESH/empty stores each call (truncate for a DB)
+  return stores; // fresh, empty stores on every call (truncate for a DB)
 });
 ```
 
