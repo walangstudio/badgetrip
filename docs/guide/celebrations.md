@@ -136,6 +136,7 @@ Sound is off until you turn it on:
 
 - **Built-in sounds:** `chime`, `fanfare`, `sparkle` and `pop`. They're synthesized with Web Audio, so no audio files ship with badgetrip.
 - **Your own files:** add them under `sounds`, as a URL or `{ src }`. Any format the browser plays works.
+- **Replacing a built-in:** reuse its name. `sounds: { chime: '/sounds/ding.mp3' }` swaps the default sound everywhere, and `fanfare` does the same for `epic`.
 - **Changing settings:** changing `sound`, `volume` or `muted` updates the notifier in place, so a settings toggle is cheap.
 - **Autoplay:** browsers block audio until the user has interacted with the page. Unlocks usually follow a click, so this rarely matters. If an unlock arrives before any interaction, it's shown silently.
 - **One sound per batch:** a single emit that unlocks bronze, silver and gold plays one sound, the one from the biggest celebration.
@@ -235,6 +236,7 @@ The others are `--badgetrip-backdrop`, `--badgetrip-fullscreen-bg` and `--badget
 
 | Option | Default | |
 |---|---|---|
+| `icons` | built-in pack | A `createIconResolver(...)`, so popups show your own art. Pass the same one your badges use; see [Your own icons](getting-started.md#your-own-icons). Angular picks it up from `provideBadgetrip(engine, { icons })`. |
 | `maxVisible` | 3 | Toasts shown at once per position. The rest wait. |
 | `maxQueue` | 10 | Waiting toasts before the rest fold into one "+N more" toast. |
 | `root` | `document.body` | Where the overlay is attached. |
