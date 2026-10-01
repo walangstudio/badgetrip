@@ -196,6 +196,22 @@ function positions(g: GradientSpec): { color: string; at: number }[] {
 
 type Box = { x: number; y: number; w: number; h: number };
 
+/**
+ * The CSS angle for a `to` direction. Sides are fixed; corners depend on the box, so the
+ * 50% line runs through the other two corners, as CSS draws it.
+ */
+function toAngle(to: GradientDirection, box: Box): number {
+  const corner: Partial<Record<GradientDirection, [number, number]>> = {
+    'top right': [box.h, -box.w],
+    'bottom right': [box.h, box.w],
+    'bottom left': [-box.h, box.w],
+    'top left': [-box.h, -box.w],
+  };
+  const v = corner[to];
+  if (!v) return ANGLES[to];
+  return (Math.atan2(v[0], -v[1]) * 180) / Math.PI;
+}
+
 /** An SVG `<defs>` gradient laid out over the viewBox the way CSS lays one over a box. */
 function svgDefs(g: GradientSpec, id: string, box: Box): string {
   const stopTags = positions(g)
@@ -205,21 +221,21 @@ function svgDefs(g: GradientSpec, id: string, box: Box): string {
     const [fx, fy] = POINTS[g.position ?? 'center'];
     const cx = box.x + fx * box.w;
     const cy = box.y + fy * box.h;
-    // CSS circles reach the farthest corner by default.
-    const radius = Math.max(
-      ...[
-        [box.x, box.y],
-        [box.x + box.w, box.y],
-        [box.x, box.y + box.h],
-        [box.x + box.w, box.y + box.h],
-      ].map(([px, py]) => Math.hypot((px as number) - cx, (py as number) - cy)),
-    );
+    // Distances to the farther side on each axis. CSS sizes to the farthest corner: a
+    // circle by its distance, an ellipse with the sides' ratio scaled by sqrt(2).
+    const sx = Math.max(cx - box.x, box.x + box.w - cx);
+    const sy = Math.max(cy - box.y, box.y + box.h - cy);
+    if (g.shape === 'ellipse' && sx > 0 && sy > 0 && sx !== sy) {
+      const rx = sx * Math.SQRT2;
+      const k = sy / sx;
+      return `<defs><radialGradient id="${id}" gradientUnits="userSpaceOnUse" cx="${r(cx)}" cy="${r(cy)}" r="${r(rx)}" gradientTransform="translate(${r(cx)} ${r(cy)}) scale(1 ${r(k)}) translate(${r(-cx)} ${r(-cy)})">${stopTags}</radialGradient></defs>`;
+    }
+    const radius = g.shape === 'ellipse' ? sx * Math.SQRT2 : Math.hypot(sx, sy);
     return `<defs><radialGradient id="${id}" gradientUnits="userSpaceOnUse" cx="${r(cx)}" cy="${r(cy)}" r="${r(radius)}">${stopTags}</radialGradient></defs>`;
   }
   // CSS angles: 0deg points up and turns clockwise. The line runs through the center and
   // is long enough that its ends touch the corners, so the colors land where CSS puts them.
-  const deg = g.angle ?? (g.to ? ANGLES[g.to] : 180);
-  const rad = (deg * Math.PI) / 180;
+  const rad = (g.angle !== undefined ? g.angle : g.to ? toAngle(g.to, box) : 180) * (Math.PI / 180);
   const sin = Math.sin(rad);
   const cos = Math.cos(rad);
   const half = (Math.abs(box.w * sin) + Math.abs(box.h * cos)) / 2;
@@ -234,6 +250,9 @@ function svgDefs(g: GradientSpec, id: string, box: Box): string {
  */
 export function paintSvg(markup: string, paint: string | GradientSpec): string {
   if (!isGradient(paint)) return markup.replaceAll('currentColor', paint);
+  const errs: string[] = [];
+  checkPaint('gradient', paint, errs, false);
+  if (errs.length) throw new Error(`invalid badgetrip gradient:\n  ${errs.join('\n  ')}`);
   const tag = /<svg\b[^>]*>/i.exec(markup);
   if (!tag) return markup;
   const vb =

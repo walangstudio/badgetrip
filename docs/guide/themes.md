@@ -66,9 +66,10 @@ Plain HTML:
 ```ts
 import { applyTheme, createNotifier, defineBadgetripElements } from '@walangstudio/badgetrip-html';
 
+// engine is the one from Getting started
 applyTheme(themes.dark); // colors for the whole page
-const elements = defineBadgetripElements(observed, { theme: themes.dark });
-const notifier = createNotifier(observed, { actor: user.id, theme: themes.dark });
+const elements = defineBadgetripElements(engine, { theme: themes.dark });
+const notifier = createNotifier(engine, { actor: 'ana', theme: themes.dark });
 ```
 
 React Native has no CSS variables, so a theme there brings its icons and celebrations but not its colors.
@@ -77,7 +78,7 @@ A provider nested inside another uses the outer theme unless it has its own. Pag
 
 ## Switch at runtime
 
-Pass another theme and everything restyles in place. Popups already on screen stay where they are.
+Pass another theme and everything restyles in place. Popups on screen recolor at once but keep their icon, layout and position; popups still waiting use the new icons.
 
 | Stack | Switch with |
 |---|---|
@@ -182,7 +183,7 @@ Tier tints only apply to SVG icons, so bronze, silver and gold share one GIF. To
 
 ## Start from another theme
 
-`extends` takes a theme or a built-in name. Nested settings merge key by key, and yours win, so you only write what changes:
+`extends` takes a theme or a built-in name. Nested settings merge key by key, and yours win, so you only write what changes. A gradient, an icon asset, a sound or a progress setting is replaced whole, not merged:
 
 ```ts
 const brand = defineTheme({
@@ -235,7 +236,7 @@ Ship images and sounds with the package and import them, so the app's bundler ha
 `themeCss(theme)` returns the variables as one CSS rule. Put it in a `<style>` in the server-rendered page, and the first paint already has the theme's colors:
 
 ```ts
-import { themeCss } from '@walangstudio/badgetrip-assets';
+import { themeCss, themes } from '@walangstudio/badgetrip-assets';
 
 const head = `<style>${themeCss(themes.dark)}</style>`;
 ```

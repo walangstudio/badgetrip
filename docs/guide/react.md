@@ -111,13 +111,21 @@ Give the provider a theme, and badges, `<UnlockNotifier>` and `useUnlocks` all f
 
 ```tsx
 import { themes } from '@walangstudio/badgetrip-assets';
+import { BadgetripProvider, UnlockNotifier } from '@walangstudio/badgetrip-react';
+import { useState } from 'react';
+import { engine } from './badges';
+import { Trophies } from './Trophies';
 
-const [theme, setTheme] = useState(themes.classic);
-
-<BadgetripProvider engine={engine} theme={theme}>
-  <UnlockNotifier actor={userId} />
-  <Trophies userId={userId} />
-</BadgetripProvider>;
+export function App({ userId }: { userId: string }) {
+  const [theme, setTheme] = useState(themes.classic);
+  return (
+    <BadgetripProvider engine={engine} theme={theme}>
+      <button type="button" onClick={() => setTheme(themes.arcade)}>Arcade</button>
+      <UnlockNotifier actor={userId} />
+      <Trophies userId={userId} />
+    </BadgetripProvider>
+  );
+}
 ```
 
 `useTheme()` reads the current theme. The [themes guide](themes.md) covers making your own.
