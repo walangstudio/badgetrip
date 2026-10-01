@@ -503,3 +503,33 @@ describe('gradient review fixes', () => {
     ).toThrow(/tierColors.gold.position/);
   });
 });
+
+describe('gradient review round 3', () => {
+  const decode = (src: string) => decodeURIComponent(src.slice('data:image/svg+xml,'.length));
+
+  it('draws a radial ellipse the way CSS does, stretched toward the farther sides', () => {
+    const svg = decode(
+      svgToDataUrl(svgs.star, {
+        type: 'radial',
+        shape: 'ellipse',
+        position: 'top',
+        colors: ['a', 'b'],
+      }),
+    );
+    expect(svg).toContain('cx="12" cy="0" r="16.971"');
+    expect(svg).toContain('gradientTransform="translate(12 0) scale(1 2) translate(-12 0)"');
+  });
+
+  it('aims corner directions corner to corner on a non-square box, like CSS', () => {
+    const own =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 24"><path stroke="currentColor" d="M0 0"/></svg>';
+    const svg = decode(svgToDataUrl(own, { colors: ['a', 'b'], to: 'top right' }));
+    expect(svg).toContain('x1="14.4" y1="31.2" x2="33.6" y2="-7.2"');
+  });
+
+  it('svgToDataUrl rejects a gradient with unsafe colors instead of writing them into the markup', () => {
+    expect(() => svgToDataUrl(svgs.star, { colors: ['red"/><foo', 'blue'] })).toThrow(
+      /colors\[0\]/,
+    );
+  });
+});

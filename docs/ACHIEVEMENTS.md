@@ -115,7 +115,7 @@ const icons = createIconResolver({
   },
   categories: { social: 'chat' },   // icon for achievements with no `icon`
   fallback: 'star',                 // default 'trophy'
-  color: '#1f2937',                 // paint color for the built-in SVGs
+  color: '#1f2937',                 // paint for the built-in SVGs: a color or a gradient
   tierColors: { bronze: '#b8733d' }, // merged over the default tints; false disables
 });
 

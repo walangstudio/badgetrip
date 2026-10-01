@@ -67,4 +67,4 @@ The built-in overlay is web-only for now. `useUnlocks()` gives you the queue of 
 
 ## Themes
 
-A `theme` on `BadgetripProvider` brings its icons and celebrations to the native badge and `useUnlocks`. React Native has no CSS variables, so the theme's colors don't apply; style your own celebration UI from `useTheme()` if you want them. See [Themes](themes.md).
+A `theme` on `BadgetripProvider` brings its icons and celebrations to the native badge and `useUnlocks`. React Native has no CSS variables, so the theme's colors don't apply. To use them in your own celebration UI, read flat colors from `useTheme()?.vars['--badgetrip-accent']` and the like; gradients come through as CSS strings, which React Native can't draw. See [Themes](themes.md).

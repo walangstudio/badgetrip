@@ -211,7 +211,7 @@ const next = queue[0]; // { view, celebration }
 
 ## Styling
 
-The overlay lives in a shadow root, so your CSS can't break it and its CSS can't leak into your page. A [theme](themes.md) sets all of this in one object. To do it by hand, set the custom properties on the page:
+The overlay lives in a shadow root, so your CSS can't break it and its CSS can't leak into your page. A [theme](themes.md) sets all of this in one object. Without a theme on the notifier, you can set the custom properties on the page by hand:
 
 ```css
 [data-badgetrip-notifier] {
@@ -236,7 +236,8 @@ The others are `--badgetrip-backdrop`, `--badgetrip-fullscreen-bg` and `--badget
 
 | Option | Default | |
 |---|---|---|
-| `icons` | built-in pack | A `createIconResolver(...)`, so popups show your own art. Pass the same one your badges use; see [Your own icons](getting-started.md#your-own-icons). Angular picks it up from `provideBadgetrip(engine, { icons })`. |
+| `theme` | none | A `defineTheme()` result: its icons, celebrations and colors. Explicit `icons` and `celebrations` win. Its colors apply to popups only, and colors it leaves out use the built-in look, not the page's. See [Themes](themes.md). |
+| `icons` | the theme's icons, else the built-in pack | A `createIconResolver(...)`, so popups show your own art. Pass the same one your badges use; see [Your own icons](getting-started.md#your-own-icons). Angular picks it up from `provideBadgetrip(engine, { icons })`. |
 | `maxVisible` | 3 | Toasts shown at once per position. The rest wait. |
 | `maxQueue` | 10 | Waiting toasts before the rest fold into one "+N more" toast. |
 | `root` | `document.body` | Where the overlay is attached. |

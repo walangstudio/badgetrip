@@ -88,10 +88,11 @@ Pass a theme to the plugin. Badges, `<UnlockNotifier>` and `useUnlocks()` follow
 
 ```ts
 import { themes } from '@walangstudio/badgetrip-assets';
+import { createBadgetrip, useTheme } from '@walangstudio/badgetrip-vue';
 
 app.use(createBadgetrip(engine, { theme: themes.dark }));
 
-// anywhere below
+// in any component's setup()
 const theme = useTheme();
 theme.value = themes.arcade;
 ```

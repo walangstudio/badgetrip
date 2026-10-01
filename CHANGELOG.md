@@ -15,7 +15,7 @@ All notable changes to badgetrip are documented here. The format follows [Keep a
   - A provider nested in another uses the outer theme unless it has its own, and page colors come from the outermost provider. A notifier with its own theme ignores the page's colors.
 - `themeCss(theme)` writes a theme's colors as one CSS rule for server-rendered pages.
 - **Gradients.** Theme backgrounds (`bg`, `fullscreenBg`, `backdrop`, `iconBg`) and icons (`icons.color`, `icons.tierColors`) take a gradient as plain data: 2-8 colors with optional stops, linear with an `angle` or `to` direction, or radial with a `shape` and `position`. A gradient icon is one sweep across the whole drawing. `gradient(spec)` returns the CSS. A fifth built-in theme, `aurora`, is the sample.
-- `notifier.update()` also takes `theme`, `icons` and `celebrations`. Popups already on screen or waiting keep their look, and progress popups start or stop to match.
+- `notifier.update()` also takes `theme`, `icons` and `celebrations`. Popups on screen change colors at once and waiting ones pick up the new icons; layout, position and sound stay as queued. Progress popups start or stop to match.
 - The docs site and playground at [walangstudio.github.io/badgetrip](https://walangstudio.github.io/badgetrip/), deployed from `main`. The playground has a theme picker and takes a `theme` block in its config.
 - A themes guide, and docs for replacing a built-in sound and giving popups your own icons.
 - Sample GIF badges, drawn for badgetrip (MIT), each with a still frame: a GIF for every built-in icon, used by the playground's `animated` sample theme, plus three standalone badges (a star, a trophy and a flame).
