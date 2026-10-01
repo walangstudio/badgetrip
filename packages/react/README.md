@@ -44,7 +44,8 @@ function LogHabit({ userId }: { userId: string }) {
 
 | | |
 |---|---|
-| `BadgetripProvider` | Takes `engine`: a local engine or an [`@walangstudio/badgetrip-ipc`](https://github.com/walangstudio/badgetrip/tree/main/packages/ipc) remote. |
+| `BadgetripProvider` | Takes `engine`: a local engine or an [`@walangstudio/badgetrip-ipc`](https://github.com/walangstudio/badgetrip/tree/main/packages/ipc) remote, and an optional `theme`. Badges, `<UnlockNotifier>` and `useUnlocks` follow the theme; pass another to switch. See the [themes guide](https://github.com/walangstudio/badgetrip/blob/main/docs/guide/themes.md). |
+| `useTheme()` | The provider's theme, or `null`. |
 | `useBadgetrip()` | The engine to emit through. Calls on it notify every hook. |
 | `useScore`, `useTier`, `useStreak`, `useEscalator`, `useLeaderboard` | Current state. Start at a neutral value (0, `null`, `[]`) until the first read resolves. |
 | `useAchievements(actor)` | Unlocked codes with unlock times. |
