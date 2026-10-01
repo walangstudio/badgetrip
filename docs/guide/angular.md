@@ -79,3 +79,18 @@ For a badge of your own design, `achievementIcon(signal)` returns a signal of th
 ## Celebrate unlocks
 
 Add `notifier` to the provider: `provideBadgetrip(engine, { notifier: () => ({ actor: inject(Auth).userId }) })`. A function runs in the injection context, so it can read services; a plain options object works too. Every unlock then pops up on top of the page, in the browser only. `inject(BADGETRIP_NOTIFIER)?.update({ sound: true })` changes sound settings later. See [Unlock celebrations](celebrations.md). For a custom UI, `inject(BadgetripService).unlocks()` returns a signal queue.
+
+## Themes
+
+Add `theme` to the provider, and switch it from the service:
+
+```ts
+import { themes } from '@walangstudio/badgetrip-assets';
+
+provideBadgetrip(engine, { theme: themes.dark, notifier: true });
+
+// in a component
+inject(BadgetripService).setTheme(themes.arcade);
+```
+
+Badges, the notifier and `unlocks()` follow `BadgetripService.theme`. Colors only go on the page in the browser. The [themes guide](themes.md) covers making your own.

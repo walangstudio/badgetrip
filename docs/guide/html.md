@@ -81,3 +81,24 @@ For the custom elements, target `badgetrip-catalog figure` in your stylesheet. T
 ## Celebrate unlocks
 
 `createNotifier(observed, { actor: 'ana' })` shows each unlock on top of the page: a toast, a modal or fullscreen confetti, with optional sound. Add `secret` to `<badgetrip-catalog>` to leave hidden achievements out and show how many remain. Both are covered in [Unlock celebrations](celebrations.md).
+
+## Themes
+
+A theme sets colors, icons and celebrations in one object. Put its colors on the page, and hand it to the elements (in place of the plain `defineBadgetripElements(engine)` call above) and the notifier:
+
+```js
+import { themes } from '@walangstudio/badgetrip-assets';
+import { applyTheme, createNotifier, defineBadgetripElements } from '@walangstudio/badgetrip-html';
+
+applyTheme(themes.dark);
+const elements = defineBadgetripElements(engine, { theme: themes.dark });
+const notifier = createNotifier(engine, { actor: 'ana', theme: themes.dark });
+
+// switch later
+const next = themes.arcade;
+applyTheme(next);
+elements.setTheme(next);
+notifier.update({ theme: next });
+```
+
+The [themes guide](themes.md) covers making your own.

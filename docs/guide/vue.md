@@ -81,3 +81,19 @@ For a custom badge, `useAchievementIcon(() => badge)` gives you the right image 
 ## Celebrate unlocks
 
 Put `<UnlockNotifier :actor="userId" />` in your root component, and every unlock pops up on top of the page. See [Unlock celebrations](celebrations.md) for per-achievement looks and sound. `useUnlocks()` gives you the queue for a custom UI.
+
+## Themes
+
+Pass a theme to the plugin. Badges, `<UnlockNotifier>` and `useUnlocks()` follow it, and assigning `useTheme().value` switches it live:
+
+```ts
+import { themes } from '@walangstudio/badgetrip-assets';
+
+app.use(createBadgetrip(engine, { theme: themes.dark }));
+
+// anywhere below
+const theme = useTheme();
+theme.value = themes.arcade;
+```
+
+The [themes guide](themes.md) covers making your own.

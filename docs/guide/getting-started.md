@@ -134,6 +134,8 @@ Added an achievement after launch? Call `engine.refresh(userId)` when a user sig
 
 ## Your own icons
 
+To change colors, icons and sounds together, use a [theme](themes.md). This section swaps icons alone.
+
 Every icon key (`sprout`, `medal`, `flame`...) comes from a built-in pack of 18 SVGs. Swap any of them, or give one achievement its own art:
 
 ```ts

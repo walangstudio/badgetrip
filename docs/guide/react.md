@@ -104,3 +104,20 @@ To change the icons themselves, wrap the tree in `<IconProvider icons={createIco
 ## Celebrate unlocks
 
 Render `<UnlockNotifier actor={userId} />` once inside the provider, and every unlock pops up on top of the page. Toasts, modals, fullscreen confetti and sound are all configurable per achievement; see [Unlock celebrations](celebrations.md). For your own celebration UI, `useUnlocks()` gives you the queue instead.
+
+## Themes
+
+Give the provider a theme, and badges, `<UnlockNotifier>` and `useUnlocks` all follow it. Pass a different one to switch; nothing re-mounts.
+
+```tsx
+import { themes } from '@walangstudio/badgetrip-assets';
+
+const [theme, setTheme] = useState(themes.classic);
+
+<BadgetripProvider engine={engine} theme={theme}>
+  <UnlockNotifier actor={userId} />
+  <Trophies userId={userId} />
+</BadgetripProvider>;
+```
+
+`useTheme()` reads the current theme. The [themes guide](themes.md) covers making your own.

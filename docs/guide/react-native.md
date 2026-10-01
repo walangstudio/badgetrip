@@ -64,3 +64,7 @@ Screen readers get each progress bar as a real progress bar, labeled like "On a 
 ## Celebrate unlocks
 
 The built-in overlay is web-only for now. `useUnlocks()` gives you the queue of new unlocks, each with its resolved celebration (layout, sound, confetti), so you can draw your own with `Modal` and `Animated`. See [Unlock celebrations](celebrations.md#your-own-celebration-ui).
+
+## Themes
+
+A `theme` on `BadgetripProvider` brings its icons and celebrations to the native badge and `useUnlocks`. React Native has no CSS variables, so the theme's colors don't apply; style your own celebration UI from `useTheme()` if you want them. See [Themes](themes.md).

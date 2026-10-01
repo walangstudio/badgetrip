@@ -14,10 +14,12 @@ The sample config is a small game (levels, collectibles, daily logins, a boss, o
 - **Progress popups.** `veteran` reports progress at 25, 50 and 75%.
 - **Hidden achievements.** `explorer` stays hidden until `secret.found` fires. Tick **Secret mode** to leave it out of the list.
 - **Previews.** **Preview** shows any achievement's celebration without unlocking it.
+- **Themes.** The **Theme** picker switches between the built-in themes live.
 
 The config is plain JSON with the same shape as `createEngine` definitions:
 
 - `achievements` is the object you would pass to `defineAchievements`, with rules written as data (`{ "kind": "count", "eventType": "item.collect", "gte": 5 }`).
 - `celebrations` is the object for `createCelebrationResolver`.
+- `theme` tweaks the picked theme, like `{ "style": { "accent": "#e11d48" } }`. It takes everything `defineTheme` does.
 
 Config errors appear under the editor, all of them at once. `pnpm --filter @badgetrip-example/playground build` produces a static site in `dist/` that can be hosted anywhere.

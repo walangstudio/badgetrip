@@ -94,6 +94,8 @@ Call it on login or after deploying new achievements. `first-of-day` only unlock
 
 ## Assets
 
+A [theme](guide/themes.md) bundles these icon settings with colors and celebrations; the options below are the same ones a theme's `icons` takes.
+
 `@walangstudio/badgetrip-assets` ships 18 line icons (MIT, drawn for badgetrip), painted with `currentColor`:
 
 `trophy star medal crown flame shield bolt heart chat sprout target clock moon check lock hidden sparkle sparkle-animated`
