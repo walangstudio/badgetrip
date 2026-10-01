@@ -147,7 +147,7 @@ describe('notifier themes', () => {
     n.show(view({ unlocked: true, name: 'Before' }));
     n.update({ theme: plain });
     n.show(view({ unlocked: true, name: 'After' }));
-    expect(host().style.getPropertyValue('--badgetrip-accent')).toBe('');
+    expect(host().style.getPropertyValue('--badgetrip-accent')).toBe('initial');
     expect(host().style.getPropertyValue('--badgetrip-bg')).toBe('#fff');
     const names = [...shadow().querySelectorAll('.toast .name')].map((x) => x.textContent);
     expect(names.sort()).toEqual(['After', 'Before']);
@@ -196,5 +196,21 @@ describe('custom elements', () => {
     );
     expect(el.style.getPropertyValue('--badgetrip-accent')).toBe('');
     expect(el.style.getPropertyValue('--badgetrip-bg')).toBe('#fff');
+  });
+});
+
+describe('review fixes', () => {
+  it("a notifier's own theme blocks colors it doesn't set from the page", () => {
+    applyTheme(themes.arcade);
+    make(observe(engine()), { theme: plain });
+    expect(host().style.getPropertyValue('--badgetrip-bg')).toBe('#fff');
+    expect(host().style.getPropertyValue('--badgetrip-font')).toBe('initial');
+    expect(host().style.getPropertyValue('--badgetrip-accent')).toBe('initial');
+  });
+
+  it('without its own theme, a notifier keeps following the page colors', () => {
+    applyTheme(themes.arcade);
+    make(observe(engine()));
+    expect(host().style.getPropertyValue('--badgetrip-font')).toBe('');
   });
 });

@@ -61,6 +61,13 @@ const VARS: Record<string, string> = {
   iconBg: '--badgetrip-icon-bg',
 };
 const STYLE_KEYS = new Set([...Object.keys(VARS), 'locked']);
+
+/** Every custom property a theme can set. */
+export const themeVars: readonly string[] = Object.freeze([
+  ...Object.values(VARS),
+  '--badgetrip-locked-filter',
+  '--badgetrip-locked-opacity',
+]);
 const LOCKED_KEYS = new Set(['filter', 'opacity']);
 const ICON_KEYS = new Set(['icons', 'overrides', 'categories', 'fallback', 'color', 'tierColors']);
 const ASSET_KEYS = new Set(['src', 'still', 'animated']);
@@ -68,12 +75,20 @@ const ASSET_KEYS = new Set(['src', 'still', 'animated']);
 const isObj = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
-/** A deep copy with nested plain objects merged key by key; arrays and scalars are replaced. */
-function merge(a: unknown, b: unknown): unknown {
+// One icon asset, one sound or one progress setting is a unit: extending replaces it whole,
+// so a child's `{ src }` never inherits the base's `still`, or its `{ tones }` the base's `src`.
+const atomic = (path: string[]) =>
+  (path.length === 3 &&
+    ((path[0] === 'icons' && (path[1] === 'icons' || path[1] === 'overrides')) ||
+      (path[0] === 'celebrations' && path[1] === 'sounds'))) ||
+  path[path.length - 1] === 'progress';
+
+/** A deep copy with nested plain objects merged key by key; arrays, scalars and units are replaced. */
+function merge(a: unknown, b: unknown, path: string[] = []): unknown {
   if (b === undefined) return copy(a);
-  if (!isObj(a) || !isObj(b)) return copy(b);
+  if (!isObj(a) || !isObj(b) || atomic(path)) return copy(b);
   const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
-  return Object.fromEntries([...keys].map((k) => [k, merge(a[k], b[k])]));
+  return Object.fromEntries([...keys].map((k) => [k, merge(a[k], b[k], [...path, k])]));
 }
 const copy = (v: unknown): unknown =>
   Array.isArray(v)
@@ -84,10 +99,32 @@ const copy = (v: unknown): unknown =>
 
 const URL_RE = /url\(\s*(?:"([^"]*)"|'([^']*)'|([^\s'")]*))\s*\)/gi;
 
+/** Parentheses balanced and quotes closed, so a value cannot leave its rule open. */
+function closed(v: string): boolean {
+  let depth = 0;
+  let quote = '';
+  for (const c of v) {
+    if (quote) {
+      if (c === quote) quote = '';
+    } else if (c === '"' || c === "'") quote = c;
+    else if (c === '(') depth++;
+    else if (c === ')' && --depth < 0) return false;
+  }
+  return depth === 0 && !quote;
+}
+
 /** A CSS value that cannot end its declaration or rule, with every `url()` vetted. */
 function checkCss(where: string, v: unknown, errs: string[]) {
-  if (typeof v !== 'string' || v.length < 1 || v.length > 300 || /[;{}<>\\]/.test(v)) {
-    return void errs.push(`${where} must be a CSS value of 1-300 characters without ; { } < > \\`);
+  if (
+    typeof v !== 'string' ||
+    v.length < 1 ||
+    v.length > 300 ||
+    /[;{}<>\\]|\/\*|\*\//.test(v) ||
+    !closed(v)
+  ) {
+    return void errs.push(
+      `${where} must be a CSS value of 1-300 characters, with closed quotes and parentheses and no ; { } < > \\ or comments`,
+    );
   }
   const urls = [...v.matchAll(URL_RE)];
   if (urls.length !== (v.match(/url\(/gi) ?? []).length) {

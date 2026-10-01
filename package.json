@@ -1,7 +1,7 @@
 {
   "name": "badgetrip",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "description": "Framework-agnostic gamification primitives - points, achievements, streaks, tiers, leaderboards, escalators.",
   "scripts": {

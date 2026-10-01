@@ -1,6 +1,6 @@
 {
   "name": "@walangstudio/badgetrip-ipc",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Run a badgetrip engine in one process (Electron main, a worker, a server) and use it from another over a message transport.",
   "type": "module",
   "main": "./dist/index.js",

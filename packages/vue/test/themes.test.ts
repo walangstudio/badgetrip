@@ -10,7 +10,7 @@ import {
 } from '@walangstudio/badgetrip-core';
 import { makeTestEngine } from '@walangstudio/badgetrip-testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { defineComponent, h, nextTick } from 'vue';
+import { defineComponent, h, nextTick, ref } from 'vue';
 import {
   AchievementBadge,
   UnlockNotifier,
@@ -164,5 +164,43 @@ describe('component-scoped themes and useUnlocks', () => {
     await vi.waitFor(() => expect(queue.value).toHaveLength(1));
     expect(queue.value[0]?.celebration.title).toBe('Nice one');
     wrapper.unmount();
+  });
+});
+
+describe('nested providers', () => {
+  it('keep the app page colors, and inherit the app theme when they have none', async () => {
+    const e = engine();
+    let inherited: unknown;
+    let own: unknown;
+    // inject() sees the parent's provide, so read the theme from a child.
+    const Inner = (theme?: typeof neon) => {
+      const Peek = defineComponent({
+        setup() {
+          if (theme) own = useTheme().value;
+          else inherited = useTheme().value;
+          return () => null;
+        },
+      });
+      return defineComponent({
+        setup() {
+          provideBadgetrip(e, theme ? { theme } : {});
+          return () => h(Peek);
+        },
+      });
+    };
+    const show = ref(true);
+    const InnerPlain = Inner(plain);
+    const InnerNone = Inner();
+    const { wrapper } = app(e, { theme: neon }, () =>
+      show.value ? [h(InnerPlain), h(InnerNone)] : null,
+    );
+    expect(own).toBe(plain);
+    expect(inherited).toBe(neon);
+    expect(rootVar('--badgetrip-accent')).toBe('#ff2bd6');
+    show.value = false;
+    await nextTick();
+    expect(rootVar('--badgetrip-accent')).toBe('#ff2bd6');
+    wrapper.unmount();
+    expect(rootVar('--badgetrip-accent')).toBe('');
   });
 });

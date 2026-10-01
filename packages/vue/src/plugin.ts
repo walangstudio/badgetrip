@@ -25,7 +25,8 @@ export type BadgetripOptions = {
   icons?: IconResolver;
   /**
    * A `defineTheme()` result. Its colors go on the page, and badges and `<UnlockNotifier>`
-   * use its icons and celebrations. Switch with `useTheme().value = other`.
+   * use its icons and celebrations. Switch with `useTheme().value = other`. Without one,
+   * a nested `provideBadgetrip` uses the outer theme; page colors only come from the outermost.
    */
   theme?: Theme;
 };
@@ -63,7 +64,15 @@ export function createBadgetrip(engine: Engine | Observable, opts: BadgetripOpti
       if (opts.icons) app.provide(IconsKey, opts.icons);
       const theme = themeRef(opts.theme);
       app.provide(ThemeKey, theme.ref);
-      app.onUnmount?.(theme.dispose);
+      // app.onUnmount arrived in Vue 3.5; the peer range starts at 3.4.
+      if (typeof app.onUnmount === 'function') app.onUnmount(theme.dispose);
+      else {
+        const unmount = app.unmount.bind(app);
+        app.unmount = () => {
+          theme.dispose();
+          unmount();
+        };
+      }
     },
   };
 }
@@ -76,9 +85,14 @@ export function provideBadgetrip(
   const reactive = toObservable(engine);
   provide(BadgetripKey, reactive);
   if (opts.icons) provide(IconsKey, opts.icons);
-  const theme = themeRef(opts.theme);
-  provide(ThemeKey, theme.ref);
-  onScopeDispose(theme.dispose);
+  // Nested under another provider: inherit its theme, and leave page colors to it.
+  const outer = inject(ThemeKey, null);
+  if (outer) provide(ThemeKey, opts.theme ? shallowRef(opts.theme) : outer);
+  else {
+    const theme = themeRef(opts.theme);
+    provide(ThemeKey, theme.ref);
+    onScopeDispose(theme.dispose);
+  }
   return reactive;
 }
 

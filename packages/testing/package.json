@@ -1,6 +1,6 @@
 {
   "name": "@walangstudio/badgetrip-testing",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Test helpers for badgetrip engines, plus the conformance suite for custom stores.",
   "type": "module",
   "main": "./dist/index.js",

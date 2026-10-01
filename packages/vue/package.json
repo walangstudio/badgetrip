@@ -1,6 +1,6 @@
 {
   "name": "@walangstudio/badgetrip-vue",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Vue 3 plugin, composables and an AchievementBadge for badgetrip.",
   "type": "module",
   "main": "./dist/index.js",

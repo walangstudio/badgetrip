@@ -31,6 +31,7 @@ export {
 export {
   defineTheme,
   themeCss,
+  themeVars,
   themes,
   type BuiltinThemeName,
   type Theme,

@@ -2,6 +2,26 @@
 
 All notable changes to badgetrip are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [SemVer](https://semver.org/).
 
+## [0.1.0] - 2026-10-01
+
+### Added
+
+- **Themes.** `defineTheme` in `@walangstudio/badgetrip-assets` puts colors, icons and celebrations in one validated object, with `extends` to start from another theme. Four built-ins ship in `themes`: `classic` (the look without a theme), `dark`, `arcade` and `minimal`. Theme values can't escape their CSS declaration, and every `url()` is vetted like an image.
+  - React: `theme` on `BadgetripProvider` and `useTheme()`. Badges, `<UnlockNotifier>` and `useUnlocks` follow it, and a new `theme` prop switches it live.
+  - Vue: `theme` on `createBadgetrip` and `provideBadgetrip`; `useTheme()` returns a ref, and assigning it switches the theme.
+  - Angular: `theme` on `provideBadgetrip`, `BadgetripService.theme` and `setTheme()`, and the `BADGETRIP_THEME` token. Colors apply in the browser only.
+  - HTML: `applyTheme(theme, target?)`, a `theme` option on `createNotifier`, `renderBadge`, `renderCatalog` and `defineBadgetripElements`, which now returns `{ setTheme }`.
+  - React Native: `useTheme()`; a theme brings its icons and celebrations.
+  - A provider nested in another uses the outer theme unless it has its own, and page colors come from the outermost provider. A notifier with its own theme ignores the page's colors.
+- `themeCss(theme)` writes a theme's colors as one CSS rule for server-rendered pages.
+- `notifier.update()` also takes `theme`, `icons` and `celebrations`. Popups already on screen or waiting keep their look, and progress popups start or stop to match.
+- The docs site and playground at [walangstudio.github.io/badgetrip](https://walangstudio.github.io/badgetrip/), deployed from `main`. The playground has a theme picker and takes a `theme` block in its config.
+- A themes guide, and docs for replacing a built-in sound and giving popups your own icons.
+
+### Changed
+
+- Locked badges and progress bars read `--badgetrip-locked-filter`, `--badgetrip-locked-opacity` and `--badgetrip-accent`, falling back to the old values, so nothing looks different without a theme.
+
 ## [0.0.1] - 2026-09-29
 
 First release. Packages are published under the `@walangstudio` npm org.

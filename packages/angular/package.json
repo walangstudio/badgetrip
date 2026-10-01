@@ -1,6 +1,6 @@
 {
   "name": "@walangstudio/badgetrip-angular",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Angular signals, provider and badge component for badgetrip. Standalone, zoneless-ready.",
   "type": "module",
   "sideEffects": false,

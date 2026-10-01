@@ -1,6 +1,6 @@
 {
   "name": "@walangstudio/badgetrip-assets",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Default SVG achievement icons for badgetrip plus a key-based override resolver. Framework-agnostic.",
   "type": "module",
   "main": "./dist/index.js",

@@ -27,16 +27,19 @@ export function BadgetripProvider({
   engine: Engine | Observable;
   /**
    * A `defineTheme()` result. Its colors go on the page, and badges and `<UnlockNotifier>`
-   * use its icons and celebrations. Pass another theme to switch.
+   * use its icons and celebrations. Pass another theme to switch. Without one, a nested
+   * provider uses the outer theme; page colors only ever come from the outermost provider.
    */
   theme?: Theme;
   children: ReactNode;
 }) {
   const value = useMemo(() => toObservable(engine), [engine]);
-  useEffect(() => (theme ? applyTheme(theme) : undefined), [theme]);
+  const nested = useContext(BadgetripContext) !== null;
+  const outerTheme = useContext(ThemeContext);
+  useEffect(() => (theme && !nested ? applyTheme(theme) : undefined), [theme, nested]);
   return (
     <BadgetripContext.Provider value={value}>
-      <ThemeContext.Provider value={theme ?? null}>{children}</ThemeContext.Provider>
+      <ThemeContext.Provider value={theme ?? outerTheme}>{children}</ThemeContext.Provider>
     </BadgetripContext.Provider>
   );
 }

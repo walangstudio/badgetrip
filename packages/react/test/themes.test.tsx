@@ -151,7 +151,7 @@ describe('UnlockNotifier with a theme', () => {
     );
     r.rerender(ui(plain));
     expect(host()).toBe(first);
-    expect(first.style.getPropertyValue('--badgetrip-accent')).toBe('');
+    expect(first.style.getPropertyValue('--badgetrip-accent')).toBe('initial');
     expect(first.style.getPropertyValue('--badgetrip-bg')).toBe('#fff');
   });
 
@@ -179,5 +179,32 @@ describe('useUnlocks with a theme', () => {
     });
     await waitFor(() => expect(result.current.u.queue).toHaveLength(1));
     expect(result.current.u.queue[0]?.celebration.title).toBe('Nice one');
+  });
+});
+
+describe('nested providers', () => {
+  it('keep the outer page colors, and an inner provider without a theme inherits it', () => {
+    const e = engine();
+    let inner: unknown;
+    const Peek = () => {
+      inner = useTheme();
+      return null;
+    };
+    const ui = (showInner: boolean, innerTheme?: typeof neon) => (
+      <BadgetripProvider engine={e} theme={neon}>
+        {showInner ? (
+          <BadgetripProvider engine={e} {...(innerTheme ? { theme: innerTheme } : {})}>
+            <Peek />
+          </BadgetripProvider>
+        ) : null}
+      </BadgetripProvider>
+    );
+    const r = render(ui(true));
+    expect(inner).toBe(neon);
+    r.rerender(ui(true, plain));
+    expect(inner).toBe(plain);
+    expect(rootVar('--badgetrip-accent')).toBe('#ff2bd6');
+    r.rerender(ui(false));
+    expect(rootVar('--badgetrip-accent')).toBe('#ff2bd6');
   });
 });
