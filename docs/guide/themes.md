@@ -72,6 +72,8 @@ const notifier = createNotifier(observed, { actor: user.id, theme: themes.dark }
 
 React Native has no CSS variables, so a theme there brings its icons and celebrations but not its colors.
 
+A provider nested inside another uses the outer theme unless it has its own. Page colors always come from the outermost provider; a nested theme changes icons and celebrations below it, and a notifier with its own theme keeps its own colors.
+
 ## Switch at runtime
 
 Pass another theme and everything restyles in place. Popups already on screen stay where they are.

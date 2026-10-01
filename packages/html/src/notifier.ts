@@ -23,7 +23,7 @@ import {
 } from '@walangstudio/badgetrip-core';
 import { createPlayer } from './audio.js';
 import { startConfetti } from './confetti.js';
-import { applyTheme, checkTheme } from './theme.js';
+import { applyOwnTheme, checkTheme } from './theme.js';
 
 export type NotifierLabels = {
   /** Accessible label of the close button. Default `'Close'`. */
@@ -41,7 +41,8 @@ export type NotifierOptions = {
   icons?: IconResolver;
   /**
    * Colors, icons and celebrations from `defineTheme()`. Explicit `icons` and
-   * `celebrations` win over the theme's. Its colors apply to the popups only.
+   * `celebrations` win over the theme's. Its colors apply to the popups only, and
+   * colors it leaves out use the built-in look rather than a page theme's.
    */
   theme?: Theme;
   /**
@@ -70,8 +71,9 @@ export type NotifierOptions = {
 
 export type Notifier = {
   /**
-   * Change settings without re-creating the notifier. Popups already on screen or
-   * waiting keep the look they were queued with. `theme: null` drops the theme.
+   * Change settings without re-creating the notifier. A new theme restyles popups on
+   * screen at once, and waiting popups show its icons; their layout, position and sound
+   * stay as they were queued. `theme: null` drops the theme.
    */
   update(opts: {
     sound?: boolean;
@@ -306,7 +308,7 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
     pointerEvents: 'none',
     zIndex: String(zIndex),
   });
-  applyTheme(theme, host);
+  applyOwnTheme(theme, host);
   const shadow = host.attachShadow({ mode: 'open' });
   const Sheet = globalThis.CSSStyleSheet as
     | (typeof CSSStyleSheet & { prototype: { replaceSync?: unknown } })
@@ -679,7 +681,7 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
       checkResolvers(o, 'notifier.update');
       if (o.theme !== undefined) {
         theme = o.theme;
-        applyTheme(theme, host);
+        applyOwnTheme(theme, host);
       }
       if (o.icons) ownIcons = o.icons;
       if (o.celebrations) ownCelebrations = o.celebrations;

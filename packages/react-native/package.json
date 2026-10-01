@@ -1,6 +1,6 @@
 {
   "name": "@walangstudio/badgetrip-react-native",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "React Native / Expo bindings for badgetrip - the @walangstudio/badgetrip-react hooks plus a native AchievementBadge.",
   "type": "module",
   "main": "./dist/index.js",

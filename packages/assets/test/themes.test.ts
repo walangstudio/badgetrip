@@ -240,3 +240,41 @@ describe('themeCss', () => {
     expect(() => themeCss(t, '</style>')).toThrow(/selector/);
   });
 });
+
+describe('review fixes', () => {
+  it('replaces a whole icon, sound or progress setting when extending, never mixing fields', () => {
+    const base = defineTheme({
+      name: 'base',
+      icons: { overrides: { a: { src: '/a.gif', still: '/a.png', animated: true } } },
+      celebrations: {
+        default: { progress: { at: [50] } },
+        sounds: { ding: '/ding.mp3' },
+        presets: { p: { sound: 'ding' } },
+      },
+    });
+    const t = defineTheme({
+      name: 'child',
+      extends: base,
+      icons: { overrides: { a: { src: '/b.png' } } },
+      celebrations: {
+        default: { progress: { every: 2 } },
+        sounds: { ding: { tones: [{ freq: 440, at: 0, dur: 0.1 }] } },
+      },
+    });
+    expect(t.icons.resolve({ code: 'a' })).toEqual({ src: '/b.png' });
+    const c = t.celebrations.resolve({ code: 'x', celebration: 'p' });
+    expect(c.sound).toEqual({ tones: [{ freq: 440, at: 0, dur: 0.1 }] });
+    expect(c.progress).toMatchObject({ at: null, every: 2 });
+  });
+
+  it('rejects CSS that would leave the rule open', () => {
+    for (const v of ['rgb(1,2,3', 'red)', '"Inter, sans-serif', "'x", 'red /* x', 'red */']) {
+      bad({ name: 'x', style: { accent: v } }, /style.accent/);
+    }
+    const ok = defineTheme({
+      name: 'x',
+      style: { font: '600 14px/1.4 "Press Start 2P", monospace' },
+    });
+    expect(ok.vars['--badgetrip-font']).toBe('600 14px/1.4 "Press Start 2P", monospace');
+  });
+});

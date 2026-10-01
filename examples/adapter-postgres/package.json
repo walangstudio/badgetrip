@@ -1,7 +1,7 @@
 {
   "name": "@badgetrip-example/adapter-postgres",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Reference: implementing the badgetrip store contract for Postgres. Copy and adapt - not a published package.",
   "type": "module",
   "scripts": {

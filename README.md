@@ -13,7 +13,7 @@ const result = await engine.emit({ id, actor: 'ana', type: 'habit.done', ts: Dat
 result.unlocked; // ['first_step']
 ```
 
-> **Status:** early (0.0.x). APIs may change before 1.0. Changes are listed in the [CHANGELOG](CHANGELOG.md).
+> **Status:** early (0.x). APIs may change before 1.0. Changes are listed in the [CHANGELOG](CHANGELOG.md).
 
 ## Why
 
