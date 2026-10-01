@@ -14,6 +14,7 @@ coverage/
 .cache/
 .eslintcache
 .vitepress/cache/
+.vitepress/.temp/
 
 # Logs
 *.log
