@@ -1,5 +1,4 @@
 import {
-  type BuiltinThemeName,
   type CelebrationResolverOptions,
   type Theme,
   type ThemeInput,
@@ -28,6 +27,7 @@ import {
   createNotifier,
   renderCatalog,
 } from '@walangstudio/badgetrip-html';
+import { animatedTheme } from './animated.js';
 import { sample } from './sample.js';
 
 const ACTOR = 'player';
@@ -49,8 +49,10 @@ const catalog = el('catalog');
 const soundBox = el<HTMLInputElement>('sound');
 const secretBox = el<HTMLInputElement>('secret');
 const themePicker = el<HTMLSelectElement>('theme');
+// The built-in themes plus the all-GIF sample theme.
+const bases: Record<string, Theme> = { ...themes, animated: animatedTheme };
 themePicker.replaceChildren(
-  ...Object.keys(themes).map((name) => {
+  ...Object.keys(bases).map((name) => {
     const o = document.createElement('option');
     o.value = name;
     o.textContent = name;
@@ -71,7 +73,7 @@ let session:
 
 /** The picked built-in theme, with the config's `theme` and `celebrations` blocks on top. */
 function buildTheme(cfg: Config): Theme {
-  const base = themePicker.value as BuiltinThemeName;
+  const base = bases[themePicker.value] ?? themes.classic;
   const tweaked = defineTheme({ name: 'playground', extends: base, ...cfg.theme } as ThemeInput);
   return cfg.celebrations
     ? defineTheme({ name: tweaked.name, extends: tweaked, celebrations: cfg.celebrations })

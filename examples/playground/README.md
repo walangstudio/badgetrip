@@ -14,8 +14,8 @@ The sample config is a small game (levels, collectibles, daily logins, a boss, o
 - **Progress popups.** `veteran` reports progress at 25, 50 and 75%.
 - **Hidden achievements.** `explorer` stays hidden until `secret.found` fires. Tick **Secret mode** to leave it out of the list.
 - **Previews.** **Preview** shows any achievement's celebration without unlocking it.
-- **Themes.** The **Theme** picker switches between the built-in themes live.
-- **GIF badges.** `first_steps`, `regular` and `boss_slayer` use the sample GIFs in `public/samples/` (a star, a flame and a trophy, drawn for badgetrip, MIT). Each has a still PNG, shown while the badge is locked or when the user prefers reduced motion.
+- **Themes.** The **Theme** picker switches between the built-in themes live, plus `animated`, a sample theme where every badge is a GIF.
+- **GIF badges.** The `animated` theme ([`src/animated.ts`](src/animated.ts)) points every built-in icon key at a GIF in `public/samples/animated/`, so any achievement gets an animated badge. `public/samples/` also holds three standalone GIFs (a star, a trophy and a flame). All were drawn for badgetrip (MIT), and each has a still PNG shown while the badge is locked or when the user prefers reduced motion.
 
 The config is plain JSON with the same shape as `createEngine` definitions:
 

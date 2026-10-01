@@ -147,6 +147,39 @@ import { gradient } from '@walangstudio/badgetrip-assets';
 banner.style.background = gradient({ colors: ['#4c1d95', '#db2777'], to: 'right' });
 ```
 
+## Sample: every badge animated
+
+Mixing a few GIFs into flat icons looks out of place, so the animated look is its own theme. The [playground](../../examples/playground) has it as `animated`: every built-in icon key points at a GIF, so any achievement gets an animated badge, with no per-achievement setup.
+
+```ts
+import { defineTheme, svgs } from '@walangstudio/badgetrip-assets';
+
+export const animatedTheme = defineTheme({
+  name: 'animated',
+  icons: {
+    icons: Object.fromEntries(
+      Object.keys(svgs).map((key) => [
+        key,
+        { src: `/badges/${key}.gif`, still: `/badges/${key}.png`, animated: true },
+      ]),
+    ),
+  },
+});
+```
+
+The 18 GIFs and their still frames are in [`examples/playground/public/samples/animated`](../../examples/playground/public/samples/animated), drawn for badgetrip (MIT). Copy the folder into your app's public files. The still frame shows while a badge is locked and for people who prefer reduced motion.
+
+<p>
+  <img src="https://raw.githubusercontent.com/walangstudio/badgetrip/main/examples/playground/public/samples/animated/trophy.gif" width="56" height="56" alt="Animated trophy badge">
+  <img src="https://raw.githubusercontent.com/walangstudio/badgetrip/main/examples/playground/public/samples/animated/star.gif" width="56" height="56" alt="Animated star badge">
+  <img src="https://raw.githubusercontent.com/walangstudio/badgetrip/main/examples/playground/public/samples/animated/heart.gif" width="56" height="56" alt="Animated heart badge">
+  <img src="https://raw.githubusercontent.com/walangstudio/badgetrip/main/examples/playground/public/samples/animated/flame.gif" width="56" height="56" alt="Animated flame badge">
+  <img src="https://raw.githubusercontent.com/walangstudio/badgetrip/main/examples/playground/public/samples/animated/clock.gif" width="56" height="56" alt="Animated clock badge">
+  <img src="https://raw.githubusercontent.com/walangstudio/badgetrip/main/examples/playground/public/samples/animated/crown.gif" width="56" height="56" alt="Animated crown badge">
+</p>
+
+Tier tints only apply to SVG icons, so bronze, silver and gold share one GIF. To tell tiers apart, give each tier its own image with `overrides`: `{ 'collector.gold': { src: '/badges/star-gold.gif', ... } }`.
+
 ## Start from another theme
 
 `extends` takes a theme or a built-in name. Nested settings merge key by key, and yours win, so you only write what changes:

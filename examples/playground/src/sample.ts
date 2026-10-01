@@ -64,14 +64,4 @@ export const sample = {
       veteran: { progress: { at: [25, 50, 75] } },
     },
   },
-  // Sample GIF badges, each with a still frame for locked badges and reduced motion.
-  theme: {
-    icons: {
-      overrides: {
-        first_steps: { src: 'samples/star.gif', still: 'samples/star.png', animated: true },
-        regular: { src: 'samples/flame.gif', still: 'samples/flame.png', animated: true },
-        boss_slayer: { src: 'samples/trophy.gif', still: 'samples/trophy.png', animated: true },
-      },
-    },
-  },
 };
