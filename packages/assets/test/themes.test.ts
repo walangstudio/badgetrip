@@ -373,7 +373,7 @@ describe('gradient icons', () => {
     expect(id(a)).not.toBe(id(b));
     const radial = decode(svgToDataUrl(svgs.star, { type: 'radial', colors: ['red', 'blue'] }));
     expect(radial).toContain('<radialGradient');
-    expect(radial).toContain('cx="12" cy="12" r="12"');
+    expect(radial).toContain('cx="12" cy="12" r="16.971"');
   });
 
   it('works as the icon color and as a tier color, keeping raw markup for tinting', () => {
@@ -441,5 +441,65 @@ describe('docs samples', () => {
     expect(gradient({ colors: ['#4c1d95', '#db2777'], to: 'right' })).toBe(
       'linear-gradient(to right, #4c1d95, #db2777)',
     );
+  });
+});
+
+describe('gradient review fixes', () => {
+  const decode = (src: string) => decodeURIComponent(src.slice('data:image/svg+xml,'.length));
+  const paint = (spec: Parameters<typeof gradient>[0], markup = svgs.star) =>
+    decode(svgToDataUrl(markup, spec));
+
+  it('refuses url() and other non-color functions as icon colors', () => {
+    bad({ name: 'x', icons: { color: 'url(//tracker.example/p.svg#a)' } }, /icons.color/);
+    bad({ name: 'x', icons: { color: { colors: ['url(#x)', 'red'] } } }, /icons.color.colors\[0\]/);
+    bad({ name: 'x', icons: { color: 'expression(alert(1))' } }, /icons.color/);
+    const ok = defineTheme({
+      name: 'x',
+      icons: { color: { colors: ['rgb(1 2 3 / 50%)', 'hsl(280 80% 60%)', 'oklch(70% 0.2 300)'] } },
+    });
+    expect(ok.name).toBe('x');
+  });
+
+  it('places mixed stops the way CSS does', () => {
+    const svg = paint({ colors: [{ color: 'red', at: 0 }, 'blue', { color: 'green', at: 20 }] });
+    expect(svg).toContain('<stop offset="0%" stop-color="red"/>');
+    expect(svg).toContain('<stop offset="10%" stop-color="blue"/>');
+    expect(svg).toContain('<stop offset="20%" stop-color="green"/>');
+    const back = paint({
+      colors: [
+        { color: 'red', at: 60 },
+        { color: 'blue', at: 30 },
+      ],
+    });
+    expect(back).toContain('<stop offset="60%" stop-color="blue"/>');
+  });
+
+  it('runs a linear gradient corner to corner like CSS, and radial out to the farthest corner', () => {
+    expect(paint({ colors: ['a', 'b'], angle: 135 })).toContain('x1="0" y1="0" x2="24" y2="24"');
+    expect(paint({ colors: ['a', 'b'], angle: 90 })).toContain('x1="0" y1="12" x2="24" y2="12"');
+    expect(paint({ type: 'radial', colors: ['a', 'b'] })).toContain('cx="12" cy="12" r="16.971"');
+    expect(paint({ type: 'radial', colors: ['a', 'b'], position: 'top left' })).toContain(
+      'cx="0" cy="0" r="33.941"',
+    );
+  });
+
+  it('handles user SVGs with an xml header and a non-square, offset viewBox', () => {
+    const own =
+      '<?xml version="1.0"?><!-- art --><svg xmlns="http://www.w3.org/2000/svg" viewBox="10 20 48 24"><path stroke="currentColor" d="M0 0"/></svg>';
+    const svg = paint({ colors: ['red', 'blue'], angle: 90 }, own);
+    expect(svg.indexOf('<defs>')).toBeGreaterThan(svg.indexOf('<svg'));
+    expect(svg).toContain('x1="10" y1="32" x2="58" y2="32"');
+    const square = paint({ colors: ['red', 'blue'], angle: 90 });
+    const id = (m: string) => /id="([\w-]+)"/.exec(m)?.[1];
+    expect(id(svg)).not.toBe(id(square));
+  });
+
+  it('createIconResolver checks gradient objects too', () => {
+    expect(() => createIconResolver({ color: { colors: ['red'] } })).toThrow(/color.colors/);
+    expect(() =>
+      createIconResolver({
+        tierColors: { gold: { type: 'radial', position: 'middle' as never, colors: ['a', 'b'] } },
+      }),
+    ).toThrow(/tierColors.gold.position/);
   });
 });

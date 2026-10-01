@@ -1,4 +1,4 @@
-import { type GradientSpec, paintSvg } from './gradient.js';
+import { type GradientSpec, assertPaints, paintSvg } from './gradient.js';
 import { svgs } from './icons.js';
 
 /**
@@ -83,6 +83,8 @@ export type IconResolver = {
 };
 
 export function createIconResolver(opts: IconResolverOptions = {}): IconResolver {
+  assertPaints('', { color: opts.color });
+  if (opts.tierColors) assertPaints('tierColors.', opts.tierColors);
   const color = opts.color ?? '#3d4451';
   const tints: Record<string, string | GradientSpec> =
     opts.tierColors === false ? {} : { ...tierColors, ...opts.tierColors };

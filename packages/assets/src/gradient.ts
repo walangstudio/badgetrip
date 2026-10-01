@@ -49,13 +49,30 @@ const POINTS: Record<GradientDirection | 'center', [number, number]> = {
 const isObj = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
+const COLOR_FUNCTIONS = new Set([
+  'rgb',
+  'rgba',
+  'hsl',
+  'hsla',
+  'hwb',
+  'lab',
+  'lch',
+  'oklab',
+  'oklch',
+  'color',
+]);
+
 /**
- * A plain color (`#fff`, `rebeccapurple`, `rgb(...)`, `hsl(... / 50%)`): safe inside a CSS
- * declaration and inside an SVG attribute, because it has no quotes, `;`, braces or `<>`.
+ * A plain color (`#fff`, `rebeccapurple`, `rgb(...)`, `oklch(...)`): safe inside a CSS
+ * declaration and inside an SVG attribute, because it has no quotes, `;`, braces or `<>`,
+ * and no function but a color function, so no `url()` that could fetch anything.
  */
 export function isColor(v: unknown): v is string {
   if (typeof v !== 'string' || v.length < 1 || v.length > 100) return false;
   if (!/^[#\w\s(),.%/+-]+$/.test(v)) return false;
+  for (const m of v.matchAll(/([\w-]*)\s*\(/g)) {
+    if (!COLOR_FUNCTIONS.has((m[1] ?? '').toLowerCase())) return false;
+  }
   let depth = 0;
   for (const c of v) {
     if (c === '(') depth++;
@@ -146,40 +163,102 @@ export function gradient(spec: GradientSpec): string {
 const r = (n: number) => Math.round(n * 1000) / 1000;
 
 /**
- * An SVG `<defs>` gradient with the given id, in user space of a `size` x `size` viewBox,
- * so the whole icon shares one sweep instead of one per path.
+ * Stop positions as CSS computes them: unset ends are 0% and 100%, unset stops in
+ * between spread evenly between their neighbors, and a stop never sits before the last.
  */
-function svgDefs(g: GradientSpec, id: string, size: number): string {
+function positions(g: GradientSpec): { color: string; at: number }[] {
   const n = g.colors.length;
-  const stopTags = g.colors
-    .map((c, i) => {
-      const color = typeof c === 'string' ? c : c.color;
-      const at = typeof c === 'string' ? (i / (n - 1)) * 100 : c.at;
-      return `<stop offset="${r(at)}%" stop-color="${color}"/>`;
-    })
-    .join('');
-  if (g.type === 'radial') {
-    const [x, y] = POINTS[g.position ?? 'center'];
-    return `<defs><radialGradient id="${id}" gradientUnits="userSpaceOnUse" cx="${r(x * size)}" cy="${r(y * size)}" r="${r(size * (x === 0.5 && y === 0.5 ? 0.5 : 1))}">${stopTags}</radialGradient></defs>`;
+  const at: (number | undefined)[] = g.colors.map((c) =>
+    typeof c === 'string' ? undefined : c.at,
+  );
+  if (at[0] === undefined) at[0] = 0;
+  if (at[n - 1] === undefined) at[n - 1] = 100;
+  let max = 0;
+  for (let i = 0; i < n; i++) {
+    if (at[i] !== undefined) {
+      max = Math.max(max, at[i] as number);
+      at[i] = max;
+    }
   }
-  // CSS angles: 0deg points up and turns clockwise; the line runs through the center.
-  const deg = g.angle ?? (g.to ? ANGLES[g.to] : 180);
-  const rad = (deg * Math.PI) / 180;
-  const dx = (Math.sin(rad) * size) / 2;
-  const dy = (-Math.cos(rad) * size) / 2;
-  const c = size / 2;
-  return `<defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${r(c - dx)}" y1="${r(c - dy)}" x2="${r(c + dx)}" y2="${r(c + dy)}">${stopTags}</linearGradient></defs>`;
+  for (let i = 1; i < n; i++) {
+    if (at[i] !== undefined) continue;
+    let j = i;
+    while (at[j] === undefined) j++;
+    const from = at[i - 1] as number;
+    const to = at[j] as number;
+    for (let k = i; k < j; k++) at[k] = from + ((to - from) * (k - i + 1)) / (j - i + 1);
+  }
+  return g.colors.map((c, i) => ({
+    color: typeof c === 'string' ? c : c.color,
+    at: at[i] as number,
+  }));
 }
 
-/** SVG markup painted with a color or a gradient wherever it says `currentColor`. */
+type Box = { x: number; y: number; w: number; h: number };
+
+/** An SVG `<defs>` gradient laid out over the viewBox the way CSS lays one over a box. */
+function svgDefs(g: GradientSpec, id: string, box: Box): string {
+  const stopTags = positions(g)
+    .map((p) => `<stop offset="${r(p.at)}%" stop-color="${p.color}"/>`)
+    .join('');
+  if (g.type === 'radial') {
+    const [fx, fy] = POINTS[g.position ?? 'center'];
+    const cx = box.x + fx * box.w;
+    const cy = box.y + fy * box.h;
+    // CSS circles reach the farthest corner by default.
+    const radius = Math.max(
+      ...[
+        [box.x, box.y],
+        [box.x + box.w, box.y],
+        [box.x, box.y + box.h],
+        [box.x + box.w, box.y + box.h],
+      ].map(([px, py]) => Math.hypot((px as number) - cx, (py as number) - cy)),
+    );
+    return `<defs><radialGradient id="${id}" gradientUnits="userSpaceOnUse" cx="${r(cx)}" cy="${r(cy)}" r="${r(radius)}">${stopTags}</radialGradient></defs>`;
+  }
+  // CSS angles: 0deg points up and turns clockwise. The line runs through the center and
+  // is long enough that its ends touch the corners, so the colors land where CSS puts them.
+  const deg = g.angle ?? (g.to ? ANGLES[g.to] : 180);
+  const rad = (deg * Math.PI) / 180;
+  const sin = Math.sin(rad);
+  const cos = Math.cos(rad);
+  const half = (Math.abs(box.w * sin) + Math.abs(box.h * cos)) / 2;
+  const cx = box.x + box.w / 2;
+  const cy = box.y + box.h / 2;
+  return `<defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${r(cx - sin * half)}" y1="${r(cy + cos * half)}" x2="${r(cx + sin * half)}" y2="${r(cy - cos * half)}">${stopTags}</linearGradient></defs>`;
+}
+
+/**
+ * SVG markup painted with a color or a gradient wherever it says `currentColor`. A
+ * gradient spans the whole viewBox, so the drawing gets one sweep, not one per path.
+ */
 export function paintSvg(markup: string, paint: string | GradientSpec): string {
   if (!isGradient(paint)) return markup.replaceAll('currentColor', paint);
-  const size = Number(/viewBox="0 0 (\d+(?:\.\d+)?)/.exec(markup)?.[1] ?? 24);
-  // A stable id per gradient, so inline SVGs on one page (React Native web) never share one.
+  const tag = /<svg\b[^>]*>/i.exec(markup);
+  if (!tag) return markup;
+  const vb =
+    /viewBox\s*=\s*["']\s*([-\d.eE]+)[\s,]+([-\d.eE]+)[\s,]+([-\d.eE]+)[\s,]+([-\d.eE]+)/.exec(
+      tag[0],
+    );
+  const box: Box = vb
+    ? { x: Number(vb[1]), y: Number(vb[2]), w: Number(vb[3]), h: Number(vb[4]) }
+    : { x: 0, y: 0, w: 24, h: 24 };
+  if (![box.x, box.y, box.w, box.h].every(Number.isFinite)) return markup;
+  // A stable id per gradient and box, so inline SVGs on one page (React Native web) never share one.
   let h = 5381;
-  for (const ch of JSON.stringify(paint)) h = ((h * 33) ^ ch.charCodeAt(0)) >>> 0;
+  for (const ch of JSON.stringify([paint, box])) h = ((h * 33) ^ ch.charCodeAt(0)) >>> 0;
   const id = `badgetrip-paint-${h.toString(36)}`;
-  const painted = markup.replaceAll('currentColor', `url(#${id})`);
-  const open = painted.indexOf('>') + 1;
-  return painted.slice(0, open) + svgDefs(paint, id, size) + painted.slice(open);
+  const end = tag.index + tag[0].length;
+  const head = markup.slice(0, end).replaceAll('currentColor', `url(#${id})`);
+  const body = markup.slice(end).replaceAll('currentColor', `url(#${id})`);
+  return head + svgDefs(paint, id, box) + body;
+}
+
+/** Throws one error listing every problem with gradient icon colors, for `createIconResolver`. */
+export function assertPaints(where: string, paints: Record<string, unknown>) {
+  const errs: string[] = [];
+  for (const [k, v] of Object.entries(paints)) {
+    if (isObj(v)) checkPaint(`${where}${k}`, v, errs, false);
+  }
+  if (errs.length) throw new Error(`invalid badgetrip icons:\n  ${errs.join('\n  ')}`);
 }
