@@ -1,4 +1,4 @@
-import type { IconResolver } from '@walangstudio/badgetrip-assets';
+import type { IconResolver, Theme } from '@walangstudio/badgetrip-assets';
 import {
   type AchievementView,
   type Engine,
@@ -6,11 +6,19 @@ import {
   toObservable,
 } from '@walangstudio/badgetrip-core';
 import { renderBadge, renderCatalog } from './render.js';
+import { applyTheme, checkTheme } from './theme.js';
 
 export type ElementOptions = {
   icons?: IconResolver;
+  /** Colors and icons from `defineTheme()`. An explicit `icons` wins. */
+  theme?: Theme;
   /** Tag prefix: `'badgetrip'` gives `<badgetrip-catalog>` and `<badgetrip-badge>`. */
   tagPrefix?: string;
+};
+
+export type Elements = {
+  /** Switch every element to another theme, or back to the default look with `null`. */
+  setTheme(theme: Theme | null): void;
 };
 
 const MOTION = '(prefers-reduced-motion: reduce)';
@@ -20,17 +28,21 @@ const MOTION = '(prefers-reduced-motion: reduce)';
  * after every emit/replay/seed/refresh through `observed.engine`, on attribute change,
  * and when `prefers-reduced-motion` flips. A failed query dispatches a bubbling
  * `badgetrip-error` event with the error as `detail`. Safe to import and call outside a
- * browser (it does nothing); a tag that is already defined is left as is.
+ * browser (it does nothing); a tag that is already defined is left as is. Each element
+ * carries the theme's colors on itself, so `setTheme` restyles them all.
  */
 export function defineBadgetripElements(
   source: Engine | Observable,
   opts: ElementOptions = {},
-): void {
-  if (typeof customElements === 'undefined') return;
+): Elements {
+  checkTheme(opts.theme, 'defineBadgetripElements');
+  if (typeof customElements === 'undefined') return { setTheme: (t) => checkTheme(t, 'setTheme') };
   const observed = toObservable(source);
   const prefix = opts.tagPrefix ?? 'badgetrip';
-  const { icons } = opts;
+  let theme = opts.theme ?? null;
+  const iconsFor = () => opts.icons ?? theme?.icons;
   const { engine } = observed;
+  const live = new Set<BadgetripElement>();
 
   // Every element for one actor shares one catalog query per engine version.
   let cacheVersion = -1;
@@ -59,6 +71,8 @@ export function defineBadgetripElements(
     protected abstract html(actor: string, reducedMotion: boolean): Promise<string>;
 
     connectedCallback() {
+      live.add(this);
+      applyTheme(theme, this);
       this.#unsubscribe = observed.subscribe(this.#rerender);
       this.#motion = globalThis.matchMedia?.(MOTION);
       this.#motion?.addEventListener('change', this.#rerender);
@@ -66,6 +80,7 @@ export function defineBadgetripElements(
     }
 
     disconnectedCallback() {
+      live.delete(this);
       this.#unsubscribe?.();
       this.#unsubscribe = undefined;
       this.#motion?.removeEventListener('change', this.#rerender);
@@ -74,6 +89,11 @@ export function defineBadgetripElements(
 
     attributeChangedCallback() {
       if (this.#unsubscribe) void this.#render();
+    }
+
+    restyle() {
+      applyTheme(theme, this);
+      void this.#render();
     }
 
     async #render() {
@@ -99,7 +119,7 @@ export function defineBadgetripElements(
     class extends BadgetripElement {
       protected async html(actor: string, reducedMotion: boolean) {
         return renderCatalog(await catalog(actor), {
-          icons,
+          icons: iconsFor(),
           reducedMotion,
           secret: this.hasAttribute('secret'),
           showCount: !this.hasAttribute('hide-count'),
@@ -116,11 +136,19 @@ export function defineBadgetripElements(
         const view = (await catalog(actor)).find((a) => a.code === code);
         if (!view) throw new Error(`unknown achievement: ${code}`);
         return renderBadge(view, {
-          icons,
+          icons: iconsFor(),
           reducedMotion,
           showCount: !this.hasAttribute('hide-count'),
         });
       }
     },
   );
+
+  return {
+    setTheme(next) {
+      checkTheme(next, 'setTheme');
+      theme = next ?? null;
+      for (const el of live) el.restyle();
+    },
+  };
 }
