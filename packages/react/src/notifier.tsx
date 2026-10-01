@@ -6,21 +6,32 @@ import {
 import { type AchievementView, watchUnlocks } from '@walangstudio/badgetrip-core';
 import { type Notifier, type NotifierOptions, createNotifier } from '@walangstudio/badgetrip-html';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useReactiveEngine } from './context.js';
+import { useReactiveEngine, useTheme } from './context.js';
 
 export type UnlockNotifierProps = NotifierOptions;
 
 /**
  * Celebrates unlocks on top of the page (toasts, modal, fullscreen, confetti, sound).
- * Render it once inside `<BadgetripProvider>`. `sound`, `volume` and `muted` update in
- * place; changing anything else re-creates the overlay, so keep `celebrations` and
- * `icons` stable (create them once, outside the component).
+ * Render it once inside `<BadgetripProvider>`. It follows the provider's `theme` unless
+ * given its own. `sound`, `volume`, `muted` and `theme` update in place; changing
+ * anything else re-creates the overlay, so keep `celebrations` and `icons` stable
+ * (create them once, outside the component).
  */
-export function UnlockNotifier({ sound, volume, muted, ...opts }: UnlockNotifierProps): null {
+export function UnlockNotifier({
+  sound,
+  volume,
+  muted,
+  theme: ownTheme,
+  ...opts
+}: UnlockNotifierProps): null {
   const reactive = useReactiveEngine();
+  const contextTheme = useTheme();
+  const theme = ownTheme ?? contextTheme;
   const notifier = useRef<Notifier>();
   const latest = useRef(opts);
   latest.current = opts;
+  const latestTheme = useRef(theme);
+  latestTheme.current = theme;
   const actorKey = typeof opts.actor === 'function' ? 'fn' : opts.actor;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: functions are read through `latest`.
@@ -51,6 +62,7 @@ export function UnlockNotifier({ sound, volume, muted, ...opts }: UnlockNotifier
       sound,
       volume,
       muted,
+      ...(latestTheme.current ? { theme: latestTheme.current } : {}),
     });
     notifier.current = n;
     return () => {
@@ -76,6 +88,10 @@ export function UnlockNotifier({ sound, volume, muted, ...opts }: UnlockNotifier
     notifier.current?.update({ sound, volume, muted });
   }, [sound, volume, muted]);
 
+  useEffect(() => {
+    notifier.current?.update({ theme });
+  }, [theme]);
+
   return null;
 }
 
@@ -91,13 +107,16 @@ const defaultCelebrations = createCelebrationResolver();
 
 /**
  * New unlocks as a queue, for drawing your own celebration UI (or on React Native).
- * Quiet achievements are left out. `dismiss()` drops the oldest, `clear()` drops all.
+ * Celebrations come from `celebrations`, then the provider's theme. Quiet achievements are left out. `dismiss()` drops the oldest, `clear()` drops all.
  */
 export function useUnlocks(opts: UseUnlocksOptions = {}) {
   const reactive = useReactiveEngine();
+  const theme = useTheme();
   const [queue, setQueue] = useState<UnlockItem[]>([]);
   const latest = useRef(opts);
   latest.current = opts;
+  const latestTheme = useRef(theme);
+  latestTheme.current = theme;
   const actorKey = typeof opts.actor === 'function' ? 'fn' : opts.actor;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: the actor predicate is read through `latest`.
@@ -113,7 +132,8 @@ export function useUnlocks(opts: UseUnlocksOptions = {}) {
             : actor,
       },
       (items) => {
-        const resolver = latest.current.celebrations ?? defaultCelebrations;
+        const resolver =
+          latest.current.celebrations ?? latestTheme.current?.celebrations ?? defaultCelebrations;
         const next = items
           .map(({ view }) => ({ view, celebration: resolver.resolve(view) }))
           .filter((i) => !i.celebration.quiet);

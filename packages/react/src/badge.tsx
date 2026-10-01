@@ -8,19 +8,29 @@ import {
 } from '@walangstudio/badgetrip-assets';
 import type { AchievementView } from '@walangstudio/badgetrip-core';
 import { type ReactNode, createContext, useContext, useMemo, useSyncExternalStore } from 'react';
+import { useTheme } from './context.js';
 
 const defaultResolver = createIconResolver();
-const IconContext = createContext<IconResolver>(defaultResolver);
+const IconContext = createContext<IconResolver | null>(null);
 
-/** The icon resolver from the nearest `IconProvider`, or the built-in pack. */
+/** The icon resolver from the nearest `IconProvider`, then the provider's theme, then the built-in pack. */
 export function useIconResolver(): IconResolver {
-  return useContext(IconContext);
+  const own = useContext(IconContext);
+  const theme = useTheme();
+  return own ?? theme?.icons ?? defaultResolver;
 }
 
 /** Supply a custom icon resolver (see `createIconResolver` in `@walangstudio/badgetrip-assets`). */
 export function IconProvider({ icons, children }: { icons: IconResolver; children: ReactNode }) {
   return <IconContext.Provider value={icons}>{children}</IconContext.Provider>;
 }
+
+// Theme hooks; the fallbacks are the look without a theme.
+const LOCKED = {
+  filter: 'var(--badgetrip-locked-filter, grayscale(1))',
+  opacity: 'var(--badgetrip-locked-opacity, 0.45)',
+};
+const BAR = { width: '100%', accentColor: 'var(--badgetrip-accent, auto)' };
 
 const MOTION = '(prefers-reduced-motion: reduce)';
 const subscribeMotion = (cb: () => void) => {
@@ -37,7 +47,7 @@ const reducedMotion = () =>
  * fall back to their still frame under `prefers-reduced-motion`.
  */
 export function useAchievementIcon(achievement: AchievementView): IconAsset {
-  const icons = useContext(IconContext);
+  const icons = useIconResolver();
   const reduce = useSyncExternalStore(subscribeMotion, reducedMotion, () => false);
   const asset = useMemo(() => icons.resolve(achievement), [icons, achievement]);
   return displayIcon(asset, {
@@ -92,7 +102,7 @@ export function AchievementBadge({
         alt=""
         width={size}
         height={size}
-        style={a.unlocked ? undefined : { filter: 'grayscale(1)', opacity: 0.45 }}
+        style={a.unlocked ? undefined : LOCKED}
       />
       <figcaption style={{ textAlign: 'center', flex: 1 }}>
         <strong>{a.name}</strong>
@@ -102,7 +112,7 @@ export function AchievementBadge({
         <progress
           value={a.progress.percent}
           max={100}
-          style={{ width: '100%' }}
+          style={BAR}
           aria-label={`${a.name}: ${a.progress.percent}%`}
         />
       ) : null}

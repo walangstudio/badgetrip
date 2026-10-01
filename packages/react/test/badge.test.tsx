@@ -121,7 +121,7 @@ describe('AchievementBadge', () => {
     const img = screen.getByRole('presentation', {
       hidden: true,
     }) as HTMLImageElement;
-    expect(img.style.filter).toBe('grayscale(1)');
+    expect(img.style.filter).toBe('var(--badgetrip-locked-filter, grayscale(1))');
     expect(img.src).toBe(svgToDataUrl(svgs.trophy));
     const bar = screen.getByRole('progressbar', {
       name: 'Alpha: 25%',

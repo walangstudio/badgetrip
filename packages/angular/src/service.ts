@@ -11,6 +11,7 @@ import {
   type Signal,
   type WritableSignal,
   assertInInjectionContext,
+  computed,
   effect,
   inject,
   isSignal,
@@ -21,6 +22,7 @@ import {
   type Celebration,
   type CelebrationResolver,
   type IconResolver,
+  type Theme,
   createCelebrationResolver,
   createIconResolver,
 } from '@walangstudio/badgetrip-assets';
@@ -34,15 +36,38 @@ import {
   toObservable,
   watchUnlocks,
 } from '@walangstudio/badgetrip-core';
-import { type Notifier, type NotifierOptions, createNotifier } from '@walangstudio/badgetrip-html';
+import {
+  type Notifier,
+  type NotifierOptions,
+  applyTheme,
+  createNotifier,
+} from '@walangstudio/badgetrip-html';
 
 export const BADGETRIP_ENGINE = new InjectionToken<Observable>('BADGETRIP_ENGINE');
 
-/** Icon resolver for badges. Defaults to the built-in `@walangstudio/badgetrip-assets` pack. */
+const defaultIcons = createIconResolver();
+
+/**
+ * Icon resolver for badges. Defaults to the built-in `@walangstudio/badgetrip-assets` pack;
+ * badges use the theme's icons unless one is provided here.
+ */
 export const BADGETRIP_ICONS = new InjectionToken<IconResolver>('BADGETRIP_ICONS', {
   providedIn: 'root',
-  factory: () => createIconResolver(),
+  factory: () => defaultIcons,
 });
+
+/** The current theme. Switch it with `BadgetripService.setTheme`. */
+export const BADGETRIP_THEME = new InjectionToken<WritableSignal<Theme | null>>('BADGETRIP_THEME', {
+  providedIn: 'root',
+  factory: () => signal(null),
+});
+
+/** The icons badges should use: explicit `BADGETRIP_ICONS`, then the theme, then the built-in pack. */
+export function badgeIcons(): Signal<IconResolver> {
+  const icons = inject(BADGETRIP_ICONS);
+  const theme = inject(BADGETRIP_THEME);
+  return computed(() => (icons !== defaultIcons ? icons : (theme()?.icons ?? defaultIcons)));
+}
 
 /**
  * The unlock overlay created by `provideBadgetrip(engine, { notifier })`, or null (no
@@ -64,6 +89,11 @@ export function provideBadgetrip(
   engine: Engine | Observable,
   opts: {
     icons?: IconResolver;
+    /**
+     * A `defineTheme()` result. Its colors go on the page (browser only), and badges and
+     * the notifier use its icons and celebrations. Switch with `BadgetripService.setTheme`.
+     */
+    theme?: Theme;
     /** Options, `true` for the defaults, or a function run in the injection context. */
     notifier?: NotifierOptions | true | (() => NotifierOptions);
   } = {},
@@ -72,16 +102,35 @@ export function provideBadgetrip(
   return makeEnvironmentProviders([
     { provide: BADGETRIP_ENGINE, useValue: toObservable(engine) },
     opts.icons ? [{ provide: BADGETRIP_ICONS, useValue: opts.icons }] : [],
+    { provide: BADGETRIP_THEME, useFactory: () => signal(opts.theme ?? null) },
+    {
+      provide: ENVIRONMENT_INITIALIZER,
+      multi: true,
+      useValue: () => {
+        if (!isPlatformBrowser(inject(PLATFORM_ID))) return;
+        const theme = inject(BADGETRIP_THEME);
+        effect((onCleanup) => {
+          const t = theme();
+          if (t) onCleanup(applyTheme(t));
+        });
+      },
+    },
     notifier
       ? [
           {
             provide: BADGETRIP_NOTIFIER,
             useFactory: () => {
               if (!isPlatformBrowser(inject(PLATFORM_ID))) return null;
+              const theme = inject(BADGETRIP_THEME);
+              const own = typeof notifier === 'function' ? notifier() : notifier;
+              const initial = theme();
               const n = createNotifier(inject(BADGETRIP_ENGINE), {
                 ...(opts.icons ? { icons: opts.icons } : {}),
-                ...(typeof notifier === 'function' ? notifier() : notifier),
+                ...(initial ? { theme: initial } : {}),
+                ...own,
               });
+              // A notifier given its own theme keeps it; otherwise it follows setTheme.
+              if (!own.theme) effect(() => n.update({ theme: theme() }));
               inject(DestroyRef).onDestroy(() => n.dispose());
               return n;
             },
@@ -134,6 +183,9 @@ export class BadgetripService {
   readonly engine: EngineApi;
 
   private readonly observed: Observable;
+  private readonly themeSignal = inject(BADGETRIP_THEME);
+  /** The current theme, or null. */
+  readonly theme: Signal<Theme | null> = this.themeSignal.asReadonly();
 
   constructor() {
     const observed = inject(BADGETRIP_ENGINE, { optional: true });
@@ -143,6 +195,11 @@ export class BadgetripService {
     this.version = signal(observed.getVersion());
     const off = observed.subscribe(() => this.version.set(observed.getVersion()));
     inject(DestroyRef).onDestroy(off);
+  }
+
+  /** Switch the theme for the page, badges and notifier; `null` goes back to the default look. */
+  setTheme(theme: Theme | null): void {
+    this.themeSignal.set(theme);
   }
 
   score(actor: Arg, score: Arg, opts?: QueryOptions): EngineQuery<number> {
@@ -208,13 +265,14 @@ export class BadgetripService {
     if (!opts.injector) assertInInjectionContext(this.unlocks);
     const destroy = opts.injector ? opts.injector.get(DestroyRef) : inject(DestroyRef);
     const queue = signal<UnlockItem[]>([]);
-    const resolver = opts.celebrations ?? defaultCelebrations;
+    const resolver = () =>
+      opts.celebrations ?? this.themeSignal()?.celebrations ?? defaultCelebrations;
     const stop = watchUnlocks(
       this.observed,
       { actor: opts.actor, onError: (err) => this.errors.handleError(err) },
       (items) => {
         const next = items
-          .map(({ view }) => ({ view, celebration: resolver.resolve(view) }))
+          .map(({ view }) => ({ view, celebration: resolver().resolve(view) }))
           .filter((i) => !i.celebration.quiet);
         if (next.length) queue.update((q) => [...q, ...next]);
       },

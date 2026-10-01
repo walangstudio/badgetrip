@@ -59,7 +59,7 @@ describe('AchievementBadgeComponent', () => {
       concealed: 'false',
     });
     expect(img.getAttribute('alt')).toBe('');
-    expect(img.style.filter).toBe('grayscale(1)');
+    expect(img.style.filter).toBe('var(--badgetrip-locked-filter, grayscale(1))');
     expect(img.src).toBe(svgToDataUrl(svgs.trophy));
     expect([img.width, img.height]).toEqual([48, 48]);
     expect(figure.querySelector('figcaption strong')?.textContent).toBe('Alpha');
