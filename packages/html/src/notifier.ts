@@ -4,6 +4,7 @@ import {
   type CountFormat,
   type IconResolver,
   type Position,
+  type Theme,
   createCelebrationResolver,
   createIconResolver,
   crossesMilestone,
@@ -22,6 +23,7 @@ import {
 } from '@walangstudio/badgetrip-core';
 import { createPlayer } from './audio.js';
 import { startConfetti } from './confetti.js';
+import { applyTheme, checkTheme } from './theme.js';
 
 export type NotifierLabels = {
   /** Accessible label of the close button. Default `'Close'`. */
@@ -37,6 +39,11 @@ export type NotifierOptions = {
   celebrations?: CelebrationResolver;
   /** Icons for the popups. Defaults to the built-in pack. */
   icons?: IconResolver;
+  /**
+   * Colors, icons and celebrations from `defineTheme()`. Explicit `icons` and
+   * `celebrations` win over the theme's. Its colors apply to the popups only.
+   */
+  theme?: Theme;
   /**
    * Only celebrate this actor (the signed-in user), or actors the predicate accepts.
    * Progress popups need a single actor, so they only run when this is a string.
@@ -62,8 +69,18 @@ export type NotifierOptions = {
 };
 
 export type Notifier = {
-  /** Change sound settings without re-creating the notifier. */
-  update(opts: { sound?: boolean; volume?: number; muted?: boolean }): void;
+  /**
+   * Change settings without re-creating the notifier. Popups already on screen or
+   * waiting keep the look they were queued with. `theme: null` drops the theme.
+   */
+  update(opts: {
+    sound?: boolean;
+    volume?: number;
+    muted?: boolean;
+    theme?: Theme | null;
+    icons?: IconResolver;
+    celebrations?: CelebrationResolver;
+  }): void;
   /** Celebrate one achievement now, for example to preview a celebration. */
   show(view: AchievementView): void;
   /** Close every popup and drop the queue. */
@@ -85,6 +102,7 @@ const POSITIONS: Position[] = [
 const OPTION_KEYS = new Set([
   'celebrations',
   'icons',
+  'theme',
   'actor',
   'sound',
   'volume',
@@ -166,6 +184,25 @@ function checkSound(o: { sound?: unknown; volume?: unknown; muted?: unknown }, w
   }
 }
 
+const isResolver = (v: unknown) =>
+  v === undefined ||
+  (typeof v === 'object' &&
+    v !== null &&
+    typeof (v as { resolve?: unknown }).resolve === 'function');
+
+function checkResolvers(
+  o: { icons?: unknown; celebrations?: unknown; theme?: unknown },
+  where: string,
+) {
+  if (!isResolver(o.celebrations)) {
+    throw new TypeError(`${where}: celebrations must come from createCelebrationResolver()`);
+  }
+  if (!isResolver(o.icons)) {
+    throw new TypeError(`${where}: icons must come from createIconResolver()`);
+  }
+  checkTheme(o.theme, where);
+}
+
 function checkOptions(o: NotifierOptions) {
   const where = 'createNotifier';
   if (typeof o !== 'object' || o === null)
@@ -173,16 +210,7 @@ function checkOptions(o: NotifierOptions) {
   for (const k of Object.keys(o)) {
     if (!OPTION_KEYS.has(k)) throw new TypeError(`${where}: unknown option '${k}'`);
   }
-  const resolver = (v: unknown) =>
-    v === undefined ||
-    (typeof v === 'object' &&
-      v !== null &&
-      typeof (v as { resolve?: unknown }).resolve === 'function');
-  if (!resolver(o.celebrations)) {
-    throw new TypeError(`${where}: celebrations must come from createCelebrationResolver()`);
-  }
-  if (!resolver(o.icons))
-    throw new TypeError(`${where}: icons must come from createIconResolver()`);
+  checkResolvers(o, where);
   if (
     o.actor !== undefined &&
     !(typeof o.actor === 'string' && o.actor) &&
@@ -240,8 +268,17 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
     );
   }
 
-  const celebrations = opts.celebrations ?? createCelebrationResolver();
-  const icons = opts.icons ?? createIconResolver();
+  const fallback = { icons: createIconResolver(), celebrations: createCelebrationResolver() };
+  let theme = opts.theme ?? null;
+  let ownIcons = opts.icons;
+  let ownCelebrations = opts.celebrations;
+  let icons = fallback.icons;
+  let celebrations = fallback.celebrations;
+  const pickResolvers = () => {
+    icons = ownIcons ?? theme?.icons ?? fallback.icons;
+    celebrations = ownCelebrations ?? theme?.celebrations ?? fallback.celebrations;
+  };
+  pickResolvers();
   const maxVisible = opts.maxVisible ?? 3;
   const maxQueue = opts.maxQueue ?? 10;
   const zIndex = opts.zIndex ?? 2147483000;
@@ -269,6 +306,7 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
     pointerEvents: 'none',
     zIndex: String(zIndex),
   });
+  applyTheme(theme, host);
   const shadow = host.attachShadow({ mode: 'open' });
   const Sheet = globalThis.CSSStyleSheet as
     | (typeof CSSStyleSheet & { prototype: { replaceSync?: unknown } })
@@ -602,10 +640,22 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
     if (sound && !muted && loud) player.play(loud, volume);
     for (const item of items) queueToast(item);
   };
-  const stopProgress =
-    typeof opts.actor === 'string' && celebrations.usesProgress?.()
-      ? watchProgress(observed, { actor: opts.actor, onError: opts.onError }, progressed)
-      : () => {};
+  // Progress is watched only while the current celebrations use it, so a theme switch can start or stop it.
+  let stopProgress: (() => void) | null = null;
+  const syncProgress = () => {
+    const want = typeof opts.actor === 'string' && !!celebrations.usesProgress?.();
+    if (want && !stopProgress) {
+      stopProgress = watchProgress(
+        observed,
+        { actor: opts.actor as string, onError: opts.onError },
+        progressed,
+      );
+    } else if (!want && stopProgress) {
+      stopProgress();
+      stopProgress = null;
+    }
+  };
+  syncProgress();
 
   const stopWatching = watchUnlocks(
     observed,
@@ -626,6 +676,15 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
     update(o) {
       if (disposed) return;
       checkSound(o, 'notifier.update');
+      checkResolvers(o, 'notifier.update');
+      if (o.theme !== undefined) {
+        theme = o.theme;
+        applyTheme(theme, host);
+      }
+      if (o.icons) ownIcons = o.icons;
+      if (o.celebrations) ownCelebrations = o.celebrations;
+      pickResolvers();
+      syncProgress();
       if (o.volume !== undefined) volume = o.volume;
       if (o.muted !== undefined) muted = o.muted;
       if (o.sound !== undefined) {
@@ -641,7 +700,7 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
     dispose() {
       if (disposed) return;
       stopWatching();
-      stopProgress();
+      stopProgress?.();
       dismissAll();
       disposed = true;
       player.dispose();

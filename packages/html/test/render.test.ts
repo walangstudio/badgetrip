@@ -36,8 +36,10 @@ describe('renderBadge', () => {
     expect(img(fig).getAttribute('src')).toBe(svgToDataUrl(svgs.trophy));
     expect(img(fig).getAttribute('alt')).toBe('');
     expect([img(fig).width, img(fig).height]).toEqual([48, 48]);
-    expect(img(fig).style.filter).toBe('grayscale(1)');
-    expect(img(fig).style.opacity).toBe('0.45');
+    // jsdom cannot parse var() in opacity, so check the attribute a browser would read.
+    expect(img(fig).getAttribute('style')).toBe(
+      'filter:var(--badgetrip-locked-filter,grayscale(1));opacity:var(--badgetrip-locked-opacity,0.45)',
+    );
     expect(fig.querySelector('figcaption strong')?.textContent).toBe('Alpha');
     expect(fig.querySelector('figcaption div')?.textContent).toBe('Do the thing');
     expect((fig.querySelector('figcaption') as HTMLElement).style.flex).toMatch(/^1/);

@@ -1,6 +1,7 @@
 import {
   type CountFormat,
   type IconResolver,
+  type Theme,
   createIconResolver,
   displayIcon,
   progressCount,
@@ -13,6 +14,8 @@ const defaultIcons = createIconResolver();
 export type BadgeOptions = {
   /** Icon resolver (see `createIconResolver` in `@walangstudio/badgetrip-assets`). Defaults to the built-in pack. */
   icons?: IconResolver;
+  /** Take icons from a theme. An explicit `icons` wins. Colors come from `applyTheme`. */
+  theme?: Theme;
   /** Show animated icons as their still frame. Default false. */
   reducedMotion?: boolean;
   /** Icon edge in px. Default 48. */
@@ -42,7 +45,8 @@ const esc = (v: unknown) => String(v).replace(/[&<>"']/g, (c) => ESCAPES[c] as s
  */
 export function renderBadge(a: AchievementView, opts: BadgeOptions = {}): string {
   const {
-    icons = defaultIcons,
+    theme,
+    icons = theme?.icons ?? defaultIcons,
     reducedMotion = false,
     size = 48,
     showProgress = true,
@@ -55,12 +59,12 @@ export function renderBadge(a: AchievementView, opts: BadgeOptions = {}): string
     reducedMotion,
   });
   const cls = className ? ` class="${esc(className)}"` : '';
-  const imgStyle = a.unlocked ? '' : ' style="filter:grayscale(1);opacity:0.45"';
+  const imgStyle = a.unlocked ? '' : ` style="${LOCKED}"`;
   const desc = a.description ? `<div>${esc(a.description)}</div>` : '';
   const pct = a.progress.percent;
   const bar =
     showProgress && !a.unlocked && !a.concealed
-      ? `<progress value="${esc(pct)}" max="100" style="width:100%" aria-label="${esc(`${a.name}: ${pct}%`)}"></progress>`
+      ? `<progress value="${esc(pct)}" max="100" style="${BAR}" aria-label="${esc(`${a.name}: ${pct}%`)}"></progress>`
       : '';
   const count = showCount ? progressCount(a, formatCount) : null;
   const countHtml =
@@ -73,6 +77,10 @@ export function renderBadge(a: AchievementView, opts: BadgeOptions = {}): string
 
 const FIGURE = 'margin:0;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%';
 const COUNT = 'font-size:12px;opacity:0.7';
+// Theme hooks; the fallbacks are the look without a theme.
+const LOCKED =
+  'filter:var(--badgetrip-locked-filter,grayscale(1));opacity:var(--badgetrip-locked-opacity,0.45)';
+const BAR = 'width:100%;accent-color:var(--badgetrip-accent,auto)';
 const GRID = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:1rem';
 
 export type CatalogOptions = BadgeOptions & {
