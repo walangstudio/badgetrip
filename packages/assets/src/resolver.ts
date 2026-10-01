@@ -1,3 +1,4 @@
+import { type GradientSpec, paintSvg } from './gradient.js';
 import { svgs } from './icons.js';
 
 /**
@@ -35,12 +36,12 @@ export const tierColors: Record<string, string> = {
   diamond: '#5b7cfa',
 };
 
-/** Encode SVG markup as a data URL, painting `currentColor` with `color`. */
-export function svgToDataUrl(markup: string, color = '#3d4451'): string {
-  return `data:image/svg+xml,${encodeURIComponent(markup.replaceAll('currentColor', color))}`;
+/** Encode SVG markup as a data URL, painting `currentColor` with a color or a gradient. */
+export function svgToDataUrl(markup: string, color: string | GradientSpec = '#3d4451'): string {
+  return `data:image/svg+xml,${encodeURIComponent(paintSvg(markup, color))}`;
 }
 
-const pack = (color: string): Record<string, IconAsset> => {
+const pack = (color: string | GradientSpec): Record<string, IconAsset> => {
   const out: Record<string, IconAsset> = {};
   for (const [name, markup] of Object.entries(svgs)) {
     out[name] = { src: svgToDataUrl(markup, color), svg: markup };
@@ -65,10 +66,10 @@ export type IconResolverOptions = {
   categories?: Record<string, string>;
   /** Key used when nothing else matches. Defaults to `'trophy'`. */
   fallback?: string;
-  /** Paint color for the built-in SVGs. */
-  color?: string;
-  /** Tint per tier name for tintable (SVG) icons, merged over the default `tierColors`. `false` disables tinting. */
-  tierColors?: Record<string, string> | false;
+  /** Paint for the built-in SVGs: a color, or a gradient such as `{ colors: ['#a855f7', '#ec4899'], angle: 135 }`. */
+  color?: string | GradientSpec;
+  /** Tint per tier name for tintable (SVG) icons, merged over the default `tierColors`. A color or a gradient; `false` disables tinting. */
+  tierColors?: Record<string, string | GradientSpec> | false;
 };
 
 export type IconResolver = {
@@ -83,7 +84,8 @@ export type IconResolver = {
 
 export function createIconResolver(opts: IconResolverOptions = {}): IconResolver {
   const color = opts.color ?? '#3d4451';
-  const tints = opts.tierColors === false ? {} : { ...tierColors, ...opts.tierColors };
+  const tints: Record<string, string | GradientSpec> =
+    opts.tierColors === false ? {} : { ...tierColors, ...opts.tierColors };
   const registry: Record<string, AssetInput> = {
     ...pack(color),
     ...opts.icons,

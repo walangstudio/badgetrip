@@ -48,7 +48,8 @@ All are 24x24, drawn in `currentColor`, and tinted per tier (`bronze`, `silver`,
 | `displayIcon(asset, { unlocked, reducedMotion })` | The frame to show now: animated only when unlocked and motion is allowed. |
 | `svgs`, `svgToDataUrl`, `tierColors` | Raw markup, the encoder and the default tints. |
 | `defineTheme(input)` | One validated theme: `style` colors, `icons` and `celebrations`, optionally `extends` another. See the [themes guide](https://github.com/walangstudio/badgetrip/blob/main/docs/guide/themes.md). |
-| `themes` | Built-in themes: `classic`, `dark`, `arcade`, `minimal`. |
+| `themes` | Built-in themes: `classic`, `dark`, `arcade`, `minimal`, `aurora`. |
+| `gradient(spec)` | A CSS gradient from data (`{ colors, angle }`, `{ colors, to }` or radial). Themes and `createIconResolver({ color })` take the same object; on icons it paints the drawing itself. |
 | `themeCss(theme, selector?)` | The theme's custom properties as one CSS rule, for server-rendered pages. |
 | `createCelebrationResolver(opts)` | How each unlock is celebrated: layout, position, sound, confetti. See the [celebrations guide](https://github.com/walangstudio/badgetrip/blob/main/docs/guide/celebrations.md). |
 | `progressCount(view, format?)`, `crossesMilestone(rule, from, to, target)` | The "3/5" badge label and the progress popup rule. |

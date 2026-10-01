@@ -3,6 +3,7 @@ import {
   type CelebrationResolverOptions,
   createCelebrationResolver,
 } from './celebrations.js';
+import { type GradientSpec, checkPaint, cssGradient } from './gradient.js';
 import { type IconResolver, type IconResolverOptions, createIconResolver } from './resolver.js';
 import { safeSrc } from './safe.js';
 
@@ -12,22 +13,22 @@ export type ThemeStyle = {
   accent?: string;
   /** Popup text. */
   fg?: string;
-  /** Popup background. */
-  bg?: string;
+  /** Popup background: a color or a gradient. */
+  bg?: string | GradientSpec;
   radius?: string;
   /** A CSS `font` shorthand for popups. */
   font?: string;
-  /** Behind a modal. */
-  backdrop?: string;
-  /** Behind a fullscreen celebration. `url(...)` images are allowed. */
-  fullscreenBg?: string;
-  /** The circle behind a popup's icon. */
-  iconBg?: string;
+  /** Behind a modal: a color or a gradient. */
+  backdrop?: string | GradientSpec;
+  /** Behind a fullscreen celebration: a color, a gradient, or `url(...)`. */
+  fullscreenBg?: string | GradientSpec;
+  /** The circle behind a popup's icon: a color or a gradient. */
+  iconBg?: string | GradientSpec;
   /** How locked badges look. */
   locked?: { filter?: string; opacity?: number };
 };
 
-export type BuiltinThemeName = 'classic' | 'dark' | 'arcade' | 'minimal';
+export type BuiltinThemeName = 'classic' | 'dark' | 'arcade' | 'minimal' | 'aurora';
 
 export type ThemeInput = {
   name: string;
@@ -81,7 +82,10 @@ const atomic = (path: string[]) =>
   (path.length === 3 &&
     ((path[0] === 'icons' && (path[1] === 'icons' || path[1] === 'overrides')) ||
       (path[0] === 'celebrations' && path[1] === 'sounds'))) ||
-  path[path.length - 1] === 'progress';
+  path[path.length - 1] === 'progress' ||
+  (path.length === 2 && path[0] === 'style' && GRADIENT_FIELDS.has(path[1] as string)) ||
+  (path.length === 2 && path[0] === 'icons' && path[1] === 'color') ||
+  (path.length === 3 && path[0] === 'icons' && path[1] === 'tierColors');
 
 /** A deep copy with nested plain objects merged key by key; arrays, scalars and units are replaced. */
 function merge(a: unknown, b: unknown, path: string[] = []): unknown {
@@ -135,11 +139,13 @@ function checkCss(where: string, v: unknown, errs: string[]) {
   }
 }
 
+const GRADIENT_FIELDS = new Set(['bg', 'backdrop', 'fullscreenBg', 'iconBg']);
 function checkStyle(style: unknown, errs: string[]) {
   if (style === undefined) return;
   if (!isObj(style)) return void errs.push('style must be an object');
   for (const [k, v] of Object.entries(style)) {
     if (!STYLE_KEYS.has(k)) errs.push(`style: unknown option '${k}'`);
+    else if (GRADIENT_FIELDS.has(k) && isObj(v)) checkPaint(`style.${k}`, v, errs, false);
     else if (k !== 'locked') checkCss(`style.${k}`, v, errs);
   }
   const locked = style.locked;
@@ -198,11 +204,11 @@ function checkIcons(icons: unknown, errs: string[]) {
   if (icons.fallback !== undefined && !isKey(icons.fallback)) {
     errs.push('icons.fallback must be an icon key');
   }
-  if (icons.color !== undefined) checkCss('icons.color', icons.color, errs);
+  if (icons.color !== undefined) checkPaint('icons.color', icons.color, errs);
   const tc = icons.tierColors;
   if (tc === undefined || tc === false) return;
   if (!isObj(tc)) return void errs.push('icons.tierColors must be an object or false');
-  for (const [k, v] of Object.entries(tc)) checkCss(`icons.tierColors.${k}`, v, errs);
+  for (const [k, v] of Object.entries(tc)) checkPaint(`icons.tierColors.${k}`, v, errs);
 }
 
 const specs = new WeakMap<Theme, Spec>();
@@ -260,6 +266,7 @@ export function defineTheme(input: ThemeInput): Theme {
   for (const [k, prop] of Object.entries(VARS)) {
     const v = (spec.style as Record<string, unknown> | undefined)?.[k];
     if (typeof v === 'string') vars[prop] = v;
+    else if (isObj(v)) vars[prop] = cssGradient(v as GradientSpec);
   }
   const locked = spec.style?.locked;
   if (locked?.filter !== undefined) vars['--badgetrip-locked-filter'] = locked.filter;
@@ -354,6 +361,36 @@ builtins.minimal = defineTheme({
       epic: { layout: 'modal', sound: false, confetti: false },
       secret: { sound: false },
     },
+  },
+});
+
+const pastel = ['#fde68a', '#f0abfc', '#c4b5fd', '#f9a8d4'];
+
+// The gradient sample: violet to pink popups with a warm accent. Suits dark pages.
+builtins.aurora = defineTheme({
+  name: 'aurora',
+  style: {
+    accent: '#fde68a',
+    fg: '#ffffff',
+    bg: { colors: ['#4c1d95', '#7c3aed', '#db2777'], angle: 135 },
+    radius: '14px',
+    iconBg: { colors: ['rgba(255,255,255,.32)', 'rgba(255,255,255,.1)'], to: 'bottom' },
+    fullscreenBg: {
+      type: 'radial',
+      position: 'top',
+      colors: [
+        { color: '#7c3aed', at: 0 },
+        { color: '#4c1d95', at: 45 },
+        { color: '#1e0b3b', at: 100 },
+      ],
+    },
+    backdrop: 'rgba(30,11,59,.6)',
+    locked: { opacity: 0.5 },
+  },
+  icons: { color: { colors: ['#ffffff', '#fde68a'], angle: 135 } },
+  celebrations: {
+    default: { sound: 'sparkle', confetti: { colors: pastel } },
+    presets: { epic: { confetti: { particles: 250, colors: pastel } } },
   },
 });
 

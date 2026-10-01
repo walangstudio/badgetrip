@@ -6,7 +6,7 @@ All notable changes to badgetrip are documented here. The format follows [Keep a
 
 ### Added
 
-- **Themes.** `defineTheme` in `@walangstudio/badgetrip-assets` puts colors, icons and celebrations in one validated object, with `extends` to start from another theme. Four built-ins ship in `themes`: `classic` (the look without a theme), `dark`, `arcade` and `minimal`. Theme values can't escape their CSS declaration, and every `url()` is vetted like an image.
+- **Themes.** `defineTheme` in `@walangstudio/badgetrip-assets` puts colors, icons and celebrations in one validated object, with `extends` to start from another theme. Five built-ins ship in `themes`: `classic` (the look without a theme), `dark`, `arcade`, `minimal` and `aurora`. Theme values can't escape their CSS declaration, and every `url()` is vetted like an image.
   - React: `theme` on `BadgetripProvider` and `useTheme()`. Badges, `<UnlockNotifier>` and `useUnlocks` follow it, and a new `theme` prop switches it live.
   - Vue: `theme` on `createBadgetrip` and `provideBadgetrip`; `useTheme()` returns a ref, and assigning it switches the theme.
   - Angular: `theme` on `provideBadgetrip`, `BadgetripService.theme` and `setTheme()`, and the `BADGETRIP_THEME` token. Colors apply in the browser only.
@@ -14,6 +14,7 @@ All notable changes to badgetrip are documented here. The format follows [Keep a
   - React Native: `useTheme()`; a theme brings its icons and celebrations.
   - A provider nested in another uses the outer theme unless it has its own, and page colors come from the outermost provider. A notifier with its own theme ignores the page's colors.
 - `themeCss(theme)` writes a theme's colors as one CSS rule for server-rendered pages.
+- **Gradients.** Theme backgrounds (`bg`, `fullscreenBg`, `backdrop`, `iconBg`) and icons (`icons.color`, `icons.tierColors`) take a gradient as plain data: 2-8 colors with optional stops, linear with an `angle` or `to` direction, or radial with a `shape` and `position`. A gradient icon is one sweep across the whole drawing. `gradient(spec)` returns the CSS. A fifth built-in theme, `aurora`, is the sample.
 - `notifier.update()` also takes `theme`, `icons` and `celebrations`. Popups already on screen or waiting keep their look, and progress popups start or stop to match.
 - The docs site and playground at [walangstudio.github.io/badgetrip](https://walangstudio.github.io/badgetrip/), deployed from `main`. The playground has a theme picker and takes a `theme` block in its config.
 - A themes guide, and docs for replacing a built-in sound and giving popups your own icons.

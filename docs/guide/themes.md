@@ -26,6 +26,7 @@ Every field is optional except `name`. `defineTheme` checks the whole thing up f
 | `dark` | Light icons and text for dark pages. |
 | `arcade` | Neon colors, monospace text, confetti on every unlock, chiptune sounds. |
 | `minimal` | White popups, no confetti, no sound. Epic unlocks become a modal. |
+| `aurora` | Violet-to-pink gradient popups and white-to-gold gradient icons, pastel confetti. The gradient sample. |
 
 ```ts
 import { themes } from '@walangstudio/badgetrip-assets';
@@ -95,6 +96,57 @@ const [theme, setTheme] = useState(themes.classic);
 </select>
 ```
 
+## Gradients
+
+Popup backgrounds and icons can be gradients as well as flat colors. A gradient is plain data, so it works in JSON themes too:
+
+```ts
+export const sunset = defineTheme({
+  name: 'sunset',
+  style: {
+    accent: '#fde68a',
+    fg: '#ffffff',
+    bg: { colors: ['#f97316', '#db2777'], angle: 135 },              // popup background
+    iconBg: { colors: ['rgba(255,255,255,.3)', 'rgba(255,255,255,.1)'], to: 'bottom' },
+    fullscreenBg: {
+      type: 'radial',
+      position: 'top',
+      colors: [
+        { color: '#fb923c', at: 0 },
+        { color: '#9d174d', at: 60 },
+        { color: '#1c1917', at: 100 },
+      ],
+    },
+  },
+  icons: {
+    color: { colors: ['#ffffff', '#fde68a'], to: 'bottom right' },  // the icons themselves
+    tierColors: {
+      gold: { colors: ['#fef3c7', '#d97706'], angle: 180 },
+      silver: { colors: ['#f8fafc', '#94a3b8'], angle: 180 },
+    },
+  },
+});
+```
+
+| Field | Values |
+|---|---|
+| `colors` | 2 to 8 colors. Add a stop with `{ color: '#fff', at: 40 }` (percent); plain colors spread evenly. |
+| `type` | `linear` (default) or `radial`. |
+| `angle` | Linear only. Degrees, `0` points up and turns clockwise, so `90` runs left to right. |
+| `to` | Linear only, instead of `angle`: `top`, `top right`, `right`, `bottom right`, `bottom`, `bottom left`, `left` or `top left`. |
+| `shape` | Radial only: `circle` (default) or `ellipse`. |
+| `position` | Radial only: where it starts, `center` (default) or any of the `to` directions. |
+
+Gradients work in `bg`, `fullscreenBg`, `backdrop` and `iconBg`, and in `icons.color` and `icons.tierColors`. The accent and text stay flat colors, since they color text. A gradient icon is one sweep across the whole drawing, so a crown goes white at one corner to gold at the other. Locked badges still turn gray. Your own image icons keep their own colors.
+
+`gradient(spec)` returns the same thing as a CSS string, for anywhere else on the page:
+
+```ts
+import { gradient } from '@walangstudio/badgetrip-assets';
+
+banner.style.background = gradient({ colors: ['#4c1d95', '#db2777'], to: 'right' });
+```
+
 ## Start from another theme
 
 `extends` takes a theme or a built-in name. Nested settings merge key by key, and yours win, so you only write what changes:
@@ -115,7 +167,7 @@ const brand = defineTheme({
 |---|---|---|
 | `accent` | `--badgetrip-accent` | popup titles, progress bars, focus rings |
 | `fg` | `--badgetrip-fg` | popup text |
-| `bg` | `--badgetrip-bg` | popup background |
+| `bg` | `--badgetrip-bg` | popup background; a color or a [gradient](#gradients) |
 | `radius` | `--badgetrip-radius` | popup corners |
 | `font` | `--badgetrip-font` | popup text, as a CSS `font` shorthand |
 | `backdrop` | `--badgetrip-backdrop` | behind a modal |
@@ -126,7 +178,7 @@ const brand = defineTheme({
 
 Values can't contain `;`, `{`, `}`, `<`, `>` or `\`, and every `url()` is checked like any other image URL, so a theme from a package can't break out of its CSS.
 
-`icons` takes the same options as [`createIconResolver`](../ACHIEVEMENTS.md#assets): `color`, `tierColors`, `icons`, `overrides`, `categories` and `fallback`. Images are URLs or bundler imports.
+`icons` takes the same options as [`createIconResolver`](../ACHIEVEMENTS.md#assets): `color`, `tierColors`, `icons`, `overrides`, `categories` and `fallback`. `color` and `tierColors` take a color or a [gradient](#gradients). Images are URLs or bundler imports.
 
 `celebrations` takes the same options as [`createCelebrationResolver`](celebrations.md#configure-it): `default`, `presets`, `overrides`, `categories`, `rarity` and `sounds`. Reuse a built-in sound name to replace it everywhere.
 

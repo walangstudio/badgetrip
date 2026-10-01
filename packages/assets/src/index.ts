@@ -28,6 +28,7 @@ export {
   type IconResolverOptions,
   type IconSubject,
 } from './resolver.js';
+export { gradient, type GradientDirection, type GradientSpec } from './gradient.js';
 export {
   defineTheme,
   themeCss,
