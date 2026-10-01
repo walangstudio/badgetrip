@@ -2,6 +2,9 @@ import {
   createCelebrationResolver,
   createIconResolver,
   defineTheme,
+  gradient,
+  svgToDataUrl,
+  svgs,
   themeCss,
   themes,
 } from '@walangstudio/badgetrip-assets';
@@ -190,8 +193,8 @@ describe('validation', () => {
 });
 
 describe('built-in themes', () => {
-  it('ships classic, dark, arcade and minimal, all frozen', () => {
-    expect(Object.keys(themes)).toEqual(['classic', 'dark', 'arcade', 'minimal']);
+  it('ships classic, dark, arcade, minimal and aurora, all frozen', () => {
+    expect(Object.keys(themes)).toEqual(['classic', 'dark', 'arcade', 'minimal', 'aurora']);
     expect(Object.isFrozen(themes)).toBe(true);
     for (const [k, t] of Object.entries(themes)) {
       expect(t.name).toBe(k);
@@ -276,5 +279,167 @@ describe('review fixes', () => {
       style: { font: '600 14px/1.4 "Press Start 2P", monospace' },
     });
     expect(ok.vars['--badgetrip-font']).toBe('600 14px/1.4 "Press Start 2P", monospace');
+  });
+});
+
+describe('gradients', () => {
+  it('builds linear gradients from an angle or a direction, with optional stops', () => {
+    expect(gradient({ colors: ['#4c1d95', '#db2777'], angle: 135 })).toBe(
+      'linear-gradient(135deg, #4c1d95, #db2777)',
+    );
+    expect(gradient({ colors: ['red', 'blue'], to: 'bottom right' })).toBe(
+      'linear-gradient(to bottom right, red, blue)',
+    );
+    expect(
+      gradient({ colors: [{ color: 'red', at: 0 }, 'white', { color: 'blue', at: 80 }] }),
+    ).toBe('linear-gradient(red 0%, white, blue 80%)');
+  });
+
+  it('builds radial gradients with a shape and position', () => {
+    expect(gradient({ type: 'radial', colors: ['#3a0a6b', '#0a0014'], position: 'top' })).toBe(
+      'radial-gradient(circle at top, #3a0a6b, #0a0014)',
+    );
+    expect(gradient({ type: 'radial', shape: 'ellipse', colors: ['a', 'b'] })).toBe(
+      'radial-gradient(ellipse at center, a, b)',
+    );
+  });
+
+  it('takes a gradient object in background style fields, so themes stay plain JSON', () => {
+    const json = JSON.stringify({
+      name: 'sunset',
+      style: {
+        bg: { colors: ['#f97316', '#db2777'], angle: 90 },
+        fullscreenBg: { type: 'radial', colors: ['#7c2d12', '#1c1917'] },
+        iconBg: { colors: ['#fff7ed', '#fde68a'], to: 'bottom' },
+      },
+    });
+    const t = defineTheme(JSON.parse(json));
+    expect(t.vars['--badgetrip-bg']).toBe('linear-gradient(90deg, #f97316, #db2777)');
+    expect(t.vars['--badgetrip-fullscreen-bg']).toBe(
+      'radial-gradient(circle at center, #7c2d12, #1c1917)',
+    );
+    expect(t.vars['--badgetrip-icon-bg']).toBe('linear-gradient(to bottom, #fff7ed, #fde68a)');
+    expect(themeCss(t)).toContain('--badgetrip-bg:linear-gradient(90deg, #f97316, #db2777)');
+  });
+
+  it('checks every part of a gradient', () => {
+    const g = (spec: unknown) => () => gradient(spec as Parameters<typeof gradient>[0]);
+    expect(g({ colors: ['red'] })).toThrow(/2-8 colors/);
+    expect(g({ colors: ['red', 'blue'], angle: 400 })).toThrow(/angle/);
+    expect(g({ colors: ['red', 'blue'], angle: 90, to: 'right' })).toThrow(/angle or to/);
+    expect(g({ colors: ['red', 'blue'], to: 'sideways' })).toThrow(/to must be/);
+    expect(g({ type: 'radial', colors: ['red', 'blue'], angle: 90 })).toThrow(/linear only/);
+    expect(g({ type: 'conic', colors: ['red', 'blue'] })).toThrow(/type/);
+    expect(g({ colors: ['red;}', 'blue'] })).toThrow(/colors\[0\]/);
+    expect(g({ colors: [{ color: 'red', at: 120 }, 'blue'] })).toThrow(/at must be 0-100/);
+    expect(g({ colors: ['red', 'blue'], spin: 1 })).toThrow(/unknown option 'spin'/);
+    bad({ name: 'x', style: { accent: { colors: ['a', 'b'] } } }, /style.accent/);
+    bad({ name: 'x', style: { bg: { colors: ['a'] } } }, /style.bg.colors/);
+  });
+
+  it('replaces a whole gradient when extending', () => {
+    const t = defineTheme({
+      name: 'mine',
+      extends: 'aurora',
+      style: { bg: { colors: ['#0ea5e9', '#22c55e'], to: 'right' } },
+    });
+    expect(t.vars['--badgetrip-bg']).toBe('linear-gradient(to right, #0ea5e9, #22c55e)');
+  });
+
+  it('ships aurora, a gradient theme, as the sample', () => {
+    expect(themes.aurora.vars['--badgetrip-bg']).toMatch(/^linear-gradient\(/);
+    expect(themes.aurora.vars['--badgetrip-fullscreen-bg']).toMatch(/^radial-gradient\(/);
+  });
+});
+
+describe('gradient icons', () => {
+  const decode = (src: string) => decodeURIComponent(src.slice('data:image/svg+xml,'.length));
+
+  it('paints an icon with one gradient across the whole drawing', () => {
+    const markup = decode(svgToDataUrl(svgs.star, { colors: ['#f97316', '#db2777'], angle: 90 }));
+    const id = /<linearGradient id="([\w-]+)" gradientUnits="userSpaceOnUse"/.exec(markup)?.[1];
+    expect(id).toMatch(/^badgetrip-paint-/);
+    expect(markup).toContain('x1="0" y1="12" x2="24" y2="12"');
+    expect(markup).toContain('<stop offset="0%" stop-color="#f97316"/>');
+    expect(markup).toContain('<stop offset="100%" stop-color="#db2777"/>');
+    expect(markup).toContain(`stroke="url(#${id})"`);
+    expect(markup).not.toContain('currentColor');
+  });
+
+  it('gives different gradients different ids, and radial gradients a center', () => {
+    const a = decode(svgToDataUrl(svgs.star, { colors: ['red', 'blue'] }));
+    const b = decode(svgToDataUrl(svgs.star, { colors: ['red', 'green'] }));
+    const id = (m: string) => /id="([\w-]+)"/.exec(m)?.[1];
+    expect(id(a)).not.toBe(id(b));
+    const radial = decode(svgToDataUrl(svgs.star, { type: 'radial', colors: ['red', 'blue'] }));
+    expect(radial).toContain('<radialGradient');
+    expect(radial).toContain('cx="12" cy="12" r="12"');
+  });
+
+  it('works as the icon color and as a tier color, keeping raw markup for tinting', () => {
+    const icons = createIconResolver({
+      color: { colors: ['#a855f7', '#ec4899'], to: 'bottom right' },
+      tierColors: { gold: { colors: ['#fde68a', '#d97706'], angle: 180 } },
+    });
+    const plain = icons.resolve({ code: 'a' });
+    expect(decode(plain.src)).toContain('stop-color="#a855f7"');
+    expect(plain.svg).toContain('currentColor');
+    const gold = icons.resolve({ code: 'b', series: { code: 's', tier: 'gold' } });
+    expect(decode(gold.src)).toContain('stop-color="#d97706"');
+  });
+
+  it('is accepted in themes, validated, and replaced whole when extending', () => {
+    const t = defineTheme({
+      name: 'x',
+      extends: 'aurora',
+      icons: { color: { colors: ['#22c55e', '#0ea5e9'], to: 'right' } },
+    });
+    expect(decode(t.icons.resolve({ code: 'a' }).src)).toContain('stop-color="#0ea5e9"');
+    bad({ name: 'x', icons: { color: '"red' } }, /icons.color/);
+    bad({ name: 'x', icons: { color: { colors: ['red'] } } }, /icons.color.colors/);
+    bad(
+      { name: 'x', icons: { tierColors: { gold: { colors: ['a"b', 'c'] } } } },
+      /tierColors.gold/,
+    );
+  });
+
+  it('aurora paints its icons with a gradient', () => {
+    expect(decode(themes.aurora.icons.resolve({ code: 'a' }).src)).toContain('<linearGradient');
+  });
+});
+
+describe('docs samples', () => {
+  it('the themes guide sunset theme is valid', () => {
+    const sunset = defineTheme({
+      name: 'sunset',
+      style: {
+        accent: '#fde68a',
+        fg: '#ffffff',
+        bg: { colors: ['#f97316', '#db2777'], angle: 135 },
+        iconBg: { colors: ['rgba(255,255,255,.3)', 'rgba(255,255,255,.1)'], to: 'bottom' },
+        fullscreenBg: {
+          type: 'radial',
+          position: 'top',
+          colors: [
+            { color: '#fb923c', at: 0 },
+            { color: '#9d174d', at: 60 },
+            { color: '#1c1917', at: 100 },
+          ],
+        },
+      },
+      icons: {
+        color: { colors: ['#ffffff', '#fde68a'], to: 'bottom right' },
+        tierColors: {
+          gold: { colors: ['#fef3c7', '#d97706'], angle: 180 },
+          silver: { colors: ['#f8fafc', '#94a3b8'], angle: 180 },
+        },
+      },
+    });
+    expect(sunset.vars['--badgetrip-fullscreen-bg']).toBe(
+      'radial-gradient(circle at top, #fb923c 0%, #9d174d 60%, #1c1917 100%)',
+    );
+    expect(gradient({ colors: ['#4c1d95', '#db2777'], to: 'right' })).toBe(
+      'linear-gradient(to right, #4c1d95, #db2777)',
+    );
   });
 });

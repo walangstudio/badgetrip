@@ -20,6 +20,6 @@ The config is plain JSON with the same shape as `createEngine` definitions:
 
 - `achievements` is the object you would pass to `defineAchievements`, with rules written as data (`{ "kind": "count", "eventType": "item.collect", "gte": 5 }`).
 - `celebrations` is the object for `createCelebrationResolver`.
-- `theme` tweaks the picked theme, like `{ "style": { "accent": "#e11d48" } }`. It takes everything `defineTheme` does.
+- `theme` tweaks the picked theme, like `{ "style": { "accent": "#e11d48" } }`. It takes everything `defineTheme` does, gradients included: `{ "icons": { "color": { "colors": ["#22c55e", "#0ea5e9"], "to": "right" } } }`.
 
 Config errors appear under the editor, all of them at once. `pnpm --filter @badgetrip-example/playground build` produces a static site in `dist/` that can be hosted anywhere.
