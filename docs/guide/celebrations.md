@@ -211,7 +211,7 @@ const next = queue[0]; // { view, celebration }
 
 ## Styling
 
-The overlay lives in a shadow root, so your CSS can't break it and its CSS can't leak into your page. Theme it with custom properties on the page:
+The overlay lives in a shadow root, so your CSS can't break it and its CSS can't leak into your page. A [theme](themes.md) sets all of this in one object. To do it by hand, set the custom properties on the page:
 
 ```css
 [data-badgetrip-notifier] {

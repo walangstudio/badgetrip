@@ -40,7 +40,7 @@ Hooks (`useScore`, `useAchievements`, `useAchievementCatalog`, `useAchievementPr
 
 ## Icons and motion
 
-`IconProvider` takes a `createIconResolver(...)` from `@walangstudio/badgetrip-assets`, as on the web. It is the same provider as `@walangstudio/badgetrip-react`'s, re-exported, so either import works.
+`IconProvider` takes a `createIconResolver(...)` from `@walangstudio/badgetrip-assets`, as on the web. A `theme` on `BadgetripProvider` brings its icons and celebrations; React Native has no CSS variables, so its colors don't apply. It is the same provider as `@walangstudio/badgetrip-react`'s, re-exported, so either import works.
 
 `useAchievementIcon(view)` returns the asset to show. Animated icons play only once unlocked and fall back to `still` while the OS reduce-motion setting is on (`AccessibilityInfo`, live). Until the setting is read, the still frame shows.
 

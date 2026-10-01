@@ -1,6 +1,10 @@
 import {
+  type BuiltinThemeName,
   type CelebrationResolverOptions,
-  createCelebrationResolver,
+  type Theme,
+  type ThemeInput,
+  defineTheme,
+  themes,
 } from '@walangstudio/badgetrip-assets';
 import {
   type AchievementDef,
@@ -18,7 +22,12 @@ import {
   observe,
   systemClock,
 } from '@walangstudio/badgetrip-core';
-import { type Notifier, createNotifier, renderCatalog } from '@walangstudio/badgetrip-html';
+import {
+  type Notifier,
+  applyTheme,
+  createNotifier,
+  renderCatalog,
+} from '@walangstudio/badgetrip-html';
 import { sample } from './sample.js';
 
 const ACTOR = 'player';
@@ -26,6 +35,8 @@ const ACTOR = 'player';
 type Config = Omit<Definitions, 'achievements'> & {
   achievements?: Record<string, AchievementSpec>;
   celebrations?: CelebrationResolverOptions;
+  /** Tweaks on top of the theme picked in the page, e.g. { "style": { "accent": "#e11d48" } }. */
+  theme?: Partial<ThemeInput>;
 };
 
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -37,10 +48,35 @@ const stats = el('stats');
 const catalog = el('catalog');
 const soundBox = el<HTMLInputElement>('sound');
 const secretBox = el<HTMLInputElement>('secret');
+const themePicker = el<HTMLSelectElement>('theme');
+themePicker.replaceChildren(
+  ...Object.keys(themes).map((name) => {
+    const o = document.createElement('option');
+    o.value = name;
+    o.textContent = name;
+    return o;
+  }),
+);
 
 let session:
-  | { engine: Engine; notifier: Notifier; defs: AchievementDef[]; stop: () => void }
+  | {
+      engine: Engine;
+      notifier: Notifier;
+      defs: AchievementDef[];
+      cfg: Config;
+      theme: Theme;
+      stop: () => void;
+    }
   | undefined;
+
+/** The picked built-in theme, with the config's `theme` and `celebrations` blocks on top. */
+function buildTheme(cfg: Config): Theme {
+  const base = themePicker.value as BuiltinThemeName;
+  const tweaked = defineTheme({ name: 'playground', extends: base, ...cfg.theme } as ThemeInput);
+  return cfg.celebrations
+    ? defineTheme({ name: tweaked.name, extends: tweaked, celebrations: cfg.celebrations })
+    : tweaked;
+}
 
 const say = (text: string, error = false) => {
   message.textContent = text;
@@ -68,7 +104,7 @@ async function render() {
   if (!s) return;
   const views = await s.engine.catalog(ACTOR);
   if (s !== session) return;
-  catalog.innerHTML = renderCatalog(views, { secret: secretBox.checked });
+  catalog.innerHTML = renderCatalog(views, { secret: secretBox.checked, theme: s.theme });
   const scores = await Promise.all(
     s.engine.definitions.scores.map(
       async (code) => `${code}: ${await s.engine.score(ACTOR, code)}`,
@@ -115,9 +151,9 @@ function apply() {
       return undefined;
     }
   };
-  const { achievements = {}, celebrations: celebrationOptions = {}, ...rest } = cfg;
+  const { achievements = {}, celebrations: _celebrations, theme: _theme, ...rest } = cfg;
   const defs = attempt(() => defineAchievements(achievements));
-  const celebrations = attempt(() => createCelebrationResolver(celebrationOptions));
+  const theme = attempt(() => buildTheme(cfg));
   const engine =
     defs &&
     attempt(() =>
@@ -130,16 +166,17 @@ function apply() {
         definitions: { ...rest, achievements: defs },
       }),
     );
-  if (!defs || !celebrations || !engine) {
+  if (!defs || !theme || !engine) {
     say(errors.join('\n'), true);
     return;
   }
 
   session?.stop();
   const observed = observe(engine);
+  applyTheme(theme);
   const notifier = createNotifier(observed, {
     actor: ACTOR,
-    celebrations,
+    theme,
     sound: soundBox.checked,
     onError: (err) => say(String(err), true),
   });
@@ -148,6 +185,8 @@ function apply() {
     engine,
     notifier,
     defs,
+    cfg,
+    theme,
     stop: () => {
       off();
       notifier.dispose();
@@ -172,7 +211,7 @@ function apply() {
     }),
   );
 
-  const missing = celebrations.missing(defs);
+  const missing = theme.celebrations.missing(defs);
   say(
     missing.length
       ? `Applied, but no preset is named ${missing.map((m) => `'${m}'`).join(', ')}.`
@@ -234,6 +273,22 @@ editor.addEventListener('keydown', (e) => {
 });
 soundBox.addEventListener('change', () => session?.notifier.update({ sound: soundBox.checked }));
 secretBox.addEventListener('change', () => void render());
+themePicker.addEventListener('change', () => {
+  const s = session;
+  if (!s) return;
+  let theme: Theme;
+  try {
+    theme = buildTheme(s.cfg);
+  } catch (err) {
+    say((err as Error).message, true);
+    return;
+  }
+  s.theme = theme;
+  applyTheme(theme);
+  s.notifier.update({ theme });
+  say(`Theme: ${themePicker.value}. Fire an event or preview a celebration.`);
+  void render();
+});
 
 editor.value = JSON.stringify(sample, null, 2);
 apply();

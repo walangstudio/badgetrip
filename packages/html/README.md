@@ -59,6 +59,10 @@ const notifier = createNotifier(observed, { actor: 'u1', sound: true });
 
 Shows each unlock on top of the page: toasts in any corner or edge, a modal, or fullscreen with confetti, with optional sound. It's configured per achievement through `createCelebrationResolver` from `@walangstudio/badgetrip-assets`. The overlay lives in a shadow root, announces unlocks to screen readers, and respects `prefers-reduced-motion`. Outside a browser it's a no-op. `notifier.update({ sound, volume, muted })` changes sound in place, and `dispose()` removes it. Full options are in the [celebrations guide](https://github.com/walangstudio/badgetrip/blob/main/docs/guide/celebrations.md).
 
+## Themes
+
+`applyTheme(theme, target?)` puts a theme's colors on the page (or one element) and returns an undo. `createNotifier(observed, { theme })` and `defineBadgetripElements(observed, { theme })` take one too; switch with `notifier.update({ theme })` and the `setTheme` that `defineBadgetripElements` returns. `renderBadge` and `renderCatalog` take `theme` for its icons. See the [themes guide](https://github.com/walangstudio/badgetrip/blob/main/docs/guide/themes.md).
+
 Secret mode: `renderCatalog(views, { secret: true })` or `<badgetrip-catalog secret>` leaves hidden, locked achievements out and adds a "2 hidden achievements remaining" line.
 
 ## htmx

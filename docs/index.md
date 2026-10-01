@@ -23,8 +23,8 @@ hero:
 features:
   - title: Achievements as config
     details: A keyed object with rule builders like rules.count and rules.streak. Tiers expand one entry into bronze, silver and gold. Hidden ones stay secret until earned.
-  - title: Unlock celebrations
-    details: Toasts in any corner or edge, a modal, or fullscreen with confetti and sound. Configure once, override per achievement.
+  - title: Celebrations and themes
+    details: Toasts in any corner, a modal, or fullscreen with confetti and sound. A theme swaps colors, icons and sounds at once, live.
   - title: Progress you can see
     details: Badges show "3/5" while locked, and optional popups report progress along the way.
   - title: Any framework

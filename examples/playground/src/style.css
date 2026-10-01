@@ -181,6 +181,19 @@ textarea {
   cursor: pointer;
 }
 
+.toggles select {
+  flex: none;
+  padding: 4px 8px;
+}
+
+/* The badges sit on the theme's popup colors so dark themes stay readable. */
+#catalog {
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--badgetrip-bg, transparent);
+  color: var(--badgetrip-fg, inherit);
+}
+
 .stats {
   margin: 16px 0 0;
   color: var(--muted);

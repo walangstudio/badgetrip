@@ -50,6 +50,7 @@ export default defineConfig({
         items: [
           { text: 'Getting started', link: '/guide/getting-started' },
           { text: 'Unlock celebrations', link: '/guide/celebrations' },
+          { text: 'Themes', link: '/guide/themes' },
         ],
       },
       {
