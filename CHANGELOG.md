@@ -18,6 +18,7 @@ All notable changes to badgetrip are documented here. The format follows [Keep a
 - `notifier.update()` also takes `theme`, `icons` and `celebrations`. Popups already on screen or waiting keep their look, and progress popups start or stop to match.
 - The docs site and playground at [walangstudio.github.io/badgetrip](https://walangstudio.github.io/badgetrip/), deployed from `main`. The playground has a theme picker and takes a `theme` block in its config.
 - A themes guide, and docs for replacing a built-in sound and giving popups your own icons.
+- Three sample GIF badges (a star, a trophy and a flame, MIT) with still frames, used in the playground.
 
 ### Changed
 

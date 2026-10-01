@@ -150,3 +150,11 @@ const icons = createIconResolver({
 ```
 
 Animated icons only play once the badge is unlocked, and fall back to the `still` frame for people who turn on reduced motion. [ACHIEVEMENTS.md](../ACHIEVEMENTS.md) has the full list of options.
+
+Want something to try first? Three sample GIF badges, drawn for badgetrip (MIT), ship in [`examples/playground/public/samples`](../../examples/playground/public/samples), each with a still PNG. The [playground](../../examples/playground) uses them for `first_steps`, `regular` and `boss_slayer`.
+
+<p>
+  <img src="https://raw.githubusercontent.com/walangstudio/badgetrip/main/examples/playground/public/samples/star.gif" width="64" height="64" alt="A gold star turning, with sparkles">
+  <img src="https://raw.githubusercontent.com/walangstudio/badgetrip/main/examples/playground/public/samples/trophy.gif" width="64" height="64" alt="A gold trophy with a pulsing glow">
+  <img src="https://raw.githubusercontent.com/walangstudio/badgetrip/main/examples/playground/public/samples/flame.gif" width="64" height="64" alt="A flickering flame">
+</p>
