@@ -3,8 +3,10 @@ export {
   provideBadgetrip,
   useBadgetrip,
   useReactiveEngine,
+  useTheme,
   BadgetripKey,
   IconsKey,
+  ThemeKey,
   type BadgetripOptions,
   type ReactiveEngine,
 } from './plugin.js';

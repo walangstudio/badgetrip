@@ -2,6 +2,7 @@ import {
   type Celebration,
   type CelebrationResolver,
   type IconResolver,
+  type Theme,
   createCelebrationResolver,
 } from '@walangstudio/badgetrip-assets';
 import { type AchievementView, watchUnlocks } from '@walangstudio/badgetrip-core';
@@ -23,18 +24,20 @@ import {
   toValue,
   watch,
 } from 'vue';
-import { useReactiveEngine } from './plugin.js';
+import { useReactiveEngine, useTheme } from './plugin.js';
 
 /**
  * Celebrates unlocks on top of the page (toasts, modal, fullscreen, confetti, sound).
- * Mount it once in the root component. `sound`, `volume` and `muted` update in place;
- * other prop changes re-create the overlay.
+ * Mount it once in the root component. It follows the app theme unless given its own.
+ * `sound`, `volume`, `muted` and the theme update in place; other prop changes
+ * re-create the overlay.
  */
 export const UnlockNotifier = defineComponent({
   name: 'UnlockNotifier',
   props: {
     celebrations: Object as PropType<CelebrationResolver>,
     icons: Object as PropType<IconResolver>,
+    theme: Object as PropType<Theme>,
     actor: [String, Function] as PropType<NotifierOptions['actor']>,
     sound: { type: Boolean, default: undefined },
     volume: Number,
@@ -48,14 +51,18 @@ export const UnlockNotifier = defineComponent({
   },
   setup(props) {
     const reactive = useReactiveEngine();
+    const appTheme = useTheme();
+    const theme = () => props.theme ?? appTheme.value;
     let notifier: Notifier | undefined;
     // Functions and the labels object are read on use, so an inline `:actor`,
     // `:on-error` or `:labels` doesn't rebuild the overlay on every parent render.
     const create = () => {
       notifier?.dispose();
       const opts = Object.fromEntries(
-        Object.entries(props).filter(([, v]) => v !== undefined),
+        Object.entries(props).filter(([k, v]) => v !== undefined && k !== 'theme'),
       ) as NotifierOptions;
+      const t = theme();
+      if (t) opts.theme = t;
       if (typeof props.actor === 'function') {
         opts.actor = (a: string) => (props.actor as (a: string) => boolean)(a);
       }
@@ -97,6 +104,7 @@ export const UnlockNotifier = defineComponent({
       () => [props.sound, props.volume, props.muted],
       () => notifier?.update({ sound: props.sound, volume: props.volume, muted: props.muted }),
     );
+    watch(theme, (t) => notifier?.update({ theme: t }));
     onBeforeUnmount(() => {
       notifier?.dispose();
       notifier = undefined;
@@ -116,8 +124,8 @@ export type UseUnlocksOptions = {
 const defaultCelebrations = createCelebrationResolver();
 
 /**
- * New unlocks as a queue, for drawing your own celebration UI. Quiet achievements are
- * left out. `dismiss()` drops the oldest, `clear()` drops all. Stops with the scope.
+ * New unlocks as a queue, for drawing your own celebration UI. Celebrations come from
+ * `celebrations`, then the app theme. Quiet achievements are left out. `dismiss()` drops the oldest, `clear()` drops all. Stops with the scope.
  */
 export function useUnlocks(opts: UseUnlocksOptions = {}): {
   queue: Readonly<ShallowRef<UnlockItem[]>>;
@@ -125,8 +133,9 @@ export function useUnlocks(opts: UseUnlocksOptions = {}): {
   clear: () => void;
 } {
   const reactive = useReactiveEngine();
+  const theme = useTheme();
   const queue = shallowRef<UnlockItem[]>([]);
-  const resolver = opts.celebrations ?? defaultCelebrations;
+  const resolver = () => opts.celebrations ?? theme.value?.celebrations ?? defaultCelebrations;
   let stop = () => {};
   watch(
     () => toValue(opts.actor),
@@ -135,7 +144,7 @@ export function useUnlocks(opts: UseUnlocksOptions = {}): {
       queue.value = [];
       stop = watchUnlocks(reactive, { actor }, (items) => {
         const next = items
-          .map(({ view }) => ({ view, celebration: resolver.resolve(view) }))
+          .map(({ view }) => ({ view, celebration: resolver().resolve(view) }))
           .filter((i) => !i.celebration.quiet);
         if (next.length) queue.value = [...queue.value, ...next];
       });

@@ -52,7 +52,7 @@ describe('AchievementBadge', () => {
     expect(fig.element.style.height).toBe('100%');
     const img = w.get('img').element as HTMLImageElement;
     expect(img.getAttribute('alt')).toBe('');
-    expect(img.style.filter).toBe('grayscale(1)');
+    expect(img.style.filter).toBe('var(--badgetrip-locked-filter, grayscale(1))');
     expect(img.src).toBe(svgToDataUrl(svgs.trophy));
     expect(w.get('figcaption').text()).toBe('AlphaDo the thing');
     const bar = w.get('progress').element as HTMLProgressElement;

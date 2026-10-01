@@ -17,7 +17,7 @@ import {
   progressCount,
 } from '@walangstudio/badgetrip-assets';
 import type { AchievementView } from '@walangstudio/badgetrip-core';
-import { BADGETRIP_ICONS } from './service.js';
+import { badgeIcons } from './service.js';
 
 const MOTION = '(prefers-reduced-motion: reduce)';
 
@@ -37,9 +37,9 @@ function prefersReducedMotion(): Signal<boolean> {
  * fall back to their still frame under `prefers-reduced-motion`. Call in an injection context.
  */
 export function achievementIcon(achievement: Signal<AchievementView>): Signal<IconAsset> {
-  const icons = inject(BADGETRIP_ICONS);
+  const icons = badgeIcons();
   const reduce = prefersReducedMotion();
-  const asset = computed(() => icons.resolve(achievement()));
+  const asset = computed(() => icons().resolve(achievement()));
   return computed(() =>
     displayIcon(asset(), {
       unlocked: achievement().unlocked,
@@ -68,8 +68,8 @@ export function achievementIcon(achievement: Signal<AchievementView>): Signal<Ic
         alt=""
         [width]="size()"
         [height]="size()"
-        [style.filter]="achievement().unlocked ? null : 'grayscale(1)'"
-        [style.opacity]="achievement().unlocked ? null : 0.45"
+        [style.filter]="achievement().unlocked ? null : 'var(--badgetrip-locked-filter, grayscale(1))'"
+        [style.opacity]="achievement().unlocked ? null : 'var(--badgetrip-locked-opacity, 0.45)'"
       />
       <figcaption style="text-align: center; flex: 1">
         <strong>{{ achievement().name }}</strong>
@@ -81,7 +81,7 @@ export function achievementIcon(achievement: Signal<AchievementView>): Signal<Ic
         <progress
           [value]="achievement().progress.percent"
           max="100"
-          style="width: 100%"
+          style="width: 100%; accent-color: var(--badgetrip-accent, auto)"
           [attr.aria-label]="achievement().name + ': ' + achievement().progress.percent + '%'"
         ></progress>
       }

@@ -4,6 +4,7 @@ export {
   BADGETRIP_ENGINE,
   BADGETRIP_ICONS,
   BADGETRIP_NOTIFIER,
+  BADGETRIP_THEME,
   type UnlockItem,
   type UnlockQueue,
   type UnlocksOptions,

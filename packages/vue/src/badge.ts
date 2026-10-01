@@ -17,7 +17,14 @@ import {
   shallowRef,
   toValue,
 } from 'vue';
-import { IconsKey, defaultIcons } from './plugin.js';
+import { IconsKey, defaultIcons, useTheme } from './plugin.js';
+
+// Theme hooks; the fallbacks are the look without a theme.
+const LOCKED = {
+  filter: 'var(--badgetrip-locked-filter, grayscale(1))',
+  opacity: 'var(--badgetrip-locked-opacity, 0.45)',
+};
+const BAR = { width: '100%', accentColor: 'var(--badgetrip-accent, auto)' };
 
 const MOTION = '(prefers-reduced-motion: reduce)';
 
@@ -41,9 +48,12 @@ function usePrefersReducedMotion() {
 export function useAchievementIcon(
   achievement: MaybeRefOrGetter<AchievementView>,
 ): ComputedRef<IconAsset> {
-  const icons = inject(IconsKey, defaultIcons);
+  const own = inject(IconsKey, null);
+  const theme = useTheme();
   const reduce = usePrefersReducedMotion();
-  const asset = computed(() => icons.resolve(toValue(achievement)));
+  const asset = computed(() =>
+    (own ?? theme.value?.icons ?? defaultIcons).resolve(toValue(achievement)),
+  );
   return computed(() =>
     displayIcon(asset.value, {
       unlocked: toValue(achievement).unlocked,
@@ -95,7 +105,7 @@ export const AchievementBadge = defineComponent({
             alt: '',
             width: props.size,
             height: props.size,
-            style: a.unlocked ? undefined : { filter: 'grayscale(1)', opacity: 0.45 },
+            style: a.unlocked ? undefined : LOCKED,
           }),
           h('figcaption', { style: { textAlign: 'center', flex: 1 } }, [
             h('strong', a.name),
@@ -105,7 +115,7 @@ export const AchievementBadge = defineComponent({
             ? h('progress', {
                 value: a.progress.percent,
                 max: 100,
-                style: { width: '100%' },
+                style: BAR,
                 'aria-label': `${a.name}: ${a.progress.percent}%`,
               })
             : null,

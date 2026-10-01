@@ -1,4 +1,9 @@
-import { createIconResolver, svgToDataUrl, svgs } from '@walangstudio/badgetrip-assets';
+import {
+  createIconResolver,
+  defineTheme,
+  svgToDataUrl,
+  svgs,
+} from '@walangstudio/badgetrip-assets';
 import {
   type AchievementView,
   createEngine,
@@ -20,6 +25,7 @@ import {
   useAchievementProgress,
   useBadgetrip,
   useScore,
+  useTheme,
   useUnlocks,
 } from '../src/index.js';
 
@@ -74,6 +80,36 @@ afterEach(() => {
   act(() => tree?.unmount());
   tree = undefined;
   motion.enabled = false;
+});
+
+describe('themes', () => {
+  it('badges use the provider theme icons, and useTheme reads it', async () => {
+    const theme = defineTheme({
+      name: 'neon',
+      icons: { overrides: { a: { src: 'https://x/neon.png' } } },
+    });
+    let seen: unknown;
+    const Peek = () => {
+      seen = useTheme();
+      return null;
+    };
+    const engine = createEngine({
+      events: memoryEventStore(),
+      scores: memoryScoreStore(),
+      achievements: memoryAchievementStore(),
+      streaks: memoryStreakStore(),
+      clock: { now: () => 0 },
+      definitions: {},
+    });
+    const t = await mount(
+      <BadgetripProvider engine={engine} theme={theme}>
+        <AchievementBadge achievement={view()} />
+        <Peek />
+      </BadgetripProvider>,
+    );
+    expect(t.root.findByType('Image' as never).props.source.uri).toBe('https://x/neon.png');
+    expect(seen).toBe(theme);
+  });
 });
 
 describe('AchievementBadge', () => {

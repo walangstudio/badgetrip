@@ -2,6 +2,7 @@ export {
   BadgetripProvider,
   useBadgetrip,
   useReactiveEngine,
+  useTheme,
   makeReactive,
   type ReactiveEngine,
   useScore,
