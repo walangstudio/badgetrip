@@ -120,6 +120,9 @@ textarea {
   padding: 12px;
   font: 13px / 1.5 ui-monospace, "Cascadia Code", Consolas, monospace;
   tab-size: 2;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
   background: #fbfbfd;
   color: var(--fg);
 }
@@ -134,6 +137,41 @@ textarea {
 
 #message.error {
   color: var(--danger);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 12px;
+}
+
+.tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 8px 12px;
+  background: none;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.tabs button[aria-selected="true"] {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+.tabs button.invalid::after {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--danger);
+  vertical-align: middle;
 }
 
 .samples {
@@ -163,36 +201,17 @@ textarea {
   overflow-wrap: break-word;
 }
 
-.help dt {
-  margin-top: 8px;
-}
-
-.help dd {
-  margin: 2px 0 0 16px;
-}
-
 .help table {
   margin: 6px 0 0;
   border-collapse: collapse;
   width: 100%;
-  table-layout: fixed;
 }
 
-.help td code {
-  overflow-wrap: anywhere;
-}
-
-.help th,
 .help td {
   text-align: left;
   vertical-align: top;
   padding: 4px 8px 4px 0;
   border-top: 1px solid var(--line);
-}
-
-.help th {
-  font-weight: 600;
-  color: var(--fg);
 }
 
 .help a {
@@ -270,10 +289,6 @@ textarea {
 
   textarea {
     height: 50vh;
-  }
-
-  .help thead {
-    display: none;
   }
 
   .help tr {
