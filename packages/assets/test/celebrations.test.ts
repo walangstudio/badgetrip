@@ -346,7 +346,7 @@ describe('animation', () => {
       exit: 'none',
       duration: 350,
       easing: spring,
-      distance: 0,
+      distance: 24,
     });
     expect(r.resolve({ code: 'a', celebration: 'epic' }).animation.enter).toBe('pop');
   });
@@ -362,7 +362,7 @@ describe('animation', () => {
       exit: 'slide',
       duration: 400,
       easing: spring,
-      distance: 0,
+      distance: 24,
     });
     expect(r.resolve({ code: 'b' }).animation).toMatchObject({
       enter: 'fade',

@@ -214,7 +214,7 @@ Values can't contain `;`, `{`, `}`, `<`, `>` or `\`, and every `url()` is checke
 
 `icons` takes the same options as [`createIconResolver`](../ACHIEVEMENTS.md#assets): `color`, `tierColors`, `icons`, `overrides`, `categories` and `fallback`. `color` and `tierColors` take a color or a [gradient](#gradients). Images are URLs or bundler imports.
 
-`celebrations` takes the same options as [`createCelebrationResolver`](celebrations.md#configure-it): `default`, `presets`, `overrides`, `categories`, `rarity` and `sounds`. Reuse a built-in sound name to replace it everywhere.
+`celebrations` takes the same options as [`createCelebrationResolver`](celebrations.md#configure-it): `default`, `presets`, `overrides`, `categories`, `rarity` and `sounds`. Reuse a built-in sound name to replace it everywhere. Any layer can set `animation`, how popups move in and out; see [Animations](animations.md).
 
 Explicit settings beat the theme. An `IconProvider`, an `icons` option or a `celebrations` option you pass yourself wins over what the theme says.
 

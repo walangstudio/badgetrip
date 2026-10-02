@@ -123,6 +123,7 @@ The fields:
 | `confetti` | `true`, `false`, or `{ particles, colors, duration }` | `false` |
 | `title` | the heading above the name | "Achievement unlocked" |
 | `quiet` | `true` to skip the popup and sound | `false` |
+| `animation` | how the popup moves in and out: `{ enter, exit, duration, easing, distance }`; see [Animations](animations.md) | toasts drop in, dialogs pop |
 
 The resolver checks the whole config when you create it and throws one error listing every problem, so a typo like `positon` fails at startup instead of silently doing nothing. `celebrations.missing(achievements)` returns the preset keys your achievements name that no preset defines.
 

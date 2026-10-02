@@ -36,6 +36,7 @@ badgetrip keeps the rules in one place and stays out of everything else:
 - **Accessible badges.** Every adapter shows a still frame while locked or when the user prefers reduced motion, and labels its progress bar.
 - **Unlock celebrations.** Toasts in any corner or edge, a modal, or fullscreen with confetti, with optional sound. Configure once, override per achievement. Secret mode hides hidden achievements the way consoles do.
 - **Themes.** One object sets colors, icons and celebrations. Swap it at runtime, extend a built-in (`classic`, `dark`, `arcade`, `minimal`, `aurora`), or share yours as a package. Backgrounds and icons can be gradients.
+- **Animations.** Popups enter and leave the way you choose (fade, slide from any side, scale, pop or bounce), with their own speed and easing, per theme or per achievement. Badges can be GIFs. Everything stays still for people who prefer reduced motion.
 - **Progress you can see.** Badges show "3/5" under locked achievements, and optional popups report progress along the way, every step or at milestones.
 - **Cross-process.** `@walangstudio/badgetrip-ipc` runs the engine in Electron's main process or a worker, behind a method allowlist and an `authorize` hook.
 
@@ -338,6 +339,7 @@ The docs are published at [walangstudio.github.io/badgetrip](https://walangstudi
 | [Guides](docs/guide/getting-started.md) | Getting started, then one guide per framework |
 | [Celebrations](docs/guide/celebrations.md) | Unlock popups, sound, confetti, secret mode |
 | [Themes](docs/guide/themes.md) | Swappable themes: colors, icons and celebrations in one object |
+| [Animations](docs/guide/animations.md) | Popup entrances and exits, animated badges, confetti, reduced motion |
 | [ACHIEVEMENTS.md](docs/ACHIEVEMENTS.md) | Achievement config, tiers, hidden badges, progress, icons |
 | [RULES.md](docs/RULES.md) | Every rule kind, filters and the path convention |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Interfaces, data model, the emit pipeline, determinism |
