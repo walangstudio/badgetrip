@@ -2,7 +2,7 @@
 
 When a user unlocks an achievement, badgetrip can show a popup over your app. That popup is a celebration. It can be a toast (a small card) in a corner or on an edge, a modal in the center, or a fullscreen screen with confetti. Sound is optional. The notifier is the part that shows them. You set it up once and can change it per achievement.
 
-This guide uses the `engine` from [Getting started](getting-started.md). Every option can be tried live in the [playground](../../examples/playground).
+This guide uses the `engine` from [Getting started](getting-started.md). Every option can be tried live in the [playground](../../examples/playground): its **Popups**, **Sounds** and **Animations** tabs take the `createCelebrationResolver` objects on this page as written.
 
 ## Turn it on
 

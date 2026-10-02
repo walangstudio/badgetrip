@@ -25,7 +25,7 @@ defineTheme({
 });
 ```
 
-The [playground](../../examples/playground) has **Entrance** and **Exit** pickers to try each one.
+To try one, paste a `createCelebrationResolver({ ... })` call from this page into the [playground](../../examples/playground)'s **Animations** tab, or use its **Entrance** and **Exit** pickers.
 
 ## Entrances and exits
 

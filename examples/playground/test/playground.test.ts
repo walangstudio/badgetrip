@@ -1,4 +1,4 @@
-import { defineTheme, themes } from '@walangstudio/badgetrip-assets';
+import { type ThemeInput, defineTheme, themes } from '@walangstudio/badgetrip-assets';
 import {
   createEngine,
   defineAchievements,
@@ -9,37 +9,42 @@ import {
   systemClock,
 } from '@walangstudio/badgetrip-core';
 import { describe, expect, it } from 'vitest';
-import { jsonErrorAt } from '../src/json.js';
-import { samples } from '../src/sample.js';
+import { type TabKey, scope, tabs } from '../src/tabs.js';
 
-describe('samples', () => {
-  for (const [key, { config }] of Object.entries(samples)) {
-    it(`${key} is valid, as JSON too`, () => {
-      const { achievements, celebrations, theme, ...definitions } = JSON.parse(
-        JSON.stringify(config),
-      );
-      const engine = createEngine({
-        events: memoryEventStore(),
-        scores: memoryScoreStore(),
-        achievements: memoryAchievementStore(),
-        streaks: memoryStreakStore(),
-        clock: systemClock,
-        definitions: { ...definitions, achievements: defineAchievements(achievements) },
-      });
-      const t = defineTheme({ name: 'p', extends: themes.classic, ...theme, celebrations });
-      expect(t.celebrations.missing(engine.definitions.achievements)).toEqual([]);
-    });
-  }
-});
+// The page runs a tab through a script element for error positions; the value is the same.
+const run = (code: string) =>
+  new Function(...Object.keys(scope), `'use strict'; return (\n${code}\n);`)(
+    ...Object.values(scope),
+  );
 
-describe('jsonErrorAt', () => {
-  const at = (text: string) => text.slice(jsonErrorAt(text), jsonErrorAt(text) + 3);
-  it('points at the mistake', () => {
-    expect(at('{\n  "a": ["x",]\n}')).toBe(']\n}');
-    expect(at('{\n  "a": 1\n  "b": 2\n}')).toBe('"b"');
-    expect(at("{\n  'a': 1\n}")).toBe("'a'");
-    expect(at('{"hidden": tru, "b": 1}')).toBe(', "');
-    expect(at(String.raw`{"a": "x\qy"}`)).toBe('qy"');
-    expect(jsonErrorAt('{"a": [1')).toBe(8);
+/** Build what Apply builds, from one code string per tab. */
+function build(code: Record<TabKey, string>) {
+  const part = (key: TabKey) => run(code[key]);
+  const { achievements, ...definitions } = part('achievements');
+  const defs = defineAchievements(achievements);
+  createEngine({
+    events: memoryEventStore(),
+    scores: memoryScoreStore(),
+    achievements: memoryAchievementStore(),
+    streaks: memoryStreakStore(),
+    clock: systemClock,
+    definitions: { ...definitions, achievements: defs },
   });
+  let t = defineTheme({ name: 'p', extends: themes.classic, ...part('theme') } as ThemeInput);
+  for (const key of ['sounds', 'popups', 'animations'] as const)
+    t = defineTheme({ name: 'p', extends: t, celebrations: part(key) });
+  return t.celebrations.missing(defs);
+}
+
+const firsts = Object.fromEntries(tabs.map((t) => [t.key, t.samples[0]?.code])) as Record<
+  TabKey,
+  string
+>;
+
+describe('tab samples', () => {
+  for (const tab of tabs)
+    for (const sample of tab.samples)
+      it(`${tab.label}: ${sample.label} runs with the other tabs' first samples`, () => {
+        expect(build({ ...firsts, [tab.key]: sample.code })).toEqual([]);
+      });
 });

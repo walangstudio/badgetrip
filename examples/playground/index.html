@@ -11,7 +11,7 @@
     <header>
       <h1>badgetrip playground</h1>
       <p>
-        Edit the config, press <kbd>Apply</kbd>, then fire events and watch what unlocks.
+        Edit the config tabs, press <kbd>Apply</kbd>, then fire events and watch what unlocks.
         Everything runs in your browser and nothing is saved.
         <a href="https://walangstudio.github.io/badgetrip/">Read the docs</a>
       </p>
@@ -22,45 +22,22 @@
           <h2 id="config-title">Config</h2>
           <button type="button" id="apply" class="primary" title="Ctrl+Enter">Apply</button>
         </div>
+        <div id="tabs" class="tabs" role="tablist" aria-label="Config"></div>
         <div class="row samples">
-          <label for="sample">Start from</label>
+          <label for="sample">Sample</label>
           <select id="sample"></select>
           <button type="button" id="load">Load</button>
         </div>
-        <textarea id="config" spellcheck="false" aria-label="Config (JSON)" autocomplete="off"></textarea>
+        <div id="editors"></div>
         <p id="message" role="status" aria-live="polite"></p>
-        <details class="help">
-          <summary>How to write the config</summary>
+        <details class="help" open>
+          <summary>What goes in this tab</summary>
+          <div id="help"></div>
           <p>
-            It's JSON: quote every key, no comments, no trailing commas, no imports or functions.
-            Apply checks all of it and lists every mistake.
-          </p>
-          <dl>
-            <dt><code>achievements</code>, <code>scores</code>, <code>points</code>, <code>streaks</code>, <code>tiers</code>, <code>leaderboards</code>, <code>escalators</code></dt>
-            <dd>
-              What <code>createEngine</code> takes. Rules are data, so the guides' JavaScript becomes:
-              <table>
-                <thead><tr><th>Guides</th><th>Here</th></tr></thead>
-                <tbody>
-                  <tr><td><code>rules.count('item.collect', 5)</code></td><td><code>{"kind": "count", "eventType": "item.collect", "gte": 5}</code></td></tr>
-                  <tr><td><code>rules.streak('daily', 3)</code></td><td><code>{"kind": "streak", "streak": "daily", "gte": 3}</code></td></tr>
-                  <tr><td><code>rules.score('xp', 100)</code></td><td><code>{"kind": "score", "score": "xp", "gte": 100}</code></td></tr>
-                  <tr><td><code>rules.all(a, b)</code></td><td><code>{"kind": "all", "rules": [a, b]}</code></td></tr>
-                </tbody>
-              </table>
-            </dd>
-            <dt><code>celebrations</code></dt>
-            <dd>What <code>createCelebrationResolver</code> takes: layouts, positions, sounds, confetti and <code>animation</code>.</dd>
-            <dt><code>theme</code></dt>
-            <dd>What <code>defineTheme</code> takes, without <code>name</code>. It's layered on the Theme picker: <code>style</code> colors and gradients, <code>icons</code>, and its own <code>celebrations</code>.</dd>
-          </dl>
-          <p>
-            Images are URLs. Files in the playground's <code>samples/</code> folder work as
-            <code>"samples/star.gif"</code>. Sounds are a built-in name (<code>chime</code>,
-            <code>fanfare</code>, <code>sparkle</code>, <code>pop</code>), a URL, or notes:
-            <code>{"tones": [{"freq": 880, "at": 0, "dur": 0.3}]}</code>.
-            Each sample in <b>Start from</b> shows one topic.
-            <a href="https://walangstudio.github.io/badgetrip/guide/getting-started">The guides</a> cover every option.
+            Write it like the docs: a JavaScript object, with <code>rules</code> ready to use.
+            Keys need no quotes, and comments and trailing commas are fine. Pasting a whole
+            <code>defineTheme({ ... })</code> call from the docs works too. Apply checks every
+            tab and lists every mistake.
           </p>
         </details>
       </section>

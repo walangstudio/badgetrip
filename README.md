@@ -42,7 +42,7 @@ badgetrip keeps all the rules in one place, and leaves the rest of your app to y
 
 ## Try it
 
-The [playground](https://walangstudio.github.io/badgetrip/playground/) is a sandbox: edit a config, emit events, and watch achievements unlock with the real celebrations. Nothing is saved. To run it locally:
+The [playground](https://walangstudio.github.io/badgetrip/playground/) is a sandbox: edit achievements, a theme, animations, sounds and popups in tabs, written just like the examples in these docs, then emit events and watch achievements unlock with the real celebrations. Nothing is saved. To run it locally:
 
 ```sh
 pnpm install
