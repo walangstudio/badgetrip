@@ -54,6 +54,8 @@ const engine = createEngine({ /* stores, clock */ definitions: { achievements } 
 | `tiers` | - | `{ name: threshold }` or `{ name: { at, points?, rarity?, icon?, name?, description?, celebration? } }`, ascending. |
 | `metadata` | - | Anything else; opaque to the engine. |
 
+Any other field, on an achievement or a tier, throws `achievement <code>: unknown option '<field>'`, so a typo fails at startup. Put extra data in `metadata`.
+
 ## Rule builders
 
 | Builder | Unlocks when |

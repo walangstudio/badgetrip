@@ -56,7 +56,7 @@ runStoreContract(async () => {
 });
 ```
 
-When it passes, your stores behave like the built-in ones: idempotent appends, atomic ticks and awards, ordering, filters and windows. Optional capabilities your stores don't implement are skipped, not passed. Run it against a throwaway database, since it deletes data between tests.
+When it passes, your stores behave like the built-in ones: idempotent appends, atomic ticks and awards, ordering, filters and windows. Optional capabilities your stores don't implement are skipped, not passed. Run it against a throwaway database: your factory must empty it before each test.
 
 ## License
 

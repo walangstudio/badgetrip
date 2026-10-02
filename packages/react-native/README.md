@@ -34,7 +34,8 @@ Hooks (`useScore`, `useAchievements`, `useAchievementCatalog`, `useAchievementPr
 `AchievementBadge` props: `achievement`, `size` (dp, default 48), `showProgress` (default true), `showCount` ("3/5", default true), `formatCount`, `style`.
 
 - Built-in SVG icons render through `SvgXml`. RN `Image` cannot show SVG data URLs.
-- Other assets (PNG, WebP, GIF, remote URLs) render through `Image`. Remote `.svg` files are not supported; register their markup as a data URL instead.
+- Remote `.svg` URLs render through `SvgUri`; when locked they are dimmed but not tinted gray.
+- Other assets (PNG, WebP, GIF and other remote images) render through `Image`.
 - Locked: RN has no CSS `filter`, so there is no true grayscale. Tintable SVGs repaint in gray; images become a gray silhouette (`tintColor`). Both dim to 45% opacity. Want real desaturation? Supply a grayscale `still` frame.
 - The progress bar is a `View` with `accessibilityRole="progressbar"`, `accessibilityValue` `{min: 0, max: 100, now}` and label `"Name: N%"`. Hidden when unlocked or concealed.
 

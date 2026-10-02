@@ -3,7 +3,7 @@
 The engine lives on your server. It returns plain HTML fragments, and htmx swaps them into the page. There's no client-side JavaScript to write beyond htmx itself.
 
 ```sh
-npm install @walangstudio/badgetrip-core @walangstudio/badgetrip-html express
+npm install @walangstudio/badgetrip-core @walangstudio/badgetrip-html @walangstudio/badgetrip-assets express
 ```
 
 This uses the `engine` from [Getting started](getting-started.md). The examples use Express, but anything that can return a string works the same way: Hono, Fastify, Next.js route handlers, or a Deno server.
@@ -58,5 +58,5 @@ The badges load with the page. Every click posts the event and swaps in the upda
 - **Never trust the client for the user id.** Work out who's asking from the session on the server, like `currentUser` does above. The header here is only a stand-in.
 - **Use a stable event id when you can.** If the event comes from a form, generate the id when you render the form and post it back. That way a double-submit counts once.
 - **The output is escaped.** Achievement names and descriptions are HTML-escaped, so you can safely let users write their own.
-- **Themes work server-side too.** Pass `theme` to `renderCatalog` for its icons, and put `themeCss(theme)` in a `<style>` in the page head for its colors. See [Themes](themes.md).
+- **Themes work server-side too.** Pass `theme` to `renderCatalog` for its icons, and put `themeCss(theme)` (from `@walangstudio/badgetrip-assets`) in a `<style>` in the page head for its colors. See [Themes](themes.md).
 - **Not using Node on the server?** A Python, PHP or Go backend can call a small Node service that runs the engine and returns these same fragments.

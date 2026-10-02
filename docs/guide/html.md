@@ -1,7 +1,7 @@
 # Plain HTML and JavaScript
 
 ```sh
-npm install @walangstudio/badgetrip-core @walangstudio/badgetrip-html
+npm install @walangstudio/badgetrip-core @walangstudio/badgetrip-html @walangstudio/badgetrip-assets
 ```
 
 No framework needed. `@walangstudio/badgetrip-html` gives you two custom elements that draw themselves and stay up to date. They also work inside Svelte, Solid, Lit, Alpine, or any page that renders HTML.
@@ -80,7 +80,7 @@ For the custom elements, target `badgetrip-catalog figure` in your stylesheet. T
 
 ## Celebrate unlocks
 
-`createNotifier(observed, { actor: 'ana' })` shows each unlock on top of the page: a toast, a modal or fullscreen confetti, with optional sound. Add `secret` to `<badgetrip-catalog>` to leave hidden achievements out and show how many remain. Both are covered in [Unlock celebrations](celebrations.md).
+`createNotifier(engine, { actor: 'ana' })` shows each unlock on top of the page: a toast, a modal or fullscreen confetti, with optional sound. Add `secret` to `<badgetrip-catalog>` to leave hidden achievements out and show how many remain. Both are covered in [Unlock celebrations](celebrations.md).
 
 ## Themes
 

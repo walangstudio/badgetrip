@@ -72,7 +72,7 @@ interface ScoreStore {
 
 **`apply`** - atomically adds `delta.delta` to the running total and returns the new value. The `delta.ts` field is the event timestamp; persist it if your store needs to support rolling leaderboards.
 
-**`top`** - returns up to `limit` entries sorted descending by value, ties broken by `actor` ascending. Without `window`, use all-time totals. With `window`, sum only deltas where `delta.ts >= window.since`. The engine computes `window.since` as `clock.now() - leaderboardDef.window.ms`.
+**`top`** - returns up to `limit` entries sorted descending by value, ties broken by `actor` ascending. Without `window`, use all-time totals. With `window`, sum only deltas where `delta.ts >= window.since`. The engine computes `window.since` as `now - leaderboardDef.window.ms`, where `now` is `clock.now()` for queries and `refresh`, and the event's `ts` during `emit` (so replays rank the same way).
 
 > Rolling-window requirement: a store that tracks only running totals **cannot** satisfy windowed `top`. You must persist per-delta history (timestamp + delta) - a secondary index keyed by `(score, ts)`. The Postgres reference keeps a `score_deltas` table for exactly this. If you never use rolling leaderboards, totals alone are enough.
 
@@ -232,7 +232,7 @@ It covers:
 
 - `append` insert-if-absent, including concurrent appends
 - `read` ordering, filters, `since` and `limit`
-- `count` with a `where` filter, and events with missing payload fields
+- `count` with a `where` filter, and `read` of an event with no `payload`
 - score `get`, `apply`, and all-time and windowed `top` (inclusive cutoff, ties, limits)
 - `award` idempotency
 - streak `tick`, `reset` (returns the previous current) and per-key scoping

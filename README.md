@@ -147,7 +147,12 @@ const engine = createEngine({
       },
     ],
     leaderboards: [
-      { code: 'weekly', score: 'xp', window: { type: 'rolling', ms: 7 * DAY }, limit: 10 },
+      {
+        code: 'weekly',
+        source: { kind: 'score', score: 'xp' },
+        window: { type: 'rolling', ms: 7 * DAY },
+        limit: 10,
+      },
     ],
     achievements: defineAchievements({
       first_step: {
@@ -353,7 +358,7 @@ The docs are published at [walangstudio.github.io/badgetrip](https://walangstudi
 
 | Example | Shows |
 |---|---|
-| [`examples/playground`](examples/playground) | A browser sandbox: edit a config, emit events, see the celebrations |
+| [`examples/playground`](examples/playground) | A browser sandbox: edit achievements, a theme, animations, sounds and popups in tabs, emit events, see the celebrations |
 | [`examples/node-cli`](examples/node-cli) | The engine in a plain Node script |
 | [`examples/react-spa`](examples/react-spa) | A Vite app on `@walangstudio/badgetrip-react` |
 | [`examples/todont-extract`](examples/todont-extract) | A production ruleset (12 badges) moved onto badgetrip |

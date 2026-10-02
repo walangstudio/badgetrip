@@ -32,7 +32,7 @@ type EmitResult = {
 
 ## The emit pipeline
 
-`createEngine` validates `definitions` once (unknown references, duplicate codes, non-positive thresholds, missing optional store capabilities) and throws before any event is accepted.
+`createEngine` validates `definitions` once (unknown keys, unknown references, duplicate codes, non-positive thresholds, missing optional store capabilities) and throws before any event is accepted.
 
 `emit(event)` validates the event (non-empty `id`/`actor`/`type`, finite `ts`, object `payload`), then runs these steps in order. Emits for the same actor are serialized in-process, so every step sees the state written by the steps before it and no concurrent emit interleaves. Across processes, correctness relies on the stores' atomic writes. A store method must never await `engine.emit` for the same actor: it would wait on its own queue forever.
 
@@ -164,6 +164,6 @@ The `engine.escalator(actor, code, key?)` query folds up to `clock.now()`, apply
 Neither tiers nor leaderboards have their own stores. Both are computed on demand:
 
 - **`engine.tier(actor, code)`** reads `scores.get(actor, def.score)` and runs `evalTier` - a linear scan over the sorted thresholds array. Returns `{ current, next, remaining, value }`.
-- **`engine.leaderboard(code)`** calls `scores.top(def.score, def.limit, window)` where `window` is computed from `clock.now() - def.window.ms` for rolling windows, or `undefined` for all-time.
+- **`engine.leaderboard(code)`** ranks by the board's `source` (a bare `score` means `{ kind: 'score' }`). Score boards call `scores.top(score, def.limit, window)`, where `window` is `now - def.window.ms` for rolling windows (`now` is `clock.now()`, or the event's `ts` during `emit`) and `undefined` for all-time. `streak-sum` boards call `streaks.topByCurrentSum(streak, def.limit)` and ignore the window.
 
-The cost is one `ScoreStore` read each. No additional tables or materialized views are required unless the application needs them for performance.
+The cost is one store read each. No additional tables or materialized views are required unless the application needs them for performance.

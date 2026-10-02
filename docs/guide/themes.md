@@ -278,7 +278,7 @@ A theme can also be plain JSON, with `extends` as a built-in name and images as 
 }
 ```
 
-Load it with one line: `const neon = defineTheme(await (await fetch('/neon.json')).json());`. To try it without writing an app, paste it into the **Theme** tab of the [playground](../../examples/playground). JSON works there, and so does the `defineTheme({ ... })` call from any example on this page.
+Load it with one line: `const neon = defineTheme(await (await fetch('/neon.json')).json());`. To try it without writing an app, paste it into the **Theme** tab of the [playground](../../examples/playground). JSON works there, and so does the `defineTheme({ ... })` call from the other examples on this page. The animated sample uses `svgs`, which the playground doesn't provide; pick **animated** in its Theme picker instead.
 
 ## Server rendering
 
