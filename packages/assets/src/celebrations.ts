@@ -203,7 +203,7 @@ const DIALOG_ANIMATION: Animation = {
   exit: 'none',
   duration: 350,
   easing: 'spring',
-  distance: 0,
+  distance: 24,
 };
 const PROGRESS_KEYS = new Set(['at', 'every', 'position', 'duration', 'sound', 'title']);
 const CONFETTI_KEYS = new Set(['particles', 'colors', 'duration']);
