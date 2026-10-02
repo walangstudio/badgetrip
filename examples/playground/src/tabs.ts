@@ -230,7 +230,7 @@ export const tabs: Tab[] = [
         note: 'A dark theme from scratch: extends dark, then changes colors, corners, font and icon colors.',
       },
       {
-        label: 'GIF badges',
+        label: 'GIF badges (files)',
         code: `{
   icons: {
     // Replace one icon key everywhere: every 'star' badge becomes this GIF
@@ -256,7 +256,24 @@ export const tabs: Tab[] = [
     },
   },
 }`,
-        note: 'Locked badges show the still PNG. Fire item.collect five times to see the star move.',
+        note: 'Preview Regular or Boss slayer to see their GIF move. Locked badges show the still PNG until they unlock.',
+      },
+      {
+        label: 'Images from a URL',
+        code: `{
+  icons: {
+    // Any image URL works: https, a path on your site, or a bundler import.
+    overrides: {
+      first_steps: { src: 'https://walangstudio.github.io/badgetrip/trophy.svg' },
+      boss_slayer: {
+        src: 'https://walangstudio.github.io/badgetrip/playground/samples/animated/crown.gif',
+        still: 'https://walangstudio.github.io/badgetrip/playground/samples/animated/crown.png',
+        animated: true,
+      },
+    },
+  },
+}`,
+        note: 'First steps and Boss slayer load their images from walangstudio.github.io. Preview them.',
       },
     ],
   },
@@ -343,7 +360,7 @@ export const tabs: Tab[] = [
     label: 'Sounds',
     help: `
       <p>Tick <b>Sound</b> on the right to hear them. Set <code>sound</code> on <code>default</code>, a preset, a rarity, a category or one achievement in <code>overrides</code>: a sound name, or <code>false</code> for silence.</p>
-      <p>Built-in names: <code>chime</code> (the default), <code>fanfare</code>, <code>sparkle</code>, <code>pop</code>. Add your own under <code>sounds</code>: a URL like <code>'sounds/ding.mp3'</code>, or notes, <code>{ tones: [{ freq: 880, at: 0, dur: 0.3 }] }</code> (<code>at</code> and <code>dur</code> in seconds, optional <code>wave</code> and <code>gain</code>). Reusing a built-in name replaces it everywhere.</p>
+      <p>Built-in names: <code>chime</code> (the default), <code>fanfare</code>, <code>sparkle</code>, <code>pop</code>. Add your own under <code>sounds</code>: a file URL (any format the browser plays: MP3, WAV, OGG), or notes, <code>{ tones: [{ freq: 880, at: 0, dur: 0.3 }] }</code> (<code>at</code> and <code>dur</code> in seconds, optional <code>wave</code> and <code>gain</code>). Reusing a built-in name replaces it everywhere.</p>
       <p><a href="${DOCS}/guide/celebrations#sound">Sound in the celebrations guide</a></p>`,
     samples: [
       {
@@ -397,6 +414,36 @@ export const tabs: Tab[] = [
   presets: { epic: { sound: 'fanfare' } },
 }`,
         note: 'Sound is on, but only the fullscreen epic popup makes a sound. Preview Boss slayer.',
+      },
+      {
+        label: 'Sound files (MP3, WAV)',
+        sound: true,
+        code: `{
+  // Files in the playground's samples/sounds folder, drawn for badgetrip
+  sounds: {
+    coin: 'samples/sounds/coin.wav',
+    powerup: 'samples/sounds/powerup.wav',
+    levelup: 'samples/sounds/levelup.mp3',
+    victory: 'samples/sounds/victory.mp3', // a short tune
+  },
+  default: { sound: 'coin' },
+  presets: { epic: { sound: 'victory' }, modal: { sound: 'levelup' } },
+  overrides: { first_steps: { sound: 'powerup' } },
+}`,
+        note: 'Sound is on. Preview First steps, Regular and Boss slayer to hear the WAV and MP3 files.',
+      },
+      {
+        label: 'Sounds from a URL',
+        sound: true,
+        code: `{
+  sounds: {
+    // Any audio URL works. Reusing a built-in name (chime, fanfare,
+    // sparkle, pop) replaces that sound everywhere.
+    chime: 'https://walangstudio.github.io/badgetrip/playground/samples/sounds/coin.wav',
+    fanfare: 'https://walangstudio.github.io/badgetrip/playground/samples/sounds/victory.mp3',
+  },
+}`,
+        note: 'Sound is on. The default chime and the epic fanfare now load from walangstudio.github.io.',
       },
     ],
   },

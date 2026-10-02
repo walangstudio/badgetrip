@@ -147,7 +147,7 @@ Sound is off until you turn it on. `sound` is a boolean, so it can come straight
 ```
 
 - **Built-in sounds:** `chime`, `fanfare`, `sparkle` and `pop`. They're synthesized with Web Audio, so no audio files ship with badgetrip.
-- **Your own files:** add them under `sounds`, as a URL or `{ src }`. Any format the browser plays works.
+- **Your own files:** add them under `sounds`, as a URL or `{ src }`: a path on your site or a full `https://` URL. Any format the browser plays works (MP3, WAV, OGG). Four samples, drawn for badgetrip (MIT license), are in [`examples/playground/public/samples/sounds`](../../examples/playground/public/samples/sounds): `coin.wav`, `powerup.wav`, `levelup.mp3` and a short tune, `victory.mp3`.
 - **Replacing a built-in:** reuse its name. `sounds: { chime: '/sounds/ding.mp3' }` swaps the default sound everywhere, and `fanfare` does the same for `epic`.
 - **Changing settings:** changing `sound`, `volume` or `muted` updates the notifier in place, so toggling a setting is fast and safe.
 - **Autoplay:** browsers block audio until the user has interacted with the page. Unlocks usually follow a click, so this rarely matters. If an unlock arrives before any interaction, it's shown silently.
