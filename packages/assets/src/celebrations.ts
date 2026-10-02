@@ -15,6 +15,37 @@ export type Position =
 export type ConfettiSpec = { particles?: number; colors?: string[]; duration?: number };
 
 /**
+ * How a popup moves in or out. `slide` comes from (or goes toward) the toast's own edge;
+ * the `slide-*` names give the direction of travel.
+ */
+export type Motion =
+  | 'fade'
+  | 'slide'
+  | 'slide-up'
+  | 'slide-down'
+  | 'slide-left'
+  | 'slide-right'
+  | 'scale'
+  | 'pop'
+  | 'bounce'
+  | 'none';
+
+/** Popup motion. Every field is optional; layers merge field by field. */
+export type AnimationSpec = {
+  enter?: Motion;
+  exit?: Motion;
+  /** Milliseconds for the entrance, 0-2000. The exit takes 70% of it. */
+  duration?: number;
+  /** `ease`, `ease-in`, `ease-out`, `ease-in-out`, `linear`, `spring`, or `cubic-bezier(x1, y1, x2, y2)`. */
+  easing?: string;
+  /** Pixels a slide travels, 0-200. */
+  distance?: number;
+};
+
+/** A resolved animation. `easing` is ready for CSS (`spring` expanded). */
+export type Animation = Required<AnimationSpec>;
+
+/**
  * Progress popups ("Create 5 todos: 3/5") before an achievement unlocks. Give `at`
  * (percentages) or `every` (steps); `true` means `{ at: [25, 50, 75] }`.
  */
@@ -60,6 +91,8 @@ export type CelebrationSpec = {
   quiet?: boolean;
   /** Progress popups before the unlock. Off by default. */
   progress?: boolean | ProgressSpec;
+  /** How the popup moves in and out. Defaults keep the built-in motion. */
+  animation?: AnimationSpec;
 };
 
 /** A fully resolved celebration, ready for a notifier. */
@@ -73,6 +106,8 @@ export type Celebration = {
   quiet: boolean;
   /** Progress popup settings, or null when off. */
   progress: ProgressCelebration | null;
+  /** Entrance and exit motion, with defaults for the layout filled in. */
+  animation: Animation;
 };
 
 /** What the resolver needs from an achievement. `AchievementView` fits. */
@@ -136,7 +171,40 @@ const SPEC_KEYS = new Set([
   'title',
   'quiet',
   'progress',
+  'animation',
 ]);
+const MOTIONS = new Set<string>([
+  'fade',
+  'slide',
+  'slide-up',
+  'slide-down',
+  'slide-left',
+  'slide-right',
+  'scale',
+  'pop',
+  'bounce',
+  'none',
+]);
+const ANIMATION_KEYS = new Set(['enter', 'exit', 'duration', 'easing', 'distance']);
+const EASINGS = new Set(['ease', 'ease-in', 'ease-out', 'ease-in-out', 'linear', 'spring']);
+const SPRING = 'cubic-bezier(.2,1.4,.4,1)';
+const BEZIER =
+  /^cubic-bezier\(\s*(-?\d*\.?\d+)\s*,\s*(-?\d*\.?\d+)\s*,\s*(-?\d*\.?\d+)\s*,\s*(-?\d*\.?\d+)\s*\)$/;
+// Today's motion: toasts drop in a little, dialogs pop.
+const TOAST_ANIMATION: Animation = {
+  enter: 'slide-down',
+  exit: 'none',
+  duration: 250,
+  easing: 'ease-out',
+  distance: 8,
+};
+const DIALOG_ANIMATION: Animation = {
+  enter: 'pop',
+  exit: 'none',
+  duration: 350,
+  easing: 'spring',
+  distance: 0,
+};
 const PROGRESS_KEYS = new Set(['at', 'every', 'position', 'duration', 'sound', 'title']);
 const CONFETTI_KEYS = new Set(['particles', 'colors', 'duration']);
 const OPTION_KEYS = new Set(['default', 'presets', 'overrides', 'categories', 'rarity', 'sounds']);
@@ -147,7 +215,7 @@ const DEFAULT_CONFETTI: Required<ConfettiSpec> = {
   duration: 3000,
 };
 
-const BASE: Required<Omit<CelebrationSpec, 'confetti' | 'progress'>> & {
+const BASE: Required<Omit<CelebrationSpec, 'confetti' | 'progress' | 'animation'>> & {
   confetti: boolean;
   progress: boolean | ProgressSpec;
 } = {
@@ -246,6 +314,7 @@ function checkSpec(where: string, spec: unknown, sounds: Map<string, SoundAsset>
   if (s.quiet !== undefined && typeof s.quiet !== 'boolean')
     errs.push(`${where}.quiet must be true or false`);
   checkProgress(`${where}.progress`, s.progress, sounds, errs);
+  checkAnimation(`${where}.animation`, s.animation, errs);
   const c = s.confetti;
   if (c === undefined || typeof c === 'boolean') return;
   if (!isObj(c)) return void errs.push(`${where}.confetti must be true, false or an object`);
@@ -268,6 +337,39 @@ function checkSpec(where: string, spec: unknown, sounds: Map<string, SoundAsset>
   }
   if (c.duration !== undefined && !isInt(c.duration, 100, 10_000)) {
     errs.push(`${where}.confetti.duration must be 100-10000 ms`);
+  }
+}
+
+const isEasing = (v: unknown) => {
+  if (typeof v !== 'string') return false;
+  if (EASINGS.has(v)) return true;
+  const m = BEZIER.exec(v);
+  if (!m) return false;
+  const [x1, y1, x2, y2] = m.slice(1).map(Number) as [number, number, number, number];
+  return x1 >= 0 && x1 <= 1 && x2 >= 0 && x2 <= 1 && Math.abs(y1) <= 5 && Math.abs(y2) <= 5;
+};
+
+function checkAnimation(where: string, v: unknown, errs: string[]) {
+  if (v === undefined) return;
+  if (!isObj(v)) return void errs.push(`${where} must be an object`);
+  for (const k of Object.keys(v)) {
+    if (!ANIMATION_KEYS.has(k)) errs.push(`${where}: unknown option '${k}'`);
+  }
+  for (const k of ['enter', 'exit'] as const) {
+    if (v[k] !== undefined && !MOTIONS.has(v[k] as string)) {
+      errs.push(`${where}.${k} must be one of ${[...MOTIONS].join(', ')}`);
+    }
+  }
+  if (v.duration !== undefined && !isInt(v.duration, 0, 2000)) {
+    errs.push(`${where}.duration must be a whole number of ms, 0-2000`);
+  }
+  if (v.distance !== undefined && !isInt(v.distance, 0, 200)) {
+    errs.push(`${where}.distance must be a whole number of px, 0-200`);
+  }
+  if (v.easing !== undefined && !isEasing(v.easing)) {
+    errs.push(
+      `${where}.easing must be ease, ease-in, ease-out, ease-in-out, linear, spring or cubic-bezier(x1, y1, x2, y2) with x1 and x2 from 0 to 1`,
+    );
   }
 }
 
@@ -374,6 +476,13 @@ export function createCelebrationResolver(
         overrides.get(s.code),
       ];
       const m = Object.assign({ ...base }, ...layers.filter(Boolean)) as typeof base;
+      // Animation merges field by field: a preset can set the entrance, an override the speed.
+      const anim: Animation = Object.assign(
+        { ...(m.layout === 'toast' ? TOAST_ANIMATION : DIALOG_ANIMATION) },
+        base.animation,
+        ...layers.map((l) => l?.animation),
+      );
+      if (anim.easing === 'spring') anim.easing = SPRING;
       const c = m.confetti;
       const pr = m.progress === true ? {} : m.progress;
       return {
@@ -394,6 +503,7 @@ export function createCelebrationResolver(
               title: pr.title ?? 'Achievement progress',
             }
           : null,
+        animation: anim,
       };
     },
     usesProgress: () =>

@@ -5,6 +5,8 @@ export { safeSrc } from './safe.js';
 export { builtinSounds, type BuiltinSound, type SoundAsset, type Tone } from './sounds.js';
 export {
   createCelebrationResolver,
+  type Animation,
+  type AnimationSpec,
   type Celebration,
   type CelebrationResolver,
   type CelebrationResolverOptions,
@@ -12,6 +14,7 @@ export {
   type CelebrationSubject,
   type ConfettiSpec,
   type Layout,
+  type Motion,
   type Position,
   type ProgressCelebration,
   type ProgressSpec,

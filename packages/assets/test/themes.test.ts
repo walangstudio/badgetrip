@@ -533,3 +533,23 @@ describe('gradient review round 3', () => {
     );
   });
 });
+
+describe('built-in theme motion', () => {
+  it('gives arcade, minimal and aurora their own entrance and exit, and leaves classic alone', () => {
+    const a = (t: keyof typeof themes) => themes[t].celebrations.resolve({ code: 'x' }).animation;
+    expect(a('arcade')).toMatchObject({ enter: 'bounce', exit: 'slide', duration: 300 });
+    expect(a('minimal')).toMatchObject({
+      enter: 'fade',
+      exit: 'fade',
+      duration: 200,
+      easing: 'ease',
+    });
+    expect(a('aurora')).toMatchObject({
+      enter: 'scale',
+      exit: 'fade',
+      easing: 'cubic-bezier(.2,1.4,.4,1)',
+    });
+    expect(a('classic')).toMatchObject({ enter: 'slide-down', exit: 'none' });
+    expect(a('dark')).toMatchObject({ enter: 'slide-down', exit: 'none' });
+  });
+});

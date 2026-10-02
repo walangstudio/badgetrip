@@ -1,5 +1,6 @@
 import {
   type CelebrationResolverOptions,
+  type Motion,
   type Theme,
   type ThemeInput,
   defineTheme,
@@ -71,13 +72,45 @@ let session:
     }
   | undefined;
 
-/** The picked built-in theme, with the config's `theme` and `celebrations` blocks on top. */
+// Entrance and exit pickers: blank keeps the theme's own motion.
+const MOTIONS: Motion[] = [
+  'fade',
+  'slide',
+  'slide-up',
+  'slide-down',
+  'slide-left',
+  'slide-right',
+  'scale',
+  'pop',
+  'bounce',
+  'none',
+];
+const enterPicker = el<HTMLSelectElement>('enter');
+const exitPicker = el<HTMLSelectElement>('exit');
+for (const picker of [enterPicker, exitPicker]) {
+  picker.replaceChildren(
+    ...['', ...MOTIONS].map((m) => {
+      const o = document.createElement('option');
+      o.value = m;
+      o.textContent = m || 'theme default';
+      return o;
+    }),
+  );
+}
+
+/** The picked theme, then the config's `theme` and `celebrations` blocks, then the motion pickers. */
 function buildTheme(cfg: Config): Theme {
   const base = bases[themePicker.value] ?? themes.classic;
-  const tweaked = defineTheme({ name: 'playground', extends: base, ...cfg.theme } as ThemeInput);
-  return cfg.celebrations
-    ? defineTheme({ name: tweaked.name, extends: tweaked, celebrations: cfg.celebrations })
-    : tweaked;
+  let t = defineTheme({ name: 'playground', extends: base, ...cfg.theme } as ThemeInput);
+  if (cfg.celebrations)
+    t = defineTheme({ name: t.name, extends: t, celebrations: cfg.celebrations });
+  const animation = {
+    ...(enterPicker.value ? { enter: enterPicker.value as Motion } : {}),
+    ...(exitPicker.value ? { exit: exitPicker.value as Motion } : {}),
+  };
+  return Object.keys(animation).length
+    ? defineTheme({ name: t.name, extends: t, celebrations: { default: { animation } } })
+    : t;
 }
 
 const say = (text: string, error = false) => {
@@ -275,7 +308,8 @@ editor.addEventListener('keydown', (e) => {
 });
 soundBox.addEventListener('change', () => session?.notifier.update({ sound: soundBox.checked }));
 secretBox.addEventListener('change', () => void render());
-themePicker.addEventListener('change', () => {
+/** Rebuild the theme from the pickers and switch the running session to it. */
+function restyle() {
   const s = session;
   if (!s) return;
   let theme: Theme;
@@ -288,9 +322,14 @@ themePicker.addEventListener('change', () => {
   s.theme = theme;
   applyTheme(theme);
   s.notifier.update({ theme });
-  say(`Theme: ${themePicker.value}. Fire an event or preview a celebration.`);
+  const parts = [`Theme: ${themePicker.value}.`];
+  if (enterPicker.value) parts.push(`Entrance: ${enterPicker.value}.`);
+  if (exitPicker.value) parts.push(`Exit: ${exitPicker.value}.`);
+  say(`${parts.join(' ')} Fire an event or preview a celebration.`);
   void render();
-});
+}
+for (const picker of [themePicker, enterPicker, exitPicker])
+  picker.addEventListener('change', restyle);
 
 editor.value = JSON.stringify(sample, null, 2);
 apply();

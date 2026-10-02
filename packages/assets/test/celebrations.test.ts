@@ -19,6 +19,13 @@ describe('createCelebrationResolver defaults', () => {
       title: 'Achievement unlocked',
       quiet: false,
       progress: null,
+      animation: {
+        enter: 'slide-down',
+        exit: 'none',
+        duration: 250,
+        easing: 'ease-out',
+        distance: 8,
+      },
     });
     expect(createCelebrationResolver().usesProgress()).toBe(false);
   });
@@ -326,5 +333,64 @@ describe('progress popups', () => {
     bad({ sound: 'nope' }, /progress: unknown sound 'nope'/);
     bad({ title: '' }, /progress.title/);
     bad({ step: 1 }, /progress: unknown option 'step'/);
+  });
+});
+
+describe('animation', () => {
+  const spring = 'cubic-bezier(.2,1.4,.4,1)';
+
+  it('defaults to the current motion: toasts slide down a little, dialogs pop', () => {
+    const r = createCelebrationResolver();
+    expect(r.resolve({ code: 'a', celebration: 'modal' }).animation).toEqual({
+      enter: 'pop',
+      exit: 'none',
+      duration: 350,
+      easing: spring,
+      distance: 0,
+    });
+    expect(r.resolve({ code: 'a', celebration: 'epic' }).animation.enter).toBe('pop');
+  });
+
+  it('merges animation field by field across layers, and names spring', () => {
+    const r = createCelebrationResolver({
+      default: { animation: { enter: 'fade', duration: 400 } },
+      presets: { big: { layout: 'modal', animation: { enter: 'bounce', easing: 'spring' } } },
+      overrides: { a: { animation: { exit: 'slide' } } },
+    });
+    expect(r.resolve({ code: 'a', celebration: 'big' }).animation).toEqual({
+      enter: 'bounce',
+      exit: 'slide',
+      duration: 400,
+      easing: spring,
+      distance: 0,
+    });
+    expect(r.resolve({ code: 'b' }).animation).toMatchObject({
+      enter: 'fade',
+      duration: 400,
+      distance: 8,
+    });
+  });
+
+  it('accepts a cubic-bezier easing', () => {
+    const r = createCelebrationResolver({
+      default: { animation: { easing: 'cubic-bezier(0.3, -0.5, 0.7, 1.5)' } },
+    });
+    expect(r.resolve(subject).animation.easing).toBe('cubic-bezier(0.3, -0.5, 0.7, 1.5)');
+  });
+
+  it('checks every animation field', () => {
+    const bad = (animation: unknown, re: RegExp) =>
+      expect(() =>
+        createCelebrationResolver({ default: { animation } as CelebrationSpec }),
+      ).toThrow(re);
+    bad({ enter: 'zoom' }, /default.animation.enter must be one of/);
+    bad({ exit: 'spin' }, /default.animation.exit must be one of/);
+    bad({ duration: 5000 }, /default.animation.duration must be/);
+    bad({ distance: -1 }, /default.animation.distance must be/);
+    bad({ easing: 'wobbly' }, /default.animation.easing must be/);
+    bad({ easing: 'cubic-bezier(2, 0, 0, 1)' }, /default.animation.easing must be/);
+    bad({ easing: 'cubic-bezier(0,0,1);x' }, /default.animation.easing must be/);
+    bad({ speed: 1 }, /default.animation: unknown option 'speed'/);
+    bad('fade', /default.animation must be an object/);
   });
 });

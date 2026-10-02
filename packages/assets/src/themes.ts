@@ -324,7 +324,11 @@ builtins.arcade = defineTheme({
   },
   icons: { color: '#c084fc' },
   celebrations: {
-    default: { sound: 'coin', confetti: { particles: 120, colors: neon } },
+    default: {
+      sound: 'coin',
+      confetti: { particles: 120, colors: neon },
+      animation: { enter: 'bounce', exit: 'slide', duration: 300 },
+    },
     presets: { epic: { sound: 'levelup', confetti: { particles: 320, colors: neon } } },
     sounds: {
       coin: {
@@ -356,7 +360,11 @@ builtins.minimal = defineTheme({
     fullscreenBg: 'rgba(255,255,255,.96)',
   },
   celebrations: {
-    default: { sound: false, duration: 3000 },
+    default: {
+      sound: false,
+      duration: 3000,
+      animation: { enter: 'fade', exit: 'fade', duration: 200, easing: 'ease' },
+    },
     presets: {
       epic: { layout: 'modal', sound: false, confetti: false },
       secret: { sound: false },
@@ -389,7 +397,11 @@ builtins.aurora = defineTheme({
   },
   icons: { color: { colors: ['#ffffff', '#fde68a'], angle: 135 } },
   celebrations: {
-    default: { sound: 'sparkle', confetti: { colors: pastel } },
+    default: {
+      sound: 'sparkle',
+      confetti: { colors: pastel },
+      animation: { enter: 'scale', exit: 'fade', duration: 320, easing: 'spring' },
+    },
     presets: { epic: { confetti: { particles: 250, colors: pastel } } },
   },
 });
