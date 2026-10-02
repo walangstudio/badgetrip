@@ -14,7 +14,7 @@ React:
 import { BadgetripProvider, UnlockNotifier } from '@walangstudio/badgetrip-react';
 
 <BadgetripProvider engine={engine}>
-  <UnlockNotifier actor={currentUser.id} />
+  <UnlockNotifier actor={userId} />
   <App />
 </BadgetripProvider>;
 ```
@@ -41,12 +41,13 @@ Plain HTML, or anything else in a browser:
 import { observe } from '@walangstudio/badgetrip-core';
 import { createNotifier } from '@walangstudio/badgetrip-html';
 
+// observe() wraps the engine so listeners hear about every emit.
 const observed = observe(engine);
-createNotifier(observed, { actor: currentUserId });
+createNotifier(observed, { actor: userId });
 // Emit through observed.engine so the notifier sees the unlocks.
 ```
 
-Pass `actor` so a user only sees their own unlocks. Leave it out and every unlock the engine reports is celebrated.
+Pass `actor` (the signed-in user's id, `userId` here) so a user only sees their own unlocks. Leave it out and every unlock the engine reports is celebrated.
 
 `replay` and `seed` never celebrate. They rebuild or import history, and nobody wants 40 toasts after a data migration.
 
@@ -56,10 +57,18 @@ Give an achievement a `celebration` preset:
 
 ```ts
 defineAchievements({
-  first_step: { ..., when: rules.count('habit.done', 1) },                  // default toast
-  century:    { ..., celebration: 'epic', when: rules.count('habit.done', 100) },
+  // No preset: the default toast
+  first_step: { name: 'First step', description: 'Log your first habit', when: rules.count('habit.done', 1) },
+  centurion: {
+    name: 'Centurion',
+    description: 'Log 100 habits',
+    celebration: 'epic',
+    when: rules.count('habit.done', 100),
+  },
   regular: {
-    ...,
+    name: 'Regular ({tier})',
+    description: 'Log {n} habits',
+    when: rules.count('habit.done'),
     tiers: { bronze: 10, silver: 50, gold: { at: 200, celebration: 'modal' } },
   },
 });
@@ -110,6 +119,8 @@ The settings come in layers. For each field, a later layer overrides an earlier 
 6. `overrides` for its tier series
 7. `overrides` for its code
 
+`rarity` (1 to 5) and `category` (any string) are optional fields on an achievement, next to `name` and `when`. The resolver's `rarity` and `categories` layers match on them.
+
 So a rare hidden achievement can pick up the fullscreen layout from `rarity` and the secret title from `secret` at the same time.
 
 The fields:
@@ -129,10 +140,10 @@ The resolver checks the whole config when you create it and throws one error lis
 
 ## Sound
 
-Sound is off until you turn it on:
+Sound is off until you turn it on. `sound` is a boolean, so it can come straight from a user setting:
 
 ```tsx
-<UnlockNotifier celebrations={celebrations} sound={settings.sound} volume={0.4} />
+<UnlockNotifier celebrations={celebrations} sound volume={0.4} />
 ```
 
 - **Built-in sounds:** `chime`, `fanfare`, `sparkle` and `pop`. They're synthesized with Web Audio, so no audio files ship with badgetrip.
@@ -156,8 +167,8 @@ For a progress popup before the unlock ("Create 5 todos: 3/5"), as many games sh
 createCelebrationResolver({
   default: { progress: { at: [25, 50, 75] } },       // every achievement, at 25/50/75%
   overrides: {
-    todo_5: { progress: { every: 1 } },               // this one, on every step
-    streak_100: { progress: false },                  // never for this one
+    regular: { progress: { every: 1 } },              // every tier of this series, on every step
+    on_a_roll: { progress: false },                   // never for this one
   },
 });
 ```
@@ -174,7 +185,7 @@ createCelebrationResolver({
 `progress: true` means the defaults. These rules limit progress popups:
 
 - Reaching the target shows the unlock celebration, not a progress popup.
-- Progress popups wait behind unlocks, and a newer count replaces a waiting one. They never push an unlock into the "+N more" summary.
+- Progress popups wait behind unlocks, and a newer count replaces a waiting one. They never push an unlock into the "+N more" summary (see `maxQueue` under [Other options](#other-options)).
 - Progress imported by `seed` or `replay` is not reported.
 - Quiet and hidden achievements never show one.
 
@@ -204,11 +215,11 @@ When a hidden achievement unlocks, its celebration uses the `secret` preset. Ove
 To draw it yourself (a game HUD, React Native, a canvas), take the queue instead of the built-in overlay:
 
 ```tsx
-const { queue, dismiss } = useUnlocks({ actor: currentUser.id });
+const { queue, dismiss } = useUnlocks({ actor: userId });
 const next = queue[0]; // { view, celebration }
 ```
 
-`celebration` is the resolved config: layout, position, sound, confetti, title. Vue has the same `useUnlocks` composable. Angular has `inject(BadgetripService).unlocks()`. React Native re-exports the React hook.
+`celebration` is the resolved config: layout, position, sound, confetti, title and animation. Vue has the same `useUnlocks` composable. Angular has `inject(BadgetripService).unlocks()`. React Native re-exports the React hook.
 
 ## Styling
 
@@ -228,10 +239,10 @@ The others are `--badgetrip-backdrop`, `--badgetrip-fullscreen-bg` and `--badget
 
 ## Accessibility
 
-- **Screen readers:** each unlock is announced through a polite live region.
-- **Focus:** toasts never take focus. A modal or fullscreen dialog moves focus to its close button, keeps Tab inside, closes on Escape, and puts focus back where it was.
-- **Reduced motion:** when the user prefers it, there's no confetti and no animation. Sound isn't motion, so it still follows your `sound` setting.
-- **Pausing:** a toast pauses its timer while hovered or while it has focus. A modal or fullscreen celebration pauses while hovered; with `duration: 0` it stays until closed.
+- **Screen readers:** each unlock and progress popup is announced through a polite live region.
+- **Focus:** toasts never take focus. A modal or fullscreen dialog moves focus to its close button, keeps Tab inside, and closes on Escape. When it closes, focus goes back where it was, unless the user has already moved it elsewhere. A popup playing its exit can't be clicked or tabbed to.
+- **Reduced motion:** when the user prefers it, there's no confetti and no animation. Sound isn't motion, so it still follows your `sound` setting. `bounce` and `pop` are the strongest motions; see [Animations](animations.md#reduced-motion).
+- **Pausing:** a toast pauses its timer while hovered or while it has focus. A modal or fullscreen celebration pauses while hovered; with `duration: 0` it stays until closed. Toasts disappear on a timer, so for users who need more time, `duration: 0` keeps them until closed too.
 
 ## Other options
 

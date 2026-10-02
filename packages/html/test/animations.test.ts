@@ -129,6 +129,7 @@ describe('exit', () => {
     (toasts()[0]?.querySelector('.close') as HTMLButtonElement).click();
     const leaving = toasts()[0];
     expect(leaving?.dataset.leaving).toBe('');
+    expect(leaving?.hasAttribute('inert')).toBe(true);
     expect(v(leaving, '--bt-animation')).toBe('badgetrip-out 140ms ease-out both');
     expect(toasts().map((t) => t.querySelector('.name')?.textContent)).toEqual(['A']);
     vi.advanceTimersByTime(200);
@@ -178,5 +179,22 @@ describe('exit', () => {
     );
     vi.advanceTimersByTime(300);
     expect(dialogs()).toEqual(['B']);
+  });
+
+  it('closing on its own puts focus back only if focus is still in the dialog', () => {
+    const before = document.body.appendChild(document.createElement('button'));
+    const elsewhere = document.body.appendChild(document.createElement('input'));
+    before.focus();
+    const n = make({ default: { layout: 'modal', duration: 1000 } });
+    n.show(view('a'));
+    expect(shadow().activeElement?.className).toBe('close');
+    elsewhere.focus();
+    vi.advanceTimersByTime(1500);
+    expect(document.activeElement).toBe(elsewhere);
+    n.show(view('b'));
+    vi.advanceTimersByTime(1500);
+    expect(document.activeElement).toBe(elsewhere);
+    before.remove();
+    elsewhere.remove();
   });
 });

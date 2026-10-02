@@ -216,6 +216,8 @@ await engine.streak('ana', 'daily'); // { current: 3, best: 3, lastTick }
 
 ### Scores, tiers and leaderboards
 
+Here a tier is a score level (`novice`, `adept`), not an achievement tier like bronze or gold.
+
 ```ts
 await engine.score('ana', 'xp');      // 10
 await engine.tier('ana', 'level');    // { current: 'novice', next: 'adept', remaining: 90, value: 10 }
@@ -242,7 +244,7 @@ const badges = await engine.catalog('ana');
 ### Celebrate unlocks
 
 ```tsx
-<UnlockNotifier actor="ana" sound={soundOn} celebrations={celebrations} />
+<UnlockNotifier actor="ana" sound celebrations={celebrations} />
 ```
 
 Each unlock pops up on top of the page. Give an achievement `celebration: 'epic'` for fullscreen confetti, or `'modal'`, `'quiet'`, or your own preset. The [celebrations guide](docs/guide/celebrations.md) covers positions, sounds, secret mode and styling.

@@ -2,10 +2,14 @@
 
 A sandbox for trying badgetrip in the browser. Edit the config on the left, press **Apply**, fire events on the right, and watch achievements unlock with the real celebration overlay. Everything runs in memory: nothing is saved, and **Start over** resets it.
 
+The hosted copy is at [walangstudio.github.io/badgetrip/playground](https://walangstudio.github.io/badgetrip/playground/). To run it from a clone of the repo:
+
 ```sh
 pnpm install
 pnpm --filter @badgetrip-example/playground dev
 ```
+
+Then open the URL it prints (usually http://localhost:5173). To try your own GIFs or sounds, put them in `examples/playground/public/` and point at them as `/my-badge.gif`.
 
 The sample config is a small game (levels, collectibles, daily logins, a boss, one secret). It covers the main features:
 
@@ -15,13 +19,13 @@ The sample config is a small game (levels, collectibles, daily logins, a boss, o
 - **Hidden achievements.** `explorer` stays hidden until `secret.found` fires. Tick **Secret mode** to leave it out of the list.
 - **Previews.** **Preview** shows any achievement's celebration without unlocking it.
 - **Themes.** The **Theme** picker switches between the built-in themes live, plus `animated`, a sample theme where every badge is a GIF.
-- **Animations.** The **Entrance** and **Exit** pickers try every popup motion on top of the theme. Blank keeps the theme's own.
-- **GIF badges.** The `animated` theme ([`src/animated.ts`](src/animated.ts)) points every built-in icon key at a GIF in `public/samples/animated/`, so any achievement gets an animated badge. `public/samples/` also holds three standalone GIFs (a star, a trophy and a flame). All were drawn for badgetrip (MIT), and each has a still PNG shown while the badge is locked or when the user prefers reduced motion.
+- **Animations.** The **Entrance** and **Exit** pickers try every popup motion on top of the theme. **theme default** keeps the theme's own.
+- **GIF badges.** The `animated` theme ([`src/animated.ts`](src/animated.ts)) points every built-in icon key at a GIF in `public/samples/animated/`, so any achievement gets an animated badge. `public/samples/` also holds three standalone GIFs (a star, a trophy and a flame). All were drawn for badgetrip (MIT license), and each has a still PNG shown while the badge is locked or when the user prefers reduced motion.
 
 The config is plain JSON with the same shape as `createEngine` definitions:
 
 - `achievements` is the object you would pass to `defineAchievements`, with rules written as data (`{ "kind": "count", "eventType": "item.collect", "gte": 5 }`).
 - `celebrations` is the object for `createCelebrationResolver`.
-- `theme` tweaks the picked theme, like `{ "style": { "accent": "#e11d48" } }`. It takes everything `defineTheme` does, gradients included: `{ "icons": { "color": { "colors": ["#22c55e", "#0ea5e9"], "to": "right" } } }`.
+- `theme` is layered on top of the picked theme, so it can hold a whole theme of your own (everything except `name` and `extends`), like `{ "style": { "accent": "#e11d48" } }`. It takes everything `defineTheme` does, gradients included: `{ "icons": { "color": { "colors": ["#22c55e", "#0ea5e9"], "to": "right" } } }`.
 
 Config errors appear under the editor, all of them at once. `pnpm --filter @badgetrip-example/playground build` produces a static site in `dist/` that can be hosted anywhere.

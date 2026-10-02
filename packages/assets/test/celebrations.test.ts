@@ -351,6 +351,23 @@ describe('animation', () => {
     expect(r.resolve({ code: 'a', celebration: 'epic' }).animation.enter).toBe('pop');
   });
 
+  it('ignores fields set to undefined instead of erasing the default', () => {
+    const r = createCelebrationResolver({
+      default: { layout: undefined, animation: { enter: undefined, duration: undefined } },
+      overrides: { a: { position: undefined, animation: { easing: undefined } } },
+    });
+    const c = r.resolve({ code: 'a' });
+    expect(c.layout).toBe('toast');
+    expect(c.position).toBe('top-right');
+    expect(c.animation).toEqual({
+      enter: 'slide-down',
+      exit: 'none',
+      duration: 250,
+      easing: 'ease-out',
+      distance: 8,
+    });
+  });
+
   it('merges animation field by field across layers, and names spring', () => {
     const r = createCelebrationResolver({
       default: { animation: { enter: 'fade', duration: 400 } },
