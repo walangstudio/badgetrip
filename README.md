@@ -319,7 +319,7 @@ import { runStoreContract } from '@walangstudio/badgetrip-testing';
 runStoreContract(() => makeFreshStores());
 ```
 
-[docs/ADAPTERS.md](docs/ADAPTERS.md) spells out what each method must do, and [`examples/adapter-postgres`](examples/adapter-postgres) is a complete Postgres implementation to copy. The reasoning is in [ADR-0001](docs/adr/0001-store-agnostic-persistence.md).
+[docs/ADAPTERS.md](docs/ADAPTERS.md) spells out what each method must do, and [`examples/adapter-postgres`](examples/adapter-postgres) is a complete Postgres implementation to copy. [Saving data](docs/guide/storage.md) walks through the options.
 
 ## How it works
 

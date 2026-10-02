@@ -11,7 +11,7 @@ export default defineConfig({
   cleanUrls: true,
   lastUpdated: true,
   // Local notes live next to the docs but are not part of the site.
-  srcExclude: ['PLAN.md', 'FINDINGS-todont.md', 'specs/**'],
+  srcExclude: ['PLAN.md', 'FINDINGS-todont.md', 'specs/**', 'adr/**'],
   head: [['link', { rel: 'icon', type: 'image/svg+xml', href: '/badgetrip/trophy.svg' }]],
   markdown: {
     config(md) {
@@ -49,6 +49,7 @@ export default defineConfig({
         text: 'Guide',
         items: [
           { text: 'Getting started', link: '/guide/getting-started' },
+          { text: 'Saving data', link: '/guide/storage' },
           { text: 'Unlock celebrations', link: '/guide/celebrations' },
           { text: 'Themes', link: '/guide/themes' },
           { text: 'Animations', link: '/guide/animations' },
@@ -75,7 +76,6 @@ export default defineConfig({
           { text: 'Writing a store', link: '/ADAPTERS' },
           { text: 'Architecture', link: '/ARCHITECTURE' },
           { text: 'Platform support', link: '/CROSS_PLATFORM' },
-          { text: 'ADR-0001: persistence', link: '/adr/0001-store-agnostic-persistence' },
         ],
       },
     ],

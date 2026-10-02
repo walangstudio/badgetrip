@@ -299,7 +299,7 @@ export interface StreakStore {
 /**
  * The persistence the application supplies. badgetrip defines these ports; the app
  * implements them against whatever store it already uses (SQL, KV, in-memory, ...).
- * badgetrip ships no brand-specific persistence - see docs/adr/0001.
+ * badgetrip ships no brand-specific persistence - see docs/guide/storage.md.
  */
 export type Stores = {
   events: EventStore;

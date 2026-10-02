@@ -210,7 +210,7 @@ import {
 
 ## badgetrip ships no adapters
 
-Persistence is the application's responsibility (see [ADR-0001](adr/0001-store-agnostic-persistence.md)). badgetrip publishes the interfaces above and the in-memory reference; you implement them against your own store. A complete Postgres reference - one file per interface, schema migration, and rolling-window `score_deltas` table - lives in [`examples/adapter-postgres`](../examples/adapter-postgres). Copy it and adapt it to your database or KV store.
+Persistence is the application's responsibility; [Saving data](guide/storage.md) explains why and how to choose. badgetrip publishes the interfaces above and the in-memory reference; you implement them against your own store. A complete Postgres reference - one file per interface, schema migration, and rolling-window `score_deltas` table - lives in [`examples/adapter-postgres`](../examples/adapter-postgres). Copy it and adapt it to your database or KV store.
 
 ## Verifying your adapter
 

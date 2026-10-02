@@ -128,7 +128,7 @@ To pop up a toast, a modal or a fullscreen popup when something unlocks, see [Un
 
 ## Before production
 
-The `memory*Store` functions keep everything in memory, which is good for testing, but all data is lost when the app restarts. For real data, implement the four store interfaces against your own database. [ADAPTERS.md](../ADAPTERS.md) explains the contract, and [examples/adapter-postgres](../../examples/adapter-postgres) is a complete Postgres version you can copy.
+The `memory*Store` functions keep everything in memory, which is good for testing, but all data is lost when the app restarts. For real data, implement the four store interfaces against your own database; [Saving data](storage.md) shows how, with a complete Postgres version to copy.
 
 Added an achievement after launch? Call `engine.refresh(userId)` when a user signs in, and they'll get any badge they already qualify for.
 

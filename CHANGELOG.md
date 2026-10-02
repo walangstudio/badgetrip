@@ -66,4 +66,4 @@ First release. Packages are published under the `@walangstudio` npm org.
 
 ### Decided
 
-- badgetrip ships no database adapters. Persistence belongs to the application, implemented against the store interfaces. See [ADR-0001](https://github.com/walangstudio/badgetrip/blob/main/docs/adr/0001-store-agnostic-persistence.md).
+- badgetrip ships no database adapters. Persistence belongs to the application, implemented against the store interfaces. See [Saving data](https://github.com/walangstudio/badgetrip/blob/main/docs/guide/storage.md).
