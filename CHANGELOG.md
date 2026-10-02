@@ -2,7 +2,7 @@
 
 All notable changes to badgetrip are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [SemVer](https://semver.org/).
 
-## [0.1.0] - 2026-10-01
+## [0.1.0] - 2026-10-02
 
 ### Added
 
