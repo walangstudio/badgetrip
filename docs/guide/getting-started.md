@@ -1,8 +1,8 @@
 # Getting started
 
-badgetrip turns things your users do into points, streaks and achievements. You tell it what happened ("Ana finished a habit"), and it works out the rest: her new score, whether her streak grew, and which badges she just unlocked.
+badgetrip turns things your users do into points, streaks and achievements. You emit an event for what happened ("Ana finished a habit"), and it calculates the rest: her new score, whether her streak grew, and which badges she just unlocked.
 
-This guide builds the engine for a small habit tracker. Every framework guide reuses it, so read this one first.
+This guide builds the engine for a small habit tracker. Every framework guide uses this engine, so read this one first.
 
 ## Install
 
@@ -54,7 +54,7 @@ export const achievements = defineAchievements({
     when: rules.streak('daily', 7),
   },
 
-  // Stays a mystery until someone earns it
+  // Not shown until someone earns it
   night_owl: {
     name: 'Night owl',
     description: 'Log a habit between midnight and 4am',
@@ -82,7 +82,7 @@ export const engine = createEngine({
 });
 ```
 
-The object key (`first_step`) is the achievement's permanent id. It gets saved with every unlock, so rename `name` whenever you like, but leave the key alone.
+The object key (`first_step`) is the achievement's permanent id. The key is saved with every unlock. You can change `name` at any time, but never change the key.
 
 `createEngine` checks the whole config up front. A typo like `rules.streak('dialy', 7)` throws right there instead of failing quietly later.
 
@@ -101,9 +101,9 @@ result.unlocked; // ['first_step'] the first time
 result.scoreDeltas; // [{ actor: 'ana', score: 'xp', delta: 10, ... }]
 ```
 
-The `id` is what keeps things honest. Send the same event twice (a retry, a double click) and it only counts once.
+The `id` prevents double counting. Emit the same event twice (a retry, a double click) and it counts once.
 
-Streaks count ticks, not calendar days. Emit `day.completed` once a day for each user who showed up, and `day.missed` for those who didn't. A nightly job is the usual place for that.
+Streaks count ticks, not calendar days. Emit `day.completed` once a day for each user who was active that day, and `day.missed` for those who weren't. Usually a nightly job emits these events.
 
 ## Show it
 
@@ -113,7 +113,7 @@ const badges = await engine.catalog('ana');
 
 You get every achievement, in the order you defined them, ready to draw: name, description, icon key, points, whether it's unlocked, and progress like `{ current: 12, target: 50, percent: 24 }`. Hidden ones come back as "Hidden achievement" until they're earned.
 
-That's the whole loop: `emit` when something happens, `catalog` when you draw. The framework guides just wire those two calls into your UI:
+That's the whole loop: `emit` when something happens, `catalog` when you display badges. The framework guides connect these two calls to your UI:
 
 - [React](react.md)
 - [React Native and Expo](react-native.md)
@@ -124,17 +124,17 @@ That's the whole loop: `emit` when something happens, `catalog` when you draw. T
 - [Electron](electron.md)
 - [Tauri](tauri.md)
 
-To pop up a toast, a modal or a fullscreen moment when something unlocks, see [Unlock celebrations](celebrations.md).
+To pop up a toast, a modal or a fullscreen popup when something unlocks, see [Unlock celebrations](celebrations.md).
 
-## Before you ship
+## Before production
 
-The `memory*Store` functions keep everything in memory, which is perfect for trying things out and useless after a restart. For real data, implement the four store interfaces against your own database. [ADAPTERS.md](../ADAPTERS.md) explains the contract, and [examples/adapter-postgres](../../examples/adapter-postgres) is a complete Postgres version you can copy.
+The `memory*Store` functions keep everything in memory, which is good for testing, but all data is lost when the app restarts. For real data, implement the four store interfaces against your own database. [ADAPTERS.md](../ADAPTERS.md) explains the contract, and [examples/adapter-postgres](../../examples/adapter-postgres) is a complete Postgres version you can copy.
 
 Added an achievement after launch? Call `engine.refresh(userId)` when a user signs in, and they'll get any badge they already qualify for.
 
 ## Your own icons
 
-To change colors, icons and sounds together, use a [theme](themes.md). This section swaps icons alone.
+To change colors, icons and sounds together, use a [theme](themes.md). This section changes only icons.
 
 Every icon key (`sprout`, `medal`, `flame`...) comes from a built-in pack of 18 SVGs. Swap any of them, or give one achievement its own art:
 
@@ -151,7 +151,7 @@ const icons = createIconResolver({
 
 Animated icons only play once the badge is unlocked, and fall back to the `still` frame for people who turn on reduced motion. [ACHIEVEMENTS.md](../ACHIEVEMENTS.md) has the full list of options.
 
-Want something to try first? Three sample GIF badges, drawn for badgetrip (MIT), ship in [`examples/playground/public/samples`](../../examples/playground/public/samples), each with a still PNG. For a whole set, the [animated sample theme](themes.md#sample-every-badge-animated) has a GIF for every built-in icon.
+Want something to try first? Three sample GIF badges, drawn for badgetrip (MIT license), ship in [`examples/playground/public/samples`](../../examples/playground/public/samples), each with a still PNG. For a whole set, the [animated sample theme](themes.md#sample-every-badge-animated) has a GIF for every built-in icon.
 
 <p>
   <img src="https://raw.githubusercontent.com/walangstudio/badgetrip/main/examples/playground/public/samples/star.gif" width="64" height="64" alt="A gold star turning, with sparkles">

@@ -6,7 +6,7 @@
 [![CI](https://github.com/walangstudio/badgetrip/actions/workflows/ci.yml/badge.svg)](https://github.com/walangstudio/badgetrip/actions/workflows/ci.yml)
 ![core deps](https://img.shields.io/badge/core%20deps-0-brightgreen)
 
-Points, streaks, tiers, leaderboards and achievements for any JavaScript app. You tell the engine what your users did. It works out their score, their streaks, and which badges they just unlocked.
+Points, streaks, tiers, leaderboards and achievements for any JavaScript app. You emit events for what your users did. The engine calculates their score, their streaks, and which achievements they just unlocked. Each achievement is shown as a badge.
 
 ```ts
 const result = await engine.emit({ id, actor: 'ana', type: 'habit.done', ts: Date.now(), payload: {} });
@@ -17,32 +17,32 @@ result.unlocked; // ['first_step']
 
 ## Why
 
-Every app with a streak or a badge ends up rebuilding the same things: a points counter, a handful of unlock rules, a streak that resets, a leaderboard. The logic usually ends up spread across database triggers, API handlers and UI hooks.
+Every app with a streak or a badge rebuilds the same things: a points counter, a handful of unlock rules, a streak that resets, a leaderboard. The logic is often split across database triggers, API handlers and UI hooks.
 
-badgetrip keeps the rules in one place and stays out of everything else:
+badgetrip keeps all the rules in one place, and leaves the rest of your app to you:
 
 - **Your database.** The engine talks to four small store interfaces. Implement them on Postgres, SQLite, KV or anything else, and badgetrip keeps its state next to your tables.
-- **Your framework.** The core is plain TypeScript with no dependencies. Thin adapters cover React, React Native, Vue, Angular, plain HTML, htmx, Electron and Tauri.
+- **Your framework.** The core is plain TypeScript with no dependencies. Small adapter packages cover React, React Native, Vue, Angular, plain HTML, htmx, Electron and Tauri.
 - **Your clock.** The engine never reads the system time on its own. Same events in, same state out, so replays and tests are deterministic.
 
 ## Features
 
 - **Achievements as config.** A keyed object with rule builders: `rules.count('habit.done', 10)`, `rules.streak('daily', 7)`, `rules.all(...)`. Tiers expand one entry into bronze/silver/gold. Hidden achievements stay concealed until earned.
-- **Progress for free.** `engine.catalog(actor)` returns every badge, ready to draw, with `{ current, target, percent }`.
+- **Built-in progress.** `engine.catalog(actor)` returns every achievement, ready to display, with `{ current, target, percent }`. The `actor` is the user an event belongs to.
 - **Points, streaks, tiers, leaderboards, escalators.** All-time and rolling leaderboards, per-key streaks, and capped severity escalators with decay.
 - **Idempotent.** Events carry an id. A retry or a double click counts once.
 - **Validated up front.** `createEngine` rejects typos and impossible rules before the first event.
 - **Swappable icons.** 18 built-in SVG icons, including an animated one. Override any icon per achievement, per tier series or per category, with GIFs, PNGs or your own SVGs.
 - **Accessible badges.** Every adapter shows a still frame while locked or when the user prefers reduced motion, and labels its progress bar.
-- **Unlock celebrations.** Toasts in any corner or edge, a modal, or fullscreen with confetti, with optional sound. Configure once, override per achievement. Secret mode hides hidden achievements the way consoles do.
+- **Unlock celebrations.** Toasts (small popup cards) in any corner or edge, a modal, or fullscreen with confetti, with optional sound. Configure once, override per achievement. A hidden achievement shows as "Hidden achievement" until it's unlocked; secret mode goes further and leaves hidden achievements out of the list, showing only how many remain.
 - **Themes.** One object sets colors, icons and celebrations. Swap it at runtime, extend a built-in (`classic`, `dark`, `arcade`, `minimal`, `aurora`), or share yours as a package. Backgrounds and icons can be gradients.
 - **Animations.** Popups enter and leave the way you choose (fade, slide from any side, scale, pop or bounce), with their own speed and easing, per theme or per achievement. Badges can be GIFs. Everything stays still for people who prefer reduced motion.
 - **Progress you can see.** Badges show "3/5" under locked achievements, and optional popups report progress along the way, every step or at milestones.
-- **Cross-process.** `@walangstudio/badgetrip-ipc` runs the engine in Electron's main process or a worker, behind a method allowlist and an `authorize` hook.
+- **Cross-process.** `@walangstudio/badgetrip-ipc` runs the engine in Electron's main process or a worker, protected by an allowlist of methods and an `authorize` hook.
 
 ## Try it
 
-The [playground](https://walangstudio.github.io/badgetrip/playground/) is a sandbox: edit a config, fire events, and watch achievements unlock with the real celebrations. Nothing is saved. To run it locally:
+The [playground](https://walangstudio.github.io/badgetrip/playground/) is a sandbox: edit a config, emit events, and watch achievements unlock with the real celebrations. Nothing is saved. To run it locally:
 
 ```sh
 pnpm install
@@ -115,7 +115,7 @@ The memory stores are for demos and tests. For data that survives a restart, see
 
 ## Usage
 
-The examples below build on one engine for a habit tracker. The outputs are real.
+The examples below build on one engine for a habit tracker. The comments show the real output.
 
 ### Define the rules
 
@@ -204,7 +204,7 @@ The `id` makes it safe to retry. Emitting `evt_1` again returns empty changes an
 
 ### Streaks
 
-Streaks count ticks, not calendar days. Emit `day.completed` once a day for each user who showed up, and `day.missed` for those who didn't; a nightly job is the usual place.
+Streaks count ticks, not calendar days. Emit `day.completed` once a day for each user who was active that day, and `day.missed` for those who weren't. Usually a nightly job emits these events.
 
 ```ts
 // Ana's third day in a row
@@ -351,7 +351,7 @@ The docs are published at [walangstudio.github.io/badgetrip](https://walangstudi
 
 | Example | Shows |
 |---|---|
-| [`examples/playground`](examples/playground) | A browser sandbox: edit a config, fire events, see the celebrations |
+| [`examples/playground`](examples/playground) | A browser sandbox: edit a config, emit events, see the celebrations |
 | [`examples/node-cli`](examples/node-cli) | The engine in a plain Node script |
 | [`examples/react-spa`](examples/react-spa) | A Vite app on `@walangstudio/badgetrip-react` |
 | [`examples/todont-extract`](examples/todont-extract) | A production ruleset (12 badges) moved onto badgetrip |

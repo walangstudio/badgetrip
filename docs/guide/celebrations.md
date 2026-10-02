@@ -1,6 +1,6 @@
 # Unlock celebrations
 
-When someone unlocks an achievement, badgetrip can celebrate it on top of your app: a toast in any corner or edge, a centered modal, or a fullscreen moment with confetti, with an optional sound. You set it up once and override it per achievement.
+When a user unlocks an achievement, badgetrip can show a popup over your app. That popup is a celebration. It can be a toast (a small card) in a corner or on an edge, a modal in the center, or a fullscreen screen with confetti. Sound is optional. The notifier is the part that shows them. You set it up once and can change it per achievement.
 
 This guide uses the `engine` from [Getting started](getting-started.md). Every option can be tried live in the [playground](../../examples/playground).
 
@@ -77,7 +77,7 @@ Built-in presets:
 
 ## Configure it
 
-Everything else lives in one resolver:
+All other settings go in one object, created with `createCelebrationResolver`:
 
 ```ts
 import { createCelebrationResolver } from '@walangstudio/badgetrip-assets';
@@ -100,7 +100,7 @@ export const celebrations = createCelebrationResolver({
 
 Then pass it along: `<UnlockNotifier celebrations={celebrations} />`, `{ notifier: { celebrations } }` in Angular, or `createNotifier(observed, { celebrations })`. Create it once, outside any component.
 
-Layers merge field by field, with later ones winning:
+The settings come in layers. For each field, a later layer overrides an earlier one, and `animation` merges its own fields too:
 
 1. the built-in default, then your `default`
 2. `rarity`
@@ -125,7 +125,7 @@ The fields:
 | `quiet` | `true` to skip the popup and sound | `false` |
 | `animation` | how the popup moves in and out: `{ enter, exit, duration, easing, distance }`; see [Animations](animations.md) | toasts drop in, dialogs pop |
 
-The resolver checks the whole config when you create it and throws one error listing every problem, so a typo like `positon` fails at startup instead of silently doing nothing. `celebrations.missing(achievements)` returns the preset keys your achievements name that no preset defines.
+The resolver checks the whole config when you create it and throws one error listing every problem, so a typo like `positon` fails at startup instead of silently doing nothing. `celebrations.missing(achievements)` returns preset names that your achievements use but that are not defined.
 
 ## Sound
 
@@ -138,7 +138,7 @@ Sound is off until you turn it on:
 - **Built-in sounds:** `chime`, `fanfare`, `sparkle` and `pop`. They're synthesized with Web Audio, so no audio files ship with badgetrip.
 - **Your own files:** add them under `sounds`, as a URL or `{ src }`. Any format the browser plays works.
 - **Replacing a built-in:** reuse its name. `sounds: { chime: '/sounds/ding.mp3' }` swaps the default sound everywhere, and `fanfare` does the same for `epic`.
-- **Changing settings:** changing `sound`, `volume` or `muted` updates the notifier in place, so a settings toggle is cheap.
+- **Changing settings:** changing `sound`, `volume` or `muted` updates the notifier in place, so toggling a setting is fast and safe.
 - **Autoplay:** browsers block audio until the user has interacted with the page. Unlocks usually follow a click, so this rarely matters. If an unlock arrives before any interaction, it's shown silently.
 - **One sound per batch:** a single emit that unlocks bronze, silver and gold plays one sound, the one from the biggest celebration.
 
@@ -150,7 +150,7 @@ Badges show a "3/5" count under locked achievements that take more than one step
 <AchievementBadge achievement={a} formatCount={(p) => `${p.current} of ${p.target} todos`} />
 ```
 
-For a Steam-style popup before the unlock ("Create 5 todos: 3/5"), turn on `progress`. It's off by default, and you can turn it on app-wide or per achievement:
+For a progress popup before the unlock ("Create 5 todos: 3/5"), as many games show, turn on `progress`. It's off by default, and you can turn it on app-wide or per achievement:
 
 ```ts
 createCelebrationResolver({
@@ -171,7 +171,7 @@ createCelebrationResolver({
 | `sound` | A sound key, or `false` | `false` |
 | `title` | Heading above the name | "Achievement progress" |
 
-`progress: true` means the defaults. A few rules keep progress popups from getting in the way:
+`progress: true` means the defaults. These rules limit progress popups:
 
 - Reaching the target shows the unlock celebration, not a progress popup.
 - Progress popups wait behind unlocks, and a newer count replaces a waiting one. They never push an unlock into the "+N more" summary.
@@ -180,11 +180,11 @@ createCelebrationResolver({
 
 Progress popups follow one user, so they need a string `actor` on the notifier: `<UnlockNotifier actor={user.id} />`. The count wording in popups is `labels.count`.
 
-To build your own, `watchProgress(observed, { actor }, cb)` from `@walangstudio/badgetrip-core` reports each locked achievement that moved forward with where it came from, and `crossesMilestone` from `@walangstudio/badgetrip-assets` applies the same `at`/`every` rules.
+To build your own, `watchProgress(observed, { actor }, cb)` from `@walangstudio/badgetrip-core` calls `cb(changes, unlocked)` when locked achievements make progress. Each change is `{ view, from }`: the current view and the old count. `crossesMilestone` from `@walangstudio/badgetrip-assets` checks the same `at`/`every` rules.
 
 ## Secret achievements
 
-Hidden achievements already show as "Hidden achievement" until they're earned. For the console-style list that leaves them out entirely and says how many remain, use secret mode:
+Hidden achievements already show as "Hidden achievement" until they're earned. To leave them out of the list entirely and show only how many remain, use secret mode:
 
 ```ts
 renderCatalog(views, { secret: true });
@@ -212,7 +212,7 @@ const next = queue[0]; // { view, celebration }
 
 ## Styling
 
-The overlay lives in a shadow root, so your CSS can't break it and its CSS can't leak into your page. A [theme](themes.md) sets all of this in one object. Without a theme on the notifier, you can set the custom properties on the page by hand:
+The overlay lives in a shadow root. Your page CSS cannot change the overlay, and the overlay CSS cannot change your page. A [theme](themes.md) sets all of this in one object. Without a theme on the notifier, you can set the custom properties on the page by hand:
 
 ```css
 [data-badgetrip-notifier] {
@@ -248,4 +248,4 @@ The others are `--badgetrip-backdrop`, `--badgetrip-fullscreen-bg` and `--badget
 
 On the server, `createNotifier` returns a no-op, so it's safe in SSR code.
 
-With `@walangstudio/badgetrip-ipc`, unlocks cross the process boundary too. When `serveEngine` has an `authorize` hook they are off unless you pass `unlocks`, usually a filter for the peer's own user; see the [Electron guide](electron.md#what-the-window-can-and-cant-do).
+With `@walangstudio/badgetrip-ipc`, unlocks cross the process boundary too. If `serveEngine` has an `authorize` hook, unlocks are not sent by default. To send them, pass `unlocks`, usually a filter that sends only the other process's current user. See the [Electron guide](electron.md#what-the-window-can-and-cant-do).
