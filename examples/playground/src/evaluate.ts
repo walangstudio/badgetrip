@@ -1,3 +1,5 @@
+import { prepare } from './config.js';
+
 export type Evaluated =
   | { ok: true; value: unknown }
   | { ok: false; message: string; line?: number; column?: number };
@@ -34,7 +36,7 @@ export function evaluate(code: string, scope: Record<string, unknown>): Evaluate
   window.addEventListener('error', onError);
   const script = document.createElement('script');
   const names = Object.keys(scope).join(', ');
-  script.textContent = `'use strict'; { const { ${names} } = window.${slot}.scope; window.${slot}.done((\n${code.replace(/;\s*$/, '')}\n)); }`;
+  script.textContent = `'use strict'; { const { ${names} } = window.${slot}.scope; window.${slot}.done((\n${prepare(code)}\n)); }`;
   document.head.appendChild(script);
   script.remove();
   window.removeEventListener('error', onError);

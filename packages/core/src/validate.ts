@@ -27,7 +27,7 @@ export function assertDefinitions(
   keys: string[] = [],
 ): void {
   const errs: string[] = [];
-  for (const k of keys) if (!Object.hasOwn(d, k)) errs.push(`unknown option '${k}'`);
+  for (const k of keys) if (!Object.hasOwn(d, k)) errs.push(`definitions: unknown option '${k}'`);
   const declared = d.scores.length ? new Set(d.scores) : undefined;
   const score = (where: string, s: string) => {
     if (declared && !declared.has(s)) errs.push(`${where}: unknown score '${s}'`);

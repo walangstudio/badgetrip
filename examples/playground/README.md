@@ -39,7 +39,7 @@ Write it like the examples in the docs: a JavaScript object, with `rules` ready 
 }
 ```
 
-A `defineTheme({ ... })` call from the docs can be pasted into the Theme tab as it is, and a `createCelebrationResolver({ ... })` call into any of the three celebration tabs. In the Achievements tab, `achievements: defineAchievements({ ... })` works too. Plain JSON works everywhere.
+A `defineTheme({ ... })` call from the docs can be pasted into the Theme tab as it is, and a `createCelebrationResolver({ ... })` call into any of the three celebration tabs. A leading `export const x =` and a trailing `;` are fine, so a whole docs line pastes in. In the Achievements tab, `achievements: defineAchievements({ ... })` works too. Plain JSON works everywhere.
 
 **Apply** checks every tab before it runs anything:
 
@@ -55,7 +55,8 @@ The code runs in your own browser tab, like code typed into its console, and is 
 - **Previews.** **Preview** shows any achievement's celebration without unlocking it.
 - **Secret mode** leaves hidden achievements out of the list.
 - **Theme** switches between the built-in themes live, plus `animated`, a sample theme where every badge is a GIF ([`src/animated.ts`](src/animated.ts)).
-- **Entrance** and **Exit** try every popup motion on top of the Animations tab; **as configured** keeps the tab's own.
+- **Entrance** and **Exit** set the default popup motion. Presets and overrides in the Animations tab still win; **as configured** keeps the tab's default.
+- If the Theme tab sets `extends`, that theme is used and the **Theme** picker has no effect.
 
 `public/samples/` holds the media, all made for badgetrip (MIT license):
 

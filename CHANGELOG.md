@@ -24,7 +24,7 @@ All notable changes to badgetrip are documented here. The format follows [Keep a
 
 ### Changed
 
-- `defineAchievements` rejects unknown fields on an achievement or a tier, and `createEngine` rejects unknown keys in `definitions`, so a typo like `icno` fails at startup instead of being ignored.
+- `defineAchievements` rejects unknown fields on an achievement or a tier, and `createEngine` rejects unknown keys in `definitions`, so a typo like `icno` fails at startup instead of being ignored. A config that carried extra fields, such as a stray `code`, now throws: remove them.
 - Locked badges and progress bars read `--badgetrip-locked-filter`, `--badgetrip-locked-opacity` and `--badgetrip-accent`, falling back to the old values, so nothing looks different without a theme.
 
 ## [0.0.1] - 2026-09-29

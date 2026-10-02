@@ -284,7 +284,7 @@ export const tabs: Tab[] = [
       <p>How popups move in and out. Put <code>animation</code> on <code>default</code>, a preset in <code>presets</code>, a <code>rarity</code>, a <code>categories</code> entry, or one achievement in <code>overrides</code>.</p>
       <p><code>enter</code> and <code>exit</code>: <code>fade</code>, <code>slide</code>, <code>slide-up</code>, <code>slide-down</code>, <code>slide-left</code>, <code>slide-right</code>, <code>scale</code>, <code>pop</code>, <code>bounce</code>, <code>none</code>.<br>
       <code>duration</code>: 0-2000 ms (the exit takes 70%). <code>easing</code>: <code>ease</code>, <code>ease-in</code>, <code>ease-out</code>, <code>ease-in-out</code>, <code>linear</code>, <code>spring</code> or <code>'cubic-bezier(.2, 1.4, .4, 1)'</code>. <code>distance</code>: 0-200 px for slides.</p>
-      <p>The Entrance and Exit pickers on the right override this tab.</p>
+      <p>The Entrance and Exit pickers on the right set the default motion; presets and overrides in this tab still win.</p>
       <p><a href="${DOCS}/guide/animations">Animations guide</a></p>`,
     samples: [
       {

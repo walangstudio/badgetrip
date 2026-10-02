@@ -113,6 +113,36 @@ describe('defineAchievements', () => {
     ).toThrow(/tiers need/);
   });
 
+  it('accepts every documented field on an achievement and a tier', () => {
+    const defs = defineAchievements({
+      x: {
+        name: 'X',
+        description: 'd',
+        when: rules.count('a'),
+        rarity: 2,
+        points: 1,
+        hidden: true,
+        lockedDescription: 'l',
+        icon: 'star',
+        category: 'c',
+        celebration: 'modal',
+        metadata: { m: 1 },
+        tiers: {
+          gold: {
+            at: 5,
+            points: 2,
+            rarity: 3,
+            icon: 'crown',
+            name: 'G',
+            description: 'g',
+            celebration: 'epic',
+          },
+        },
+      },
+    });
+    expect(defs).toHaveLength(1);
+  });
+
   it('rejects a misspelled field on an achievement or a tier', () => {
     const when = rules.count('a');
     expect(() =>
