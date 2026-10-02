@@ -47,7 +47,7 @@ Want to see them all first? The [playground](../../examples/playground) has **En
 | `scale` | grows from slightly smaller | shrinks a little as it fades |
 | `pop` | grows from smaller; with `spring` easing it overshoots a little | shrinks as it fades |
 | `bounce` | springs in, swells, settles | swells, then shrinks away |
-| `none` | appears at once | disappears at once |
+| `none` | appears immediately | disappears immediately |
 
 For `slide`, a toast at the top comes down from above, one at the bottom comes up from below, and one on the left or right side comes in from that side. Modals and fullscreen popups come up from below.
 
@@ -67,7 +67,7 @@ animation: {
 
 ## Defaults
 
-Without an `animation`, popups move the way they always have:
+Without `animation`, popups use these defaults:
 
 | Popup | enter | exit | duration | easing | distance |
 |---|---|---|---|---|---|
@@ -122,7 +122,7 @@ Confetti is part of a celebration: `confetti: true`, or `{ particles, colors, du
 
 When someone turns on "reduce motion" in their system settings (the `prefers-reduced-motion` media query), badgetrip:
 
-- shows and hides popups at once, with no entrance or exit;
+- shows and hides popups immediately, with no entrance or exit;
 - skips confetti;
 - shows the still frame of animated badges.
 

@@ -26,7 +26,7 @@ Every field is optional except `name`. `defineTheme` checks the whole thing up f
 | `dark` | Light icons and text for dark pages. |
 | `arcade` | Neon colors, monospace text, confetti on every unlock, chiptune sounds. |
 | `minimal` | White popups, no confetti, no sound. Epic unlocks become a modal. |
-| `aurora` | Violet-to-pink gradient popups and white-to-gold gradient icons, pastel confetti. The gradient sample. |
+| `aurora` | Violet-to-pink gradient popups and white-to-gold gradient icons, pastel confetti. Shows what gradients can do. |
 
 ```ts
 import { themes } from '@walangstudio/badgetrip-assets';
@@ -38,7 +38,7 @@ Try them all in the [playground](../../examples/playground).
 
 ## Use a theme
 
-Give it to the provider. Badges, popups and unlock queues under it all follow, and the colors go on the page.
+Give it to the provider. All badges, popups and unlock queues inside the provider use this theme, and its colors are applied to the page as CSS variables.
 
 React:
 
@@ -74,11 +74,16 @@ const notifier = createNotifier(engine, { actor: 'ana', theme: themes.dark });
 
 React Native has no CSS variables, so a theme there brings its icons and celebrations but not its colors.
 
-A provider nested inside another uses the outer theme unless it has its own. Page colors always come from the outermost provider; a nested theme changes icons and celebrations below it, and a notifier with its own theme keeps its own colors.
+Nested providers:
+
+- A nested provider without a theme uses its parent's theme.
+- Page colors always come from the outermost provider.
+- A nested theme changes only icons and celebrations inside that provider.
+- A notifier with its own `theme` uses that theme's colors.
 
 ## Switch at runtime
 
-Pass another theme and everything restyles in place. Popups on screen recolor at once but keep their icon, layout and position; popups still waiting use the new icons.
+Pass another theme and everything restyles in place. Popups already on screen change color immediately; their icon, layout and position stay the same. Popups still in the queue use the new icons.
 
 | Stack | Switch with |
 |---|---|
@@ -87,7 +92,7 @@ Pass another theme and everything restyles in place. Popups on screen recolor at
 | Angular | `inject(BadgetripService).setTheme(themes.arcade)` |
 | HTML | `applyTheme(t)`, `elements.setTheme(t)` and `notifier.update({ theme: t })` |
 
-A user setting is a few lines:
+To let users choose a theme:
 
 ```tsx
 const [theme, setTheme] = useState(themes.classic);
@@ -138,7 +143,7 @@ export const sunset = defineTheme({
 | `shape` | Radial only: `circle` (default) or `ellipse`. |
 | `position` | Radial only: where it starts, `center` (default) or any of the `to` directions. |
 
-Gradients work in `bg`, `fullscreenBg`, `backdrop` and `iconBg`, and in `icons.color` and `icons.tierColors`. The accent and text stay flat colors, since they color text. A gradient icon is one sweep across the whole drawing, so a crown goes white at one corner to gold at the other. Locked badges still turn gray. Your own image icons keep their own colors.
+Gradients work in `bg`, `fullscreenBg`, `backdrop` and `iconBg`, and in `icons.color` and `icons.tierColors`. The accent and text must be solid colors, because they are used for text. A gradient icon uses one gradient across the whole drawing, so a crown is white at one corner and gold at the opposite corner. Locked badges still turn gray. Your own image icons keep their own colors.
 
 `gradient(spec)` returns the same thing as a CSS string, for anywhere else on the page:
 
@@ -150,7 +155,7 @@ banner.style.background = gradient({ colors: ['#4c1d95', '#db2777'], to: 'right'
 
 ## Sample: every badge animated
 
-Mixing a few GIFs into flat icons looks out of place, so the animated look is its own theme. The [playground](../../examples/playground) has it as `animated`: every built-in icon key points at a GIF, so any achievement gets an animated badge, with no per-achievement setup.
+A few animated GIFs next to static icons look inconsistent, so the animated set is a separate theme. The [playground](../../examples/playground) has it as `animated`: every built-in icon key points at a GIF, so any achievement gets an animated badge, with no per-achievement setup.
 
 ```ts
 import { defineTheme, svgs } from '@walangstudio/badgetrip-assets';
@@ -168,7 +173,7 @@ export const animatedTheme = defineTheme({
 });
 ```
 
-The 18 GIFs and their still frames are in [`examples/playground/public/samples/animated`](../../examples/playground/public/samples/animated), drawn for badgetrip (MIT). Copy the folder into your app's public files. The still frame shows while a badge is locked and for people who prefer reduced motion.
+The 18 GIFs and their still frames are in [`examples/playground/public/samples/animated`](../../examples/playground/public/samples/animated), drawn for badgetrip (MIT license). Copy the folder into your app's public files. The still frame shows while a badge is locked and for people who prefer reduced motion.
 
 <p>
   <img src="https://raw.githubusercontent.com/walangstudio/badgetrip/main/examples/playground/public/samples/animated/trophy.gif" width="56" height="56" alt="Animated trophy badge">
@@ -179,7 +184,7 @@ The 18 GIFs and their still frames are in [`examples/playground/public/samples/a
   <img src="https://raw.githubusercontent.com/walangstudio/badgetrip/main/examples/playground/public/samples/animated/crown.gif" width="56" height="56" alt="Animated crown badge">
 </p>
 
-Tier tints only apply to SVG icons, so bronze, silver and gold share one GIF. To tell tiers apart, give each tier its own image with `overrides`: `{ 'collector.gold': { src: '/badges/star-gold.gif', ... } }`.
+Tier colors only apply to SVG icons, so bronze, silver and gold share one GIF. To show a different image for each tier, give each tier its own image with `overrides`: `{ 'collector.gold': { src: '/badges/star-gold.gif', ... } }`.
 
 ## Start from another theme
 
@@ -210,13 +215,13 @@ const brand = defineTheme({
 | `locked.filter` | `--badgetrip-locked-filter` | locked badges, default `grayscale(1)` |
 | `locked.opacity` | `--badgetrip-locked-opacity` | locked badges, default `0.45` |
 
-Values can't contain `;`, `{`, `}`, `<`, `>` or `\`, and every `url()` is checked like any other image URL, so a theme from a package can't break out of its CSS.
+Values can't contain `;`, `{`, `}`, `<`, `>` or `\`, and every `url()` is checked like any other image URL, so a theme from a package cannot inject CSS or HTML into your page.
 
 `icons` takes the same options as [`createIconResolver`](../ACHIEVEMENTS.md#assets): `color`, `tierColors`, `icons`, `overrides`, `categories` and `fallback`. `color` and `tierColors` take a color or a [gradient](#gradients). Images are URLs or bundler imports.
 
 `celebrations` takes the same options as [`createCelebrationResolver`](celebrations.md#configure-it): `default`, `presets`, `overrides`, `categories`, `rarity` and `sounds`. Reuse a built-in sound name to replace it everywhere. Any layer can set `animation`, how popups move in and out; see [Animations](animations.md).
 
-Explicit settings beat the theme. An `IconProvider`, an `icons` option or a `celebrations` option you pass yourself wins over what the theme says.
+Settings you pass directly override the theme. An `IconProvider`, an `icons` option or a `celebrations` option you pass yourself is used instead of the theme's.
 
 ## Share a theme
 
