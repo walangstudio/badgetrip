@@ -54,7 +54,7 @@ const { unlocked } = await engine.emit({
 
 | | |
 |---|---|
-| `createEngine(config)` | Validates `definitions` and returns an engine. Throws on unknown refs, bad thresholds or missing store capabilities. |
+| `createEngine(config)` | Validates `definitions` and returns an engine. Throws on unknown refs or keys, bad thresholds or missing store capabilities. |
 | `emit(event)` | Records one event and returns `{ event, scoreDeltas, streakChanges, escalations, unlocked }`. A repeated `id` is a no-op. |
 | `replay(log)` | Emits a log in `ts` order (ties by `id`). Same log, same state. |
 | `seed(snapshot)` | Loads existing scores, achievements and streaks. Not idempotent. |
@@ -68,7 +68,7 @@ const { unlocked } = await engine.emit({
 
 | | |
 |---|---|
-| `defineAchievements({ key: spec })` | Keyed achievement config. The key is the permanent code. `tiers` expand one entry into several. |
+| `defineAchievements({ key: spec })` | Keyed achievement config. The key is the permanent code. `tiers` expand one entry into several. Unknown fields on an achievement or a tier throw. |
 | `rules.*` | `count`, `score`, `streak`, `unique`, `groupCount`, `firstOfDay`, `rank`, `all`, `any`. |
 
 **Everything else**

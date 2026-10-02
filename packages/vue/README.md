@@ -7,7 +7,7 @@ Vue 3 composables and an `AchievementBadge` for badgetrip. Written with render f
 ## Install
 
 ```sh
-npm install @walangstudio/badgetrip-vue @walangstudio/badgetrip-core
+npm install @walangstudio/badgetrip-vue @walangstudio/badgetrip-core @walangstudio/badgetrip-assets
 ```
 
 Peer dependency: Vue 3.4 or later.

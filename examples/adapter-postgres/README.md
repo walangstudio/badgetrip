@@ -49,7 +49,9 @@ import { pgStores } from '../src/index.js';
 runStoreContract(async () => {
   const stores = pgStores(pool);
   await stores.migrate();
-  return stores; // fresh, empty stores on every call (truncate for a DB)
+  // Every call must return empty stores
+  await pool.query('TRUNCATE events, score_deltas, score_totals, achievements, streaks');
+  return stores;
 });
 ```
 

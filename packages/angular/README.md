@@ -15,9 +15,11 @@ Peer dependency: Angular 17.1 or later.
 ## Usage
 
 ```ts
+import { provideZonelessChangeDetection } from '@angular/core'; // Angular 20+; on 18-19 it is provideExperimentalZonelessChangeDetection
 import { provideBadgetrip } from '@walangstudio/badgetrip-angular';
 
 bootstrapApplication(App, {
+  // Zoneless is optional: with zone.js, pass only provideBadgetrip.
   providers: [provideZonelessChangeDetection(), provideBadgetrip(engine, { icons })],
 });
 ```
@@ -28,6 +30,7 @@ import { AchievementBadgeComponent, BadgetripService } from '@walangstudio/badge
 
 @Component({
   selector: 'app-profile',
+  standalone: true,
   imports: [AchievementBadgeComponent],
   template: `
     <p>Honor: {{ score() }}</p>
@@ -57,7 +60,7 @@ export class Profile {
 - Create queries in an injection context (field initializers) or pass `{ injector }`. They are torn down with that injector.
 - Only calls through `badgetrip.engine` notify. Calls on the raw engine do not.
 - `provideBadgetrip(engine, { theme })` applies a theme (colors in the browser only); `BadgetripService.theme` reads it and `setTheme()` switches badges, the page and the notifier. See the [themes guide](https://github.com/walangstudio/badgetrip/blob/main/docs/guide/themes.md).
-- `provideBadgetrip(engine, { notifier })` celebrates unlocks on top of the page (browser only; `BADGETRIP_NOTIFIER` exposes it for `update({ sound })`). `unlocks()` returns a signal queue for a custom UI. See the [celebrations guide](https://github.com/walangstudio/badgetrip/blob/main/docs/guide/celebrations.md).
+- `provideBadgetrip(engine, { notifier })` celebrates unlocks on top of the page (browser only; `BADGETRIP_NOTIFIER` exposes it for `update({ sound })`). `unlocks()` returns `{ queue, dismiss, clear }` for a custom UI, where `queue` is a signal. See the [celebrations guide](https://github.com/walangstudio/badgetrip/blob/main/docs/guide/celebrations.md).
 - `<badgetrip-achievement-badge>` inputs: `achievement`, `size`, `showProgress`, `showCount` ("3/5", default true) and `formatCount`.
 - `achievementIcon(signal)` returns the icon a custom badge should show (resolver + `displayIcon` + `prefers-reduced-motion`, SSR-safe).
 

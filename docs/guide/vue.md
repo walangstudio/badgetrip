@@ -1,7 +1,7 @@
 # Vue
 
 ```sh
-npm install @walangstudio/badgetrip-core @walangstudio/badgetrip-vue
+npm install @walangstudio/badgetrip-core @walangstudio/badgetrip-vue @walangstudio/badgetrip-assets
 ```
 
 This uses the `engine` from [Getting started](getting-started.md).

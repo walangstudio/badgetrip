@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Try badgetrip in the browser: edit a config, fire events, watch the celebrations. Nothing is saved.",
+  "description": "Try badgetrip in the browser: edit achievements, a theme, animations, sounds and popups, fire events, watch the celebrations. Nothing is saved.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -p . && vite build",

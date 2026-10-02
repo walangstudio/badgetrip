@@ -1,7 +1,7 @@
 # Angular
 
 ```sh
-npm install @walangstudio/badgetrip-core @walangstudio/badgetrip-angular
+npm install @walangstudio/badgetrip-core @walangstudio/badgetrip-angular @walangstudio/badgetrip-assets
 ```
 
 Needs Angular 17.1 or newer (it uses signal inputs). This uses the `engine` from [Getting started](getting-started.md).
@@ -28,6 +28,7 @@ import { AchievementBadgeComponent, BadgetripService } from '@walangstudio/badge
 
 @Component({
   selector: 'app-trophies',
+  standalone: true,
   imports: [AchievementBadgeComponent],
   template: `
     <button (click)="log()">Done for today</button>
@@ -71,6 +72,8 @@ Create queries in a field initializer or constructor, where Angular's injection 
 ## Custom icons
 
 ```ts
+import { createIconResolver } from '@walangstudio/badgetrip-assets';
+
 provideBadgetrip(engine, { icons: createIconResolver({ icons: { medal: { src: '/art/medal.png' } } }) });
 ```
 
@@ -78,7 +81,7 @@ For a badge of your own design, `achievementIcon(signal)` returns a signal of th
 
 ## Celebrate unlocks
 
-Add `notifier` to the provider: `provideBadgetrip(engine, { notifier: () => ({ actor: inject(Auth).userId }) })`. A function runs in the injection context, so it can read services; a plain options object works too. Every unlock then pops up on top of the page, in the browser only. `inject(BADGETRIP_NOTIFIER)?.update({ sound: true })` changes sound settings later. See [Unlock celebrations](celebrations.md). For a custom UI, `inject(BadgetripService).unlocks()` returns a signal queue.
+Add `notifier` to the provider: `provideBadgetrip(engine, { notifier: () => ({ actor: inject(Auth).userId }) })`. A function runs in the injection context, so it can read services; a plain options object works too. Every unlock then pops up on top of the page, in the browser only. `inject(BADGETRIP_NOTIFIER)?.update({ sound: true })` changes sound settings later. See [Unlock celebrations](celebrations.md). For a custom UI, `inject(BadgetripService).unlocks()` returns `{ queue, dismiss, clear }`, where `queue` is a signal.
 
 ## Themes
 

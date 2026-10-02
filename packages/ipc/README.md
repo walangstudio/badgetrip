@@ -35,7 +35,7 @@ remote.subscribe(() => rerender(remote.getVersion()));
     in-process callers; every change reaches every peer.
 - `connectEngine<M>(transport, { timeoutMs? }) => RemoteEngine<M>`
   - Same async methods as `Engine` (`Pick`), plus `engine` (the same methods), `subscribe`,
-    `getVersion` - the `ObservedEngine` shape - and `dispose`.
+    `getVersion` and `onUnlock` - the `ObservedEngine` shape - and `dispose`.
   - Calls reject with `TimeoutError` after `timeoutMs` (default 10000, `Infinity` disables) and
     with `DisposedError` on or after `dispose()`. Remote errors arrive as `Error` with the
     original `name` and `message`.
