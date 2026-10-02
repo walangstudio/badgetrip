@@ -101,6 +101,40 @@ function toRule(r: RuleInput, where: string): Rule {
 const fill = (s: string, tier: string, n: number) =>
   s.replaceAll('{tier}', tier).replaceAll('{n}', String(n));
 
+// `satisfies` makes the compiler list every field, so a new one can't be rejected by mistake.
+const SPEC_KEYS = new Set(
+  Object.keys({
+    name: 1,
+    description: 1,
+    when: 1,
+    rarity: 1,
+    points: 1,
+    hidden: 1,
+    lockedDescription: 1,
+    icon: 1,
+    category: 1,
+    celebration: 1,
+    metadata: 1,
+    tiers: 1,
+  } satisfies Record<keyof AchievementSpec, 1>),
+);
+const TIER_KEYS = new Set(
+  Object.keys({
+    at: 1,
+    points: 1,
+    rarity: 1,
+    icon: 1,
+    name: 1,
+    description: 1,
+    celebration: 1,
+  } satisfies Record<keyof TierSpec, 1>),
+);
+
+const checkKeys = (o: object, allowed: Set<string>, where: string) => {
+  for (const k of Object.keys(o))
+    if (!allowed.has(k)) throw new Error(`${where}: unknown option '${k}'`);
+};
+
 /**
  * Compile a keyed achievement config into `AchievementDef[]` for `createEngine`.
  * The object key is the stable achievement code.
@@ -113,27 +147,6 @@ const fill = (s: string, tier: string, n: number) =>
  *     },
  *   })
  */
-const SPEC_KEYS = new Set([
-  'name',
-  'description',
-  'when',
-  'rarity',
-  'points',
-  'hidden',
-  'lockedDescription',
-  'icon',
-  'category',
-  'celebration',
-  'metadata',
-  'tiers',
-]);
-const TIER_KEYS = new Set(['at', 'points', 'rarity', 'icon', 'name', 'description', 'celebration']);
-
-const checkKeys = (o: object, allowed: Set<string>, where: string) => {
-  for (const k of Object.keys(o))
-    if (!allowed.has(k)) throw new Error(`${where}: unknown option '${k}'`);
-};
-
 export function defineAchievements(specs: Record<string, AchievementSpec>): AchievementDef[] {
   const out: AchievementDef[] = [];
   for (const [code, spec] of Object.entries(specs)) {

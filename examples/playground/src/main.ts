@@ -1,16 +1,7 @@
-import {
-  type CelebrationResolverOptions,
-  type Motion,
-  type Theme,
-  type ThemeInput,
-  defineTheme,
-  themes,
-} from '@walangstudio/badgetrip-assets';
+import { type Motion, type Theme, themes } from '@walangstudio/badgetrip-assets';
 import {
   type AchievementDef,
-  type AchievementSpec,
   type AchievementView,
-  type Definitions,
   type Engine,
   type RuleInput,
   createEngine,
@@ -29,21 +20,11 @@ import {
   renderCatalog,
 } from '@walangstudio/badgetrip-html';
 import { animatedTheme } from './animated.js';
+import { type EngineConfig, type Parts, type Problem, buildTheme, issues } from './config.js';
 import { evaluate } from './evaluate.js';
 import { type TabKey, scope, tabs } from './tabs.js';
 
 const ACTOR = 'player';
-
-type EngineConfig = Omit<Definitions, 'achievements'> & {
-  achievements?: Record<string, AchievementSpec>;
-};
-type Parts = {
-  achievements: EngineConfig;
-  theme: Partial<ThemeInput>;
-  animations: CelebrationResolverOptions;
-  sounds: CelebrationResolverOptions;
-  popups: CelebrationResolverOptions;
-};
 
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const message = el('message');
@@ -164,36 +145,46 @@ let session:
       defs: AchievementDef[];
       parts: Parts;
       theme: Theme;
+      picks: Picks;
       stop: () => void;
     }
   | undefined;
 
-/**
- * The picked theme, then the Theme, Sounds, Popups and Animations tabs as layers (so each
- * tab's mistakes are reported under its name), then the motion pickers.
- */
-function buildTheme(parts: Parts, problems: Problem[]): Theme | undefined {
-  const before = problems.length;
-  const layer = (from: Theme, key: TabKey, input: Partial<ThemeInput>) => {
-    try {
-      return defineTheme({ name: 'playground', extends: from, ...input } as ThemeInput);
-    } catch (err) {
-      problems.push(...issues(key, err));
-      return from;
-    }
-  };
-  let t = layer(bases[themePicker.value] ?? themes.classic, 'theme', parts.theme);
-  t = layer(t, 'sounds', { celebrations: parts.sounds });
-  t = layer(t, 'popups', { celebrations: parts.popups });
-  t = layer(t, 'animations', { celebrations: parts.animations });
-  if (problems.length > before) return undefined;
-  const animation = {
-    ...(enterPicker.value ? { enter: enterPicker.value as Motion } : {}),
-    ...(exitPicker.value ? { exit: exitPicker.value as Motion } : {}),
-  };
-  return Object.keys(animation).length
-    ? defineTheme({ name: t.name, extends: t, celebrations: { default: { animation } } })
-    : t;
+/** The right-hand controls that feed the build, so a failed Apply can put them back. */
+type Picks = { theme: string; enter: string; exit: string; sound: boolean };
+const picks = (): Picks => ({
+  theme: themePicker.value,
+  enter: enterPicker.value,
+  exit: exitPicker.value,
+  sound: soundBox.checked,
+});
+const restore = (p: Picks) => {
+  themePicker.value = p.theme;
+  enterPicker.value = p.enter;
+  exitPicker.value = p.exit;
+  soundBox.checked = p.sound;
+};
+
+const build = (parts: Parts, problems: Problem[]) =>
+  buildTheme(
+    parts,
+    bases[themePicker.value] ?? themes.classic,
+    {
+      ...(enterPicker.value ? { enter: enterPicker.value as Motion } : {}),
+      ...(exitPicker.value ? { exit: exitPicker.value as Motion } : {}),
+    },
+    problems,
+  );
+
+/** The status after a successful build: a warning when a preset name is unknown. */
+function settled(theme: Theme, defs: AchievementDef[], ok: string): 'ok' | 'warning' {
+  const missing = theme.celebrations.missing(defs);
+  if (!missing.length) {
+    say(ok);
+    return 'ok';
+  }
+  say(`Applied, but no preset is named ${missing.map((m) => `'${m}'`).join(', ')}.`, true);
+  return 'warning';
 }
 
 const say = (text: string, error = false) => {
@@ -247,17 +238,6 @@ function fire(type: string, payload: Record<string, unknown> = {}) {
     .catch((err: Error) => say(err.message, true));
 }
 
-type Problem = { key: TabKey; text: string; line?: number; column?: number };
-
-/** One problem per line of a validation error, without the "invalid badgetrip ..." header. */
-function issues(key: TabKey, err: unknown): Problem[] {
-  return String(err instanceof Error ? err.message : err)
-    .split('\n')
-    .map((l) => l.trim())
-    .filter((l) => l && !/^invalid badgetrip \w+:$/.test(l))
-    .map((l) => ({ key, text: key === 'theme' ? l : l.replace(/^celebrations: /, '') }));
-}
-
 /**
  * List every problem, mark the tabs that have one, and put the cursor on the first: on its
  * line when the browser gave one, else on the first name it quotes (like 'icno').
@@ -296,7 +276,8 @@ function report(problems: Problem[]) {
     // Prefer the name used as a key over a mention in a comment or a value.
     const name = /'([^']+)'/.exec(first.text)?.[1];
     if (name) {
-      const key = new RegExp(`['"]?${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"]?\\s*:`);
+      const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const key = new RegExp(`(?<![\\w$])['"]?${escaped}['"]?\\s*:`);
       const m = key.exec(text);
       at = m ? m.index + (m[0].startsWith(name) ? 0 : 1) : text.indexOf(name);
       length = name.length;
@@ -321,9 +302,10 @@ function read(): Parts | undefined {
   return problems.length ? undefined : (parts as Parts);
 }
 
-function apply(): boolean {
+/** Build and start a session from the tabs. On any mistake the running session is kept. */
+function apply(): 'ok' | 'warning' | 'failed' {
   const parts = read();
-  if (!parts) return false;
+  if (!parts) return 'failed';
   // Build every part even if one fails, so every mistake shows at once.
   const problems: Problem[] = [];
   const attempt = <T>(fn: () => T): T | undefined => {
@@ -336,7 +318,7 @@ function apply(): boolean {
   };
   const { achievements = {}, ...definitions } = parts.achievements;
   const defs = attempt(() => defineAchievements(achievements));
-  const theme = buildTheme(parts, problems);
+  const theme = build(parts, problems);
   const engine =
     defs &&
     attempt(() =>
@@ -350,7 +332,7 @@ function apply(): boolean {
       }),
     );
   report(problems);
-  if (problems.length || !defs || !theme || !engine) return false;
+  if (problems.length || !defs || !theme || !engine) return 'failed';
 
   session?.stop();
   const observed = observe(engine);
@@ -368,6 +350,7 @@ function apply(): boolean {
     defs,
     parts,
     theme,
+    picks: picks(),
     stop: () => {
       off();
       notifier.dispose();
@@ -383,17 +366,12 @@ function apply(): boolean {
       return b;
     }),
   );
+  const previewing = previewCode.value;
   previewCode.replaceChildren(...defs.map((d) => option(d.code, `${d.name} (${d.code})`)));
+  if (defs.some((d) => d.code === previewing)) previewCode.value = previewing;
 
-  const missing = theme.celebrations.missing(defs);
-  say(
-    missing.length
-      ? `Applied, but no preset is named ${missing.map((m) => `'${m}'`).join(', ')}.`
-      : `Applied: ${defs.length} achievements. Fire some events.`,
-    missing.length > 0,
-  );
   void render();
-  return true;
+  return settled(theme, defs, `Applied: ${defs.length} achievements. Fire some events.`);
 }
 
 /** Put a sample in a tab. The pickers that would hide it go back to their defaults. */
@@ -419,7 +397,12 @@ function pickSample() {
     samplePicker.value = String(chosen[key] ?? 0);
     return;
   }
-  if (load(key, index) && apply()) say(tabOf(key).samples[index]?.note ?? '');
+  const before = picks();
+  if (!load(key, index)) return;
+  const result = apply();
+  // Keep the controls matching the session that is still running.
+  if (result === 'failed') restore(before);
+  if (result === 'ok') say(tabOf(key).samples[index]?.note ?? '');
 }
 
 /** Celebrate one achievement as if it just unlocked, without changing any state. */
@@ -463,27 +446,38 @@ el<HTMLFormElement>('custom').addEventListener('submit', (e) => {
   }
   if (type) fire(type, payload);
 });
-soundBox.addEventListener('change', () => session?.notifier.update({ sound: soundBox.checked }));
+soundBox.addEventListener('change', () => {
+  session?.notifier.update({ sound: soundBox.checked });
+  if (session) session.picks.sound = soundBox.checked;
+});
 secretBox.addEventListener('change', () => void render());
 /** Rebuild the theme from the pickers and switch the running session to it. */
 function restyle() {
   const s = session;
   if (!s) return;
   const problems: Problem[] = [];
-  const theme = buildTheme(s.parts, problems);
-  if (!theme) return report(problems);
+  const theme = build(s.parts, problems);
+  if (!theme) {
+    restore(s.picks);
+    return report(problems);
+  }
   s.theme = theme;
+  s.picks = picks();
   applyTheme(theme);
   s.notifier.update({ theme });
-  const parts = [`Theme: ${themePicker.value}.`];
-  if (enterPicker.value) parts.push(`Entrance: ${enterPicker.value}.`);
-  if (exitPicker.value) parts.push(`Exit: ${exitPicker.value}.`);
-  say(`${parts.join(' ')} Fire an event or preview a celebration.`);
   void render();
+  const status = [
+    s.parts.theme.extends
+      ? `The Theme tab extends '${String(s.parts.theme.extends)}', so the Theme picker has no effect.`
+      : `Theme: ${themePicker.value}.`,
+  ];
+  if (enterPicker.value) status.push(`Entrance: ${enterPicker.value}.`);
+  if (exitPicker.value) status.push(`Exit: ${exitPicker.value}.`);
+  settled(theme, s.defs, `${status.join(' ')} Fire an event or preview a celebration.`);
 }
 for (const picker of [themePicker, enterPicker, exitPicker])
   picker.addEventListener('change', restyle);
 
 for (const tab of tabs) load(tab.key, 0);
 show('achievements');
-if (apply()) say(tabOf('achievements').samples[0]?.note ?? '');
+if (apply() === 'ok') say(tabOf('achievements').samples[0]?.note ?? '');
