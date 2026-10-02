@@ -28,10 +28,12 @@ export type Problem = { key: TabKey; text: string; line?: number; column?: numbe
  * stay the same, so error positions still match the editor.
  */
 export function prepare(code: string): string {
+  // Removed text keeps its line breaks, so every later line stays where it was.
+  const breaks = (s: string) => '\n'.repeat(s.split('\n').length - 1);
   return code
     .replace(
-      /^((?:\s|\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)*)(?:export\s+default\s+|(?:export\s+)?(?:const|let|var)\s+[\w$]+\s*=\s*)/,
-      '$1',
+      /^((?:\s|\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)*)(export\s+default\s+|(?:export\s+)?(?:const|let|var)\s+[\w$]+\s*=\s*)/,
+      (_, lead: string, decl: string) => lead + breaks(decl),
     )
     .replace(/;\s*(?:\/\/[^\n]*)?\s*$/, '');
 }
@@ -69,8 +71,7 @@ export function buildTheme(
   t = layer(t, 'sounds', { celebrations: parts.sounds });
   t = layer(t, 'popups', { celebrations: parts.popups });
   t = layer(t, 'animations', { celebrations: parts.animations });
-  if (problems.length > before) return undefined;
-  return Object.keys(motion).length
-    ? defineTheme({ name: t.name, extends: t, celebrations: { default: { animation: motion } } })
-    : t;
+  if (Object.keys(motion).length)
+    t = layer(t, 'animations', { celebrations: { default: { animation: motion } } });
+  return problems.length > before ? undefined : t;
 }

@@ -61,6 +61,8 @@ describe('prepare', () => {
     expect(prepare('// a note\nconst x = { a: 1 };')).toBe('// a note\n{ a: 1 }');
     expect(prepare('export default {}')).toBe('{}');
     expect(prepare("{ a: 'b;' }")).toBe("{ a: 'b;' }");
+    expect(prepare('const x =\n{ a: 1 }')).toBe('\n{ a: 1 }');
+    expect(prepare('/* export const y = */ { a: 1 }')).toBe('/* export const y = */ { a: 1 }');
   });
 });
 
