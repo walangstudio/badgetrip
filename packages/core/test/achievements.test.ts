@@ -113,6 +113,25 @@ describe('defineAchievements', () => {
     ).toThrow(/tiers need/);
   });
 
+  it('rejects a misspelled field on an achievement or a tier', () => {
+    const when = rules.count('a');
+    expect(() =>
+      defineAchievements({
+        x: { name: 'X', description: '', when: rules.count('a', 1), icno: 'star' } as never,
+      }),
+    ).toThrow(/achievement x: unknown option 'icno'/);
+    expect(() =>
+      defineAchievements({
+        x: {
+          name: 'X',
+          description: '',
+          when,
+          tiers: { gold: { at: 5, celebraton: 'epic' } as never },
+        },
+      }),
+    ).toThrow(/achievement x: tier 'gold': unknown option 'celebraton'/);
+  });
+
   it('compiles to definitions the engine unlocks tier by tier', async () => {
     const { engine } = makeTestEngine({
       achievements: defineAchievements({

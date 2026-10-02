@@ -29,9 +29,20 @@ import {
   renderCatalog,
 } from '@walangstudio/badgetrip-html';
 import { animatedTheme } from './animated.js';
-import { sample } from './sample.js';
+import { jsonErrorAt } from './json.js';
+import { samples } from './sample.js';
 
 const ACTOR = 'player';
+const DEFINITION_KEYS = [
+  'scores',
+  'points',
+  'streaks',
+  'achievements',
+  'tiers',
+  'leaderboards',
+  'escalators',
+];
+const CONFIG_KEYS = [...DEFINITION_KEYS, 'celebrations', 'theme'];
 
 type Config = Omit<Definitions, 'achievements'> & {
   achievements?: Record<string, AchievementSpec>;
@@ -50,6 +61,15 @@ const catalog = el('catalog');
 const soundBox = el<HTMLInputElement>('sound');
 const secretBox = el<HTMLInputElement>('secret');
 const themePicker = el<HTMLSelectElement>('theme');
+const samplePicker = el<HTMLSelectElement>('sample');
+samplePicker.replaceChildren(
+  ...Object.entries(samples).map(([key, s]) => {
+    const o = document.createElement('option');
+    o.value = key;
+    o.textContent = s.label;
+    return o;
+  }),
+);
 // The built-in themes plus the all-GIF sample theme.
 const bases: Record<string, Theme> = { ...themes, animated: animatedTheme };
 themePicker.replaceChildren(
@@ -101,9 +121,19 @@ for (const picker of [enterPicker, exitPicker]) {
 /** The picked theme, then the config's `theme` and `celebrations` blocks, then the motion pickers. */
 function buildTheme(cfg: Config): Theme {
   const base = bases[themePicker.value] ?? themes.classic;
-  let t = defineTheme({ name: 'playground', extends: base, ...cfg.theme } as ThemeInput);
-  if (cfg.celebrations)
-    t = defineTheme({ name: t.name, extends: t, celebrations: cfg.celebrations });
+  // A broken `theme` block still lets `celebrations` be checked, so both sets of mistakes show.
+  const errors: string[] = [];
+  const layer = (from: Theme, input: Partial<ThemeInput>) => {
+    try {
+      return defineTheme({ name: 'playground', extends: from, ...input } as ThemeInput);
+    } catch (err) {
+      errors.push((err as Error).message);
+      return from;
+    }
+  };
+  let t = layer(base, cfg.theme ?? {});
+  if (cfg.celebrations) t = layer(t, { celebrations: cfg.celebrations });
+  if (errors.length) throw new Error(errors.join('\n'));
   const animation = {
     ...(enterPicker.value ? { enter: enterPicker.value as Motion } : {}),
     ...(exitPicker.value ? { exit: exitPicker.value as Motion } : {}),
@@ -164,20 +194,27 @@ function fire(type: string, payload: Record<string, unknown> = {}) {
     .catch((err: Error) => say(err.message, true));
 }
 
-function apply() {
+function apply(): boolean {
   let cfg: Config;
   try {
     cfg = JSON.parse(editor.value);
   } catch (err) {
-    say(`That isn't valid JSON: ${(err as Error).message}`, true);
-    return;
+    const at = jsonErrorAt(editor.value);
+    const before = editor.value.slice(0, at).split('\n');
+    const where = `line ${before.length}, column ${(before.at(-1)?.length ?? 0) + 1}`;
+    say(`That isn't valid JSON (${where}): ${(err as Error).message}`, true);
+    editor.focus();
+    editor.setSelectionRange(at, at + 1);
+    return false;
   }
   if (typeof cfg !== 'object' || cfg === null || Array.isArray(cfg)) {
     say('The config must be a JSON object: { "achievements": { ... } }.', true);
-    return;
+    return false;
   }
-  // Build both halves even if one fails, so every mistake shows at once.
-  const errors: string[] = [];
+  // Build every part even if one fails, so every mistake shows at once.
+  const errors: string[] = Object.keys(cfg)
+    .filter((k) => !CONFIG_KEYS.includes(k))
+    .map((k) => `unknown key '${k}': the config takes ${CONFIG_KEYS.join(', ')}`);
   const attempt = <T>(fn: () => T): T | undefined => {
     try {
       return fn();
@@ -186,7 +223,10 @@ function apply() {
       return undefined;
     }
   };
-  const { achievements = {}, celebrations: _celebrations, theme: _theme, ...rest } = cfg;
+  const { achievements = {}, ...rest } = cfg;
+  const definitions = Object.fromEntries(
+    Object.entries(rest).filter(([k]) => DEFINITION_KEYS.includes(k)),
+  );
   const defs = attempt(() => defineAchievements(achievements));
   const theme = attempt(() => buildTheme(cfg));
   const engine =
@@ -198,12 +238,12 @@ function apply() {
         achievements: memoryAchievementStore(),
         streaks: memoryStreakStore(),
         clock: systemClock,
-        definitions: { ...rest, achievements: defs },
+        definitions: { ...definitions, achievements: defs },
       }),
     );
-  if (!defs || !theme || !engine) {
+  if (errors.length || !defs || !theme || !engine) {
     say(errors.join('\n'), true);
-    return;
+    return false;
   }
 
   session?.stop();
@@ -254,6 +294,22 @@ function apply() {
     missing.length > 0,
   );
   void render();
+  return true;
+}
+
+/** Load a sample into the editor, with the pickers back on their defaults so it shows as written. */
+let loaded = '';
+function loadSample() {
+  const s = samples[samplePicker.value];
+  if (!s) return;
+  if (editor.value !== loaded && !window.confirm('Replace your edits with this sample?')) return;
+  loaded = JSON.stringify(s.config, null, 2);
+  editor.value = loaded;
+  themePicker.value = 'classic';
+  enterPicker.value = '';
+  exitPicker.value = '';
+  soundBox.checked = s.sound === true;
+  if (apply()) say(s.note);
 }
 
 /** Celebrate one achievement as if it just unlocked, without changing any state. */
@@ -280,10 +336,7 @@ function preview() {
 
 el('apply').addEventListener('click', apply);
 el('restart').addEventListener('click', apply);
-el('sample').addEventListener('click', () => {
-  editor.value = JSON.stringify(sample, null, 2);
-  apply();
-});
+el('load').addEventListener('click', loadSample);
 el('preview').addEventListener('click', preview);
 el<HTMLFormElement>('custom').addEventListener('submit', (e) => {
   e.preventDefault();
@@ -331,5 +384,4 @@ function restyle() {
 for (const picker of [themePicker, enterPicker, exitPicker])
   picker.addEventListener('change', restyle);
 
-editor.value = JSON.stringify(sample, null, 2);
-apply();
+loadSample();

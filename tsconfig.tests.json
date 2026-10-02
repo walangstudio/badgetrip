@@ -18,6 +18,6 @@
       "@walangstudio/badgetrip-ipc": ["./packages/ipc/src/index.ts"]
     }
   },
-  "include": ["packages/*/test", "vitest.config.ts"],
+  "include": ["packages/*/test", "examples/playground/test", "vitest.config.ts"],
   "exclude": ["packages/angular"]
 }

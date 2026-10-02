@@ -17,7 +17,7 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['packages/*/test/**/*.test.{ts,tsx}'],
+    include: ['packages/*/test/**/*.test.{ts,tsx}', 'examples/playground/test/**/*.test.ts'],
     environment: 'node',
   },
 });
