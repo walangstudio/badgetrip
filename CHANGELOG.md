@@ -20,7 +20,7 @@ All notable changes to badgetrip are documented here. The format follows [Keep a
 - The docs site and playground at [walangstudio.github.io/badgetrip](https://walangstudio.github.io/badgetrip/), deployed from `main`. The playground splits the config into tabs (Achievements, Theme, Animations, Sounds, Popups), each with samples and a short reference. Tabs take the same JavaScript objects as the docs, `rules.count(...)` included, and Apply points at the tab, line and column of every mistake.
 - A "Saving data" guide: picking a store, the rules a store must follow, and checking it with `runStoreContract`.
 - A themes guide, and docs for replacing a built-in sound and giving popups your own icons.
-- Sample GIF badges, drawn for badgetrip (MIT), each with a still frame: a GIF for every built-in icon, used by the playground's `animated` sample theme, plus three standalone badges (a star, a trophy and a flame).
+- Sample GIF badges, drawn for badgetrip (MIT), each with a still frame: a GIF for every built-in icon, used by the playground's `animated` sample theme, plus three standalone badges (a star, a trophy and a flame). Sample sounds too: `coin.wav`, `powerup.wav`, `levelup.mp3` and a short tune, `victory.mp3`.
 
 ### Changed
 

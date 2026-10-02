@@ -92,6 +92,7 @@ const editors = {} as Record<TabKey, HTMLTextAreaElement>;
 const panels = {} as Record<TabKey, HTMLDivElement>;
 const tabButtons = {} as Record<TabKey, HTMLButtonElement>;
 const loaded = {} as Record<TabKey, string>;
+const chosen = {} as Record<TabKey, number>;
 let active: TabKey = 'achievements';
 for (const tab of tabs) {
   const button = document.createElement('button');
@@ -137,6 +138,7 @@ function show(key: TabKey, focus = false) {
   }
   const tab = tabOf(key);
   samplePicker.replaceChildren(...tab.samples.map((s, i) => option(String(i), s.label)));
+  samplePicker.value = String(chosen[key] ?? 0);
   help.innerHTML = tab.help;
   // On a phone the tab strip scrolls; keep the open tab in sight.
   const strip = tabList.getBoundingClientRect();
@@ -399,21 +401,25 @@ function load(key: TabKey, index: number) {
   const s = tabOf(key).samples[index];
   if (!s) return false;
   editors[key].value = loaded[key] = s.code;
+  chosen[key] = index;
   if (key === 'theme') themePicker.value = 'classic';
   if (key === 'animations') enterPicker.value = exitPicker.value = '';
   if (s.sound) soundBox.checked = true;
   return true;
 }
 
-function loadSample() {
+/** Picking a sample applies it at once. Edits in the tab are only replaced after asking. */
+function pickSample() {
   const key = active;
+  const index = Number(samplePicker.value);
   if (
     editors[key].value !== loaded[key] &&
     !window.confirm(`Replace your edits in the ${tabOf(key).label} tab with this sample?`)
-  )
+  ) {
+    samplePicker.value = String(chosen[key] ?? 0);
     return;
-  if (load(key, Number(samplePicker.value)) && apply())
-    say(tabOf(key).samples[Number(samplePicker.value)]?.note ?? '');
+  }
+  if (load(key, index) && apply()) say(tabOf(key).samples[index]?.note ?? '');
 }
 
 /** Celebrate one achievement as if it just unlocked, without changing any state. */
@@ -440,7 +446,7 @@ function preview() {
 
 el('apply').addEventListener('click', apply);
 el('restart').addEventListener('click', apply);
-el('load').addEventListener('click', loadSample);
+samplePicker.addEventListener('change', pickSample);
 el('preview').addEventListener('click', preview);
 el<HTMLFormElement>('custom').addEventListener('submit', (e) => {
   e.preventDefault();
