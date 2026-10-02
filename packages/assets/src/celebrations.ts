@@ -464,7 +464,10 @@ export function createCelebrationResolver(
 
   if (errs.length) throw new Error(`invalid badgetrip celebrations:\n  ${errs.join('\n  ')}`);
 
-  const base = { ...BASE, ...opts.default };
+  // An explicit `undefined` means "not set", so it never erases a default.
+  const defined = <T extends object>(o: T | undefined) =>
+    o && (Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined)) as T);
+  const base = { ...BASE, ...defined(opts.default) };
   return {
     resolve(s) {
       const layers = [
@@ -475,12 +478,12 @@ export function createCelebrationResolver(
         s.series ? overrides.get(s.series.code) : undefined,
         overrides.get(s.code),
       ];
-      const m = Object.assign({ ...base }, ...layers.filter(Boolean)) as typeof base;
+      const m = Object.assign({ ...base }, ...layers.map(defined)) as typeof base;
       // Animation merges field by field: a preset can set the entrance, an override the speed.
       const anim: Animation = Object.assign(
         { ...(m.layout === 'toast' ? TOAST_ANIMATION : DIALOG_ANIMATION) },
-        base.animation,
-        ...layers.map((l) => l?.animation),
+        defined(base.animation),
+        ...layers.map((l) => defined(l?.animation)),
       );
       if (anim.easing === 'spring') anim.easing = SPRING;
       const c = m.confetti;

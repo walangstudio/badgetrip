@@ -1,7 +1,7 @@
 # React
 
 ```sh
-npm install @walangstudio/badgetrip-core @walangstudio/badgetrip-react
+npm install @walangstudio/badgetrip-core @walangstudio/badgetrip-react @walangstudio/badgetrip-assets
 ```
 
 This uses the `engine` from [Getting started](getting-started.md).
@@ -45,7 +45,7 @@ export function Trophies({ userId }: { userId: string }) {
 }
 ```
 
-Locked badges are grayed out with a progress bar under them. Hidden ones show a question mark until earned.
+Locked badges are grayed out with a progress bar under them. Hidden ones show a question-mark icon and the name "Hidden achievement" until earned.
 
 ## Record something
 
@@ -99,7 +99,7 @@ function Pill({ badge }: { badge: AchievementView }) {
 }
 ```
 
-To change the icons themselves, wrap the tree in `<IconProvider icons={createIconResolver({ ... })}>`. See [Getting started](getting-started.md#your-own-icons).
+To change the icons themselves, wrap the tree in `<IconProvider icons={createIconResolver({ ... })}>`, with `createIconResolver` from `@walangstudio/badgetrip-assets`. See [Getting started](getting-started.md#your-own-icons).
 
 ## Celebrate unlocks
 
@@ -107,25 +107,33 @@ Render `<UnlockNotifier actor={userId} />` once inside the provider, and every u
 
 ## Themes
 
-Give the provider a theme, and badges, `<UnlockNotifier>` and `useUnlocks` all follow it. Pass a different one to switch; nothing re-mounts.
+Give the provider a theme, and badges, `<UnlockNotifier>` and `useUnlocks` all follow it. Pass a different one to switch; nothing re-mounts. Keep the theme in state next to the provider, so `main.tsx` from above becomes:
 
 ```tsx
+// main.tsx
 import { themes } from '@walangstudio/badgetrip-assets';
 import { BadgetripProvider, UnlockNotifier } from '@walangstudio/badgetrip-react';
 import { useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import { App } from './App';
 import { engine } from './badges';
-import { Trophies } from './Trophies';
 
-export function App({ userId }: { userId: string }) {
+const userId = 'ana'; // your signed-in user
+
+function Root() {
   const [theme, setTheme] = useState(themes.classic);
   return (
     <BadgetripProvider engine={engine} theme={theme}>
       <button type="button" onClick={() => setTheme(themes.arcade)}>Arcade</button>
       <UnlockNotifier actor={userId} />
-      <Trophies userId={userId} />
+      <App />
     </BadgetripProvider>
   );
 }
+
+createRoot(document.getElementById('root')!).render(<Root />);
 ```
+
+`celebrations` or `icons` passed to `<UnlockNotifier>`, and an `<IconProvider>`, are used instead of the theme's.
 
 `useTheme()` reads the current theme. The [themes guide](themes.md) covers making your own.

@@ -1,13 +1,8 @@
 # Animations
 
-Everything in badgetrip that moves: how unlock popups come in and go out, animated badge icons, and confetti. All of it turns off for people who ask their system for less motion.
+Everything in badgetrip that moves: how unlock popups come in and go out, animated badge icons, and confetti. All of it turns off for people who ask their system for less motion. Colors, icons and sounds are in [Themes](themes.md); popup layouts and positions in [Unlock celebrations](celebrations.md).
 
-Looking for something else?
-
-- **Your own theme** (colors, icons, sounds): [Themes](themes.md)
-- **GIF badges**, one per achievement or a whole animated set: [Themes, sample: every badge animated](themes.md#sample-every-badge-animated)
-- **Popup layouts, positions and sound**: [Unlock celebrations](celebrations.md)
-- **Saving data in your own database**: [Writing a store](../ADAPTERS.md), and why badgetrip works that way in [ADR-0001](../adr/0001-store-agnostic-persistence.md)
+Popups use the built-in motions below, tuned with speed, easing and distance. Your own CSS keyframes aren't supported. For full control, draw the popup yourself with `useUnlocks` ([Your own celebration UI](celebrations.md#your-own-celebration-ui)); each item's `celebration.animation` still tells you which motion was configured.
 
 ## Popup motion in one line
 
@@ -30,7 +25,7 @@ defineTheme({
 });
 ```
 
-Want to see them all first? The [playground](../../examples/playground) has **Entrance** and **Exit** pickers.
+The [playground](../../examples/playground) has **Entrance** and **Exit** pickers to try each one.
 
 ## Entrances and exits
 
@@ -54,13 +49,17 @@ For `slide`, a toast at the top comes down from above, one at the bottom comes u
 ## Speed, easing and distance
 
 ```ts
-animation: {
-  enter: 'slide-up',
-  exit: 'fade',
-  duration: 400,       // milliseconds for the entrance, 0-2000; the exit takes 70% of it
-  easing: 'ease-out',  // how the speed changes over the motion
-  distance: 24,        // pixels a slide travels, 0-200
-}
+createCelebrationResolver({
+  default: {
+    animation: {
+      enter: 'slide-up',
+      exit: 'fade',
+      duration: 400,       // milliseconds for the entrance, 0-2000; the exit takes 70% of it
+      easing: 'ease-out',  // how the speed changes over the motion
+      distance: 24,        // pixels a slide travels, 0-200
+    },
+  },
+});
 ```
 
 `easing` takes `ease`, `ease-in`, `ease-out`, `ease-in-out`, `linear`, or `spring`, which overshoots and settles. It also takes any `cubic-bezier(x1, y1, x2, y2)` curve, with `x1` and `x2` from 0 to 1; [cubic-bezier.com](https://cubic-bezier.com) helps you find one.
@@ -104,6 +103,8 @@ Badges can move too:
 - **GIF, APNG or animated WebP:** give an icon `animated: true` and a `still` frame. The still shows while the badge is locked and for people who prefer reduced motion.
 
   ```ts
+  import { createIconResolver } from '@walangstudio/badgetrip-assets';
+
   createIconResolver({
     overrides: { boss: { src: '/badges/boss.gif', still: '/badges/boss.png', animated: true } },
   });
@@ -126,4 +127,6 @@ When someone turns on "reduce motion" in their system settings (the `prefers-red
 - skips confetti;
 - shows the still frame of animated badges.
 
-Popups still appear, stay for their duration, and are announced to screen readers as usual. Sound is not motion, so it still follows your `sound` setting. You don't need to do anything to get this.
+Popups still appear, stay for their duration, and are announced to screen readers as usual.
+
+Some people feel sick from motion but never turn the setting on. `bounce`, `pop` and long slides are the strongest motions; `fade` is the gentlest. Sound is not motion, so it still follows your `sound` setting. You don't need to do anything to get this.

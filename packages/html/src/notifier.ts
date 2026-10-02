@@ -523,7 +523,10 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
     alsoFade?: HTMLElement,
   ) => {
     if (instant || disposed || a.exit === 'none' || reducedMotion()) return done();
+    // A leaving popup is out of reach: no clicks, no Tab, not read again.
     el.dataset.leaving = '';
+    el.setAttribute('inert', '');
+    if (alsoFade) alsoFade.dataset.leaving = '';
     setVars(el, motionVars(a, 'exit', at));
     const ms = Math.round(a.duration * 0.7);
     alsoFade?.style.setProperty('--bt-backdrop', `badgetrip-fade-out ${ms}ms ease-in both`);
@@ -615,7 +618,11 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
       gone = true;
       cancelTimer();
       document.removeEventListener('keydown', onKey, true);
-      if (restore && before instanceof HTMLElement && before.isConnected) before.focus();
+      // Only take focus back from the dialog, never from wherever the user went since.
+      const focusHere =
+        box.contains(shadow.activeElement) || document.activeElement === document.body;
+      if (restore && focusHere && before instanceof HTMLElement && before.isConnected)
+        before.focus();
       leave(
         box,
         item.c.animation,
