@@ -384,6 +384,12 @@ describe('definition validation at createEngine', () => {
       /gte/,
     ],
     ['duplicate achievement codes', { achievements: [count('a'), count('a')] }, /duplicate/],
+    ['unknown definitions key', { scroes: ['xp'] } as Definitions, /unknown option 'scroes'/],
+    [
+      'inherited name as a key',
+      { constructor: [] } as unknown as Definitions,
+      /unknown option 'constructor'/,
+    ],
     [
       'points on an undeclared score',
       { scores: ['shame'], points: [{ on: 'x', score: 'typo', delta: 1 }] },

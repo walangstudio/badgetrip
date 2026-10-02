@@ -78,11 +78,6 @@ h3 {
   color: var(--muted);
 }
 
-.actions {
-  display: flex;
-  gap: 8px;
-}
-
 button,
 select,
 input {
@@ -139,6 +134,69 @@ textarea {
 
 #message.error {
   color: var(--danger);
+}
+
+.samples {
+  align-items: center;
+  margin: 0 0 12px;
+}
+
+.row.samples select {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.help {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.help summary {
+  cursor: pointer;
+  color: var(--fg);
+}
+
+.help code {
+  font: 12px ui-monospace, "Cascadia Code", Consolas, monospace;
+  color: var(--fg);
+  overflow-wrap: break-word;
+}
+
+.help dt {
+  margin-top: 8px;
+}
+
+.help dd {
+  margin: 2px 0 0 16px;
+}
+
+.help table {
+  margin: 6px 0 0;
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.help td code {
+  overflow-wrap: anywhere;
+}
+
+.help th,
+.help td {
+  text-align: left;
+  vertical-align: top;
+  padding: 4px 8px 4px 0;
+  border-top: 1px solid var(--line);
+}
+
+.help th {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.help a {
+  color: var(--accent);
 }
 
 .chips {
@@ -212,5 +270,21 @@ textarea {
 
   textarea {
     height: 50vh;
+  }
+
+  .help thead {
+    display: none;
+  }
+
+  .help tr {
+    display: block;
+    padding: 4px 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .help td {
+    display: block;
+    padding: 2px 0;
+    border: 0;
   }
 }

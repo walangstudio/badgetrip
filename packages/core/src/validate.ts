@@ -21,8 +21,13 @@ export function assertEvent(e: Event): void {
  * Check definitions once at engine construction, so a config mistake fails fast
  * instead of throwing mid-emit after the event is already persisted.
  */
-export function assertDefinitions(d: Required<Definitions>, stores: Stores): void {
+export function assertDefinitions(
+  d: Required<Definitions>,
+  stores: Stores,
+  keys: string[] = [],
+): void {
   const errs: string[] = [];
+  for (const k of keys) if (!Object.hasOwn(d, k)) errs.push(`unknown option '${k}'`);
   const declared = d.scores.length ? new Set(d.scores) : undefined;
   const score = (where: string, s: string) => {
     if (declared && !declared.has(s)) errs.push(`${where}: unknown score '${s}'`);

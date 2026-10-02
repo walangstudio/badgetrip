@@ -39,7 +39,7 @@ export function createEngine(config: EngineConfig) {
   const { events, scores, achievements, streaks, clock } = config;
   const defs = withDefaults(config.definitions);
   const dayBoundary = config.dayBoundary ?? utcDayStart;
-  assertDefinitions(defs, config);
+  assertDefinitions(defs, config, Object.keys(config.definitions));
 
   function resolveLeaderboardSource(def: LeaderboardDef): LeaderboardSource {
     if (def.source) return def.source;

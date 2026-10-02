@@ -113,9 +113,34 @@ const fill = (s: string, tier: string, n: number) =>
  *     },
  *   })
  */
+const SPEC_KEYS = new Set([
+  'name',
+  'description',
+  'when',
+  'rarity',
+  'points',
+  'hidden',
+  'lockedDescription',
+  'icon',
+  'category',
+  'celebration',
+  'metadata',
+  'tiers',
+]);
+const TIER_KEYS = new Set(['at', 'points', 'rarity', 'icon', 'name', 'description', 'celebration']);
+
+const checkKeys = (o: object, allowed: Set<string>, where: string) => {
+  for (const k of Object.keys(o))
+    if (!allowed.has(k)) throw new Error(`${where}: unknown option '${k}'`);
+};
+
 export function defineAchievements(specs: Record<string, AchievementSpec>): AchievementDef[] {
   const out: AchievementDef[] = [];
   for (const [code, spec] of Object.entries(specs)) {
+    checkKeys(spec, SPEC_KEYS, `achievement ${code}`);
+    for (const [tier, t] of Object.entries(spec.tiers ?? {}))
+      if (typeof t === 'object' && t)
+        checkKeys(t, TIER_KEYS, `achievement ${code}: tier '${tier}'`);
     const { when, tiers, rarity, ...rest } = spec;
     if (!tiers) {
       out.push({
