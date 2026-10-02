@@ -1,4 +1,5 @@
 import {
+  type Animation,
   type Celebration,
   type CelebrationResolver,
   type CountFormat,
@@ -135,7 +136,7 @@ const CSS = `
   background:var(--badgetrip-bg,#1f2330);font:var(--badgetrip-font,14px/1.4 system-ui,sans-serif);
   box-shadow:0 10px 30px rgba(0,0,0,.3)}
 .toast{position:relative;display:flex;align-items:center;gap:12px;padding:12px 40px 12px 12px;
-  border-radius:var(--badgetrip-radius,12px);animation:badgetrip-in .25s ease-out}
+  border-radius:var(--badgetrip-radius,12px);animation:var(--bt-animation,none)}
 .icon{box-sizing:border-box;flex:none;border-radius:50%;background:var(--badgetrip-icon-bg,#f5f6fa)}
 .toast .icon{width:44px;height:44px;padding:6px}
 .title{font-size:11px;letter-spacing:.06em;text-transform:uppercase;
@@ -149,12 +150,12 @@ const CSS = `
 .close:hover{background:rgba(255,255,255,.12)}
 .close:focus-visible{outline:2px solid var(--badgetrip-accent,#f9c74f);outline-offset:1px}
 .backdrop{position:fixed;inset:0;display:grid;place-items:center;padding:16px;pointer-events:auto;
-  background:var(--badgetrip-backdrop,rgba(8,10,20,.6));animation:badgetrip-fade .2s ease-out}
+  background:var(--badgetrip-backdrop,rgba(8,10,20,.6));animation:var(--bt-backdrop,badgetrip-fade .2s ease-out both)}
 .backdrop[data-layout=fullscreen]{background:var(--badgetrip-fullscreen-bg,
   radial-gradient(circle at 50% 40%,#2b2f45 0%,#0b0d17 70%))}
 .dialog{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;
   text-align:center;padding:32px 40px;border-radius:var(--badgetrip-radius,16px);
-  max-width:min(420px,100%);animation:badgetrip-pop .35s cubic-bezier(.2,1.4,.4,1)}
+  max-width:min(420px,100%);animation:var(--bt-animation,none)}
 .dialog .icon{width:104px;height:104px;padding:14px}
 .dialog .name{font-size:22px}
 [data-layout=fullscreen] .dialog{background:transparent;box-shadow:none;max-width:min(640px,100%)}
@@ -164,11 +165,72 @@ const CSS = `
 [data-layout=fullscreen] .description{font-size:16px}
 [data-layout=fullscreen] .close{position:fixed;top:16px;right:16px;width:44px;height:44px;font-size:26px}
 .live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-@keyframes badgetrip-in{from{opacity:0;transform:translateY(-8px)}}
+@keyframes badgetrip-move{from{opacity:0;transform:translate(var(--bt-dx,0),var(--bt-dy,0)) scale(var(--bt-s,1))}}
+@keyframes badgetrip-bounce{0%{opacity:0;transform:scale(.3)}50%{opacity:1;transform:scale(1.08)}
+  72%{transform:scale(.95)}100%{transform:scale(1)}}
+@keyframes badgetrip-out{to{opacity:0;transform:translate(var(--bt-dx,0),var(--bt-dy,0)) scale(var(--bt-s,1))}}
+@keyframes badgetrip-bounce-out{0%{transform:scale(1)}28%{transform:scale(.95)}50%{opacity:1;transform:scale(1.08)}
+  100%{opacity:0;transform:scale(.3)}}
 @keyframes badgetrip-fade{from{opacity:0}}
-@keyframes badgetrip-pop{from{opacity:0;transform:scale(.8)}}
+@keyframes badgetrip-fade-out{to{opacity:0}}
+[data-leaving]{pointer-events:none}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 `;
+
+// Where a toast's own edge is, as a unit vector, for `slide`. Dialogs come from below.
+const EDGE: Record<Position | 'dialog', [number, number]> = {
+  'top-left': [0, -1],
+  top: [0, -1],
+  'top-right': [0, -1],
+  right: [1, 0],
+  'bottom-right': [0, 1],
+  bottom: [0, 1],
+  'bottom-left': [0, 1],
+  left: [-1, 0],
+  dialog: [0, 1],
+};
+const TRAVEL: Record<string, [number, number]> = {
+  'slide-up': [0, -1],
+  'slide-down': [0, 1],
+  'slide-left': [-1, 0],
+  'slide-right': [1, 0],
+};
+
+/**
+ * Inline custom properties that drive one entrance or exit. Exits use their own keyframes
+ * (a browser won't restart a finished animation of the same name), and their offset is
+ * where the popup ends up rather than where it starts.
+ */
+function motionVars(
+  a: Animation,
+  phase: 'enter' | 'exit',
+  at: Position | 'dialog',
+): Record<string, string> {
+  const m = a[phase];
+  if (m === 'none') return { '--bt-animation': 'none' };
+  const ms = Math.round(phase === 'exit' ? a.duration * 0.7 : a.duration);
+  const out = phase === 'exit' ? '-out' : '';
+  if (m === 'bounce')
+    return { '--bt-animation': `badgetrip-bounce${out} ${ms}ms ${a.easing} both` };
+  let dir: [number, number] = [0, 0];
+  if (m === 'slide') dir = EDGE[at];
+  else if (TRAVEL[m]) {
+    const t = TRAVEL[m] as [number, number];
+    // Entering travels toward t, so it starts on the opposite side; leaving ends along t.
+    dir = phase === 'enter' ? [-t[0], -t[1]] : t;
+  }
+  const px = (n: number) => `${n === 0 ? 0 : n * a.distance}px`;
+  return {
+    '--bt-animation': `${out ? 'badgetrip-out' : 'badgetrip-move'} ${ms}ms ${a.easing} both`,
+    '--bt-dx': px(dir[0]),
+    '--bt-dy': px(dir[1]),
+    '--bt-s': m === 'scale' ? '0.85' : m === 'pop' ? '0.8' : '1',
+  };
+}
+
+const setVars = (el: HTMLElement, vars: Record<string, string>) => {
+  for (const [k, v] of Object.entries(vars)) el.style.setProperty(k, v);
+};
 
 const isInt = (v: unknown, lo: number, hi: number) =>
   typeof v === 'number' && Number.isInteger(v) && v >= lo && v <= hi;
@@ -347,7 +409,7 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
   root.appendChild(host);
 
   const reducedMotion = () => !!globalThis.matchMedia?.(MOTION)?.matches;
-  const cleanups = new Set<() => void>();
+  const cleanups = new Set<(instant?: boolean) => void>();
   // Each announcement is its own line, so ones that land close together (an unlock
   // and a progress update) are all read out; old lines are cleared after a while.
   const announce = (text: string) => {
@@ -449,28 +511,65 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
   // The "+N more" toast still waiting to be shown; later overflow adds to it.
   let summary: Item | undefined;
 
+  // Exits still running, so dispose and dismissAll can finish them at once.
+  const leaving = new Set<() => void>();
+  /** Play the exit, then call `done`. Instant on dispose, under reduced motion, or with no exit. */
+  const leave = (
+    el: HTMLElement,
+    a: Animation,
+    at: Position | 'dialog',
+    instant: boolean,
+    done: () => void,
+    alsoFade?: HTMLElement,
+  ) => {
+    if (instant || disposed || a.exit === 'none' || reducedMotion()) return done();
+    el.dataset.leaving = '';
+    setVars(el, motionVars(a, 'exit', at));
+    const ms = Math.round(a.duration * 0.7);
+    alsoFade?.style.setProperty('--bt-backdrop', `badgetrip-fade-out ${ms}ms ease-in both`);
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      el.removeEventListener('animationend', onEnd);
+      leaving.delete(finish);
+      done();
+    };
+    const onEnd = (e: Event) => {
+      if (e.target === el) finish();
+    };
+    el.addEventListener('animationend', onEnd);
+    // animationend never comes without CSS animation support, so a timer backs it up.
+    const timer = setTimeout(finish, ms + 50);
+    leaving.add(finish);
+  };
+
   const showToast = (item: Item) => {
     const pos = item.c.position;
     const box = el('div', 'toast');
     if (item.progress) box.dataset.kind = 'progress';
     const close = content(box, item);
+    setVars(box, motionVars(item.c.animation, 'enter', pos));
     visible.set(pos, (visible.get(pos) ?? 0) + 1);
     regions.get(pos)?.appendChild(box);
     if (item === summary) summary = undefined;
     confetti(item.c);
     let gone = false;
-    const remove = () => {
+    const remove = (instant?: boolean) => {
       if (gone) return;
       gone = true;
       cancelTimer();
-      cleanups.delete(remove);
-      box.remove();
-      visible.set(pos, (visible.get(pos) ?? 1) - 1);
-      const next = waiting.get(pos)?.shift();
-      if (next && !disposed) showToast(next);
+      leave(box, item.c.animation, pos, instant === true, () => {
+        cleanups.delete(remove);
+        box.remove();
+        visible.set(pos, (visible.get(pos) ?? 1) - 1);
+        const next = waiting.get(pos)?.shift();
+        if (next && !disposed) showToast(next);
+      });
     };
-    const cancelTimer = autoClose(box, item.c.duration, remove, true);
-    close.addEventListener('click', remove);
+    const cancelTimer = autoClose(box, item.c.duration, () => remove(), true);
+    close.addEventListener('click', () => remove());
     cleanups.add(remove);
   };
   const queueToast = (item: Item) => {
@@ -491,7 +590,7 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
 
   // Modal and fullscreen: one at a time, focus trapped while open.
   const dialogs: Item[] = [];
-  let closeDialog: (() => void) | undefined;
+  let closeDialog: ((instant?: boolean) => void) | undefined;
   let dialogCount = 0;
   const openDialog = (item: Item) => {
     const layout = item.c.layout;
@@ -504,24 +603,34 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
     box.setAttribute('aria-labelledby', `${id}-title`);
     box.tabIndex = -1;
     const close = content(box, item, id);
+    setVars(box, motionVars(item.c.animation, 'enter', 'dialog'));
     backdrop.appendChild(box);
     const before = document.activeElement;
     shadow.appendChild(backdrop);
     close.focus();
     confetti(item.c);
     let gone = false;
-    const finish = (restore: boolean) => {
+    const finish = (restore: boolean, instant = false) => {
       if (gone) return;
       gone = true;
       cancelTimer();
       document.removeEventListener('keydown', onKey, true);
-      backdrop.remove();
-      closeDialog = undefined;
       if (restore && before instanceof HTMLElement && before.isConnected) before.focus();
-      const next = dialogs.shift();
-      if (next && !disposed) openDialog(next);
+      leave(
+        box,
+        item.c.animation,
+        'dialog',
+        instant,
+        () => {
+          backdrop.remove();
+          closeDialog = undefined;
+          const next = dialogs.shift();
+          if (next && !disposed) openDialog(next);
+        },
+        backdrop,
+      );
     };
-    closeDialog = () => finish(true);
+    closeDialog = (instant?: boolean) => finish(true, instant === true);
     // Keys are caught at the document so they work wherever focus ended up (a click
     // on the dialog text, for example). The page behind is not reachable by Tab.
     const onKey = (e: KeyboardEvent) => {
@@ -669,9 +778,10 @@ export function createNotifier(source: Engine | Observable, opts: NotifierOption
     summary = undefined;
     for (const q of waiting.values()) q.length = 0;
     dialogs.length = 0;
-    for (const c of [...cleanups]) c();
+    for (const c of [...cleanups]) c(true);
     cleanups.clear();
-    closeDialog?.();
+    for (const f of [...leaving]) f();
+    closeDialog?.(true);
   };
 
   return {
