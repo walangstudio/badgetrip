@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@walangstudio/badgetrip-core": "workspace:*",
-    "pg": "^8.23.0"
+    "pg": "^8.23.1"
   },
   "devDependencies": {
     "@walangstudio/badgetrip-testing": "workspace:*",
