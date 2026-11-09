@@ -17,27 +17,27 @@
     "@walangstudio/badgetrip-assets": "workspace:*",
     "@walangstudio/badgetrip-core": "workspace:*",
     "@walangstudio/badgetrip-html": "workspace:*",
-    "tslib": "^2.3.0"
+    "tslib": "^2.9.1"
   },
   "peerDependencies": {
     "@angular/common": ">=17.1.0",
     "@angular/core": ">=17.1.0"
   },
   "devDependencies": {
-    "@analogjs/vite-plugin-angular": "^2.7.5",
-    "@analogjs/vitest-angular": "^2.7.5",
-    "@angular/build": "~22.2.0",
-    "@angular/common": "^22.2.0",
-    "@angular/compiler": "^22.2.0",
-    "@angular/compiler-cli": "^22.2.0",
-    "@angular/core": "^22.2.0",
-    "@angular/platform-browser": "^22.2.0",
+    "@analogjs/vite-plugin-angular": "^2.9.6",
+    "@analogjs/vitest-angular": "^2.9.6",
+    "@angular/build": "~22.2.6",
+    "@angular/common": "^22.2.4",
+    "@angular/compiler": "^22.2.4",
+    "@angular/compiler-cli": "^22.2.4",
+    "@angular/core": "^22.2.4",
+    "@angular/platform-browser": "^22.2.4",
     "jsdom": "^30.1.1",
-    "ng-packagr": "^22.2.1",
+    "ng-packagr": "^22.2.6",
     "rxjs": "^7.8.2",
-    "typescript": "~6.0.3",
-    "vite": "^8.3.0",
-    "vitest": "^4.1.11"
+    "typescript": "~5.9.3",
+    "vite": "^8.3.6",
+    "vitest": "^4.1.12"
   },
   "keywords": ["gamification", "angular", "signals"],
   "license": "MIT",
